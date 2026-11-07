@@ -1,0 +1,9 @@
+.git
+.venv
+.claude
+.forgejo
+data
+archiv
+tests
+**/__pycache__
+*.egg-info

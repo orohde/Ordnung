@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Ordnung!</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0a2a5c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ordnung!">
+  <link rel="stylesheet" href="vendor/theme_horizon.css" id="theme-light">
+  <link rel="stylesheet" href="vendor/theme_horizon_dark.css" id="theme-dark" disabled>
+  <link rel="stylesheet" href="vendor/fundamental.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ============================== Login ============================== -->
+  <section id="view-login" class="login" hidden>
+    <form id="login-form" class="login__card">
+      <img src="icon.svg" alt="" class="login__logo">
+      <h1 class="fd-title fd-title--h3">Ordnung!</h1>
+      <label class="fd-form-label" for="login-user" data-i18n="login.user">Benutzer</label>
+      <input class="fd-input" id="login-user" autocomplete="username" required>
+      <label class="fd-form-label" for="login-pass" data-i18n="login.pass">Passwort</label>
+      <input class="fd-input" id="login-pass" type="password" autocomplete="current-password" required>
+      <p id="login-error" class="login__error" hidden data-i18n="login.error">Anmeldung fehlgeschlagen.</p>
+      <button class="fd-button fd-button--emphasized" type="submit" data-i18n="login.submit">Anmelden</button>
+    </form>
+  </section>
+
+  <!-- ============================== App ============================== -->
+  <section id="view-app" class="app" hidden>
+    <header class="fd-shellbar">
+      <div class="fd-shellbar__group fd-shellbar__group--product">
+        <button id="btn-tree" class="fd-button fd-button--transparent fd-shellbar__button only-mobile" type="button" aria-label="Ordner">&#9776;</button>
+        <img src="icon.svg" alt="" class="shell-logo">
+        <span class="fd-shellbar__title">Ordnung!</span>
+      </div>
+      <div class="fd-shellbar__group shell-search">
+        <input id="search" class="fd-input" type="search" autocomplete="off"
+               data-i18n-placeholder="search.placeholder" placeholder="Suchen …">
+      </div>
+      <div class="fd-shellbar__group fd-shellbar__group--actions">
+        <button id="btn-theme" class="fd-button fd-shellbar__button" type="button" aria-label="Theme">&#9680;</button>
+        <a id="btn-inbox" class="fd-button fd-shellbar__button admin-only" href="#/eingang"><span data-i18n="ib.short">Eingang</span><span id="ib-badge" class="ib-badge" hidden></span></a>
+        <a id="btn-import" class="fd-button fd-shellbar__button admin-only" href="#/import" data-i18n="imp.title">Import</a>
+        <a id="btn-rules" class="fd-button fd-shellbar__button admin-only" href="#/regeln" data-i18n="rules.title">Regeln</a>
+        <a id="btn-settings" class="fd-button fd-shellbar__button" href="#/einstellungen/konto" aria-label="Einstellungen" data-i18n-title="set.title">&#9881;</a>
+        <button id="btn-logout" class="fd-button fd-shellbar__button" type="button" data-i18n="app.logout">Abmelden</button>
+      </div>
+    </header>
+
+    <div class="toolbar" id="archive-toolbar">
+      <div id="area-chips" class="chips" role="group" aria-label="Bereiche"></div>
+      <label class="toolbar__check">
+        <input type="checkbox" id="chk-recursive" checked>
+        <span data-i18n="list.recursive">mit Unterordnern</span>
+      </label>
+      <span id="status" class="toolbar__status"></span>
+    </div>
+
+    <div class="layout" id="archive-layout">
+      <aside id="tree-panel" class="tree-panel">
+        <div class="tree-tools">
+          <button id="tree-expand" class="fd-button fd-button--transparent tree-tool" type="button" data-i18n-title="tree.expand" title="Alle aufklappen">&#8862;</button>
+          <button id="tree-collapse" class="fd-button fd-button--transparent tree-tool" type="button" data-i18n-title="tree.collapse" title="Alle zuklappen">&#8863;</button>
+        </div>
+        <div id="tree" class="tree" role="tree"></div>
+        <div id="mappen-panel" class="mappen-panel">
+          <div class="mappen-head">
+            <h3 class="tag-panel__title" data-i18n="mp.title">Mappen</h3>
+            <button id="mappe-new" class="fd-button fd-button--transparent tree-tool" type="button" data-i18n-title="mp.new" title="Neue Mappe">+</button>
+          </div>
+          <div id="mappen" class="tree" role="tree"></div>
+        </div>
+        <div id="tag-panel" class="tag-panel" hidden>
+          <h3 class="tag-panel__title" data-i18n="tags.title">Tags</h3>
+          <div id="tag-cloud" class="tag-cloud"></div>
+        </div>
+        <datalist id="tag-list"></datalist>
+        <a href="#/papierkorb" class="trash-link" data-i18n="tr.link">🗑 Papierkorb</a>
+      </aside>
+      <div class="splitter splitter--col" id="split-tree" role="separator" aria-orientation="vertical"></div>
+
+      <div class="work" id="work">
+      <main class="list-panel">
+        <div class="list-head">
+          <h2 id="list-title" class="fd-title fd-title--h5"></h2>
+          <span id="list-count" class="list-count"></span>
+          <span id="list-tagfilter" class="tag-row"></span>
+          <span id="list-mappe-actions" class="mappe-actions" hidden>
+            <a id="mappe-zip" class="fd-button fd-button--transparent" data-i18n="mp.zip">ZIP herunterladen</a>
+            <a id="mappe-pdf" class="fd-button fd-button--transparent" data-i18n="mp.pdf">Als eine PDF</a>
+          </span>
+        </div>
+        <div id="bulk" class="bulk" hidden>
+          <span id="bulk-count" class="bulk__count"></span>
+          <input id="bulk-tag" class="fd-input bulk__input" data-picker="tag-list" autocomplete="off" data-i18n-placeholder="tags.ph">
+          <button id="bulk-add" class="fd-button" type="button" data-i18n="tags.add">Tag hinzufügen</button>
+          <button id="bulk-remove" class="fd-button fd-button--transparent" type="button" data-i18n="tags.remove">Tag entfernen</button>
+          <button id="bulk-clear" class="fd-button fd-button--transparent" type="button" data-i18n="tags.clearsel">Auswahl aufheben</button>
+          <span id="bulk-msg" class="form-msg"></span>
+        </div>
+        <table class="fd-table doc-table">
+          <thead class="fd-table__header">
+            <tr class="fd-table__row">
+              <th class="fd-table__cell col-check"><input type="checkbox" id="chk-all" data-i18n-title="tags.selall"></th>
+              <th class="fd-table__cell col-date" data-i18n="col.date">Datum</th>
+              <th class="fd-table__cell" data-i18n="col.title">Titel</th>
+              <th class="fd-table__cell col-area" data-i18n="col.area">Bereich</th>
+            </tr>
+          </thead>
+          <tbody id="doc-rows" class="fd-table__body"></tbody>
+        </table>
+        <p id="list-empty" class="list-empty" hidden data-i18n="list.empty">Keine Dokumente.</p>
+        <div class="list-more"><button id="btn-more" class="fd-button" type="button" hidden data-i18n="list.more">Mehr laden</button></div>
+      </main>
+
+      <div class="splitter" id="split-preview" role="separator" hidden></div>
+      <section id="preview" class="preview" hidden>
+        <div class="preview__bar">
+          <div class="preview__meta">
+            <div class="pv-titlerow"><div id="pv-title" class="preview__title"></div>
+              <button id="pv-meta" class="fd-button fd-button--transparent pv-meta" type="button" hidden data-i18n-title="pv.meta" title="Titel und Datum ändern">✎</button></div>
+            <div id="pv-sub" class="preview__sub"></div>
+            <form id="pv-meta-form" class="pv-meta-form" hidden>
+              <input id="pv-meta-title" class="fd-input" required maxlength="150" data-i18n-placeholder="ed.sv.name">
+              <input id="pv-meta-date" class="fd-input" type="date" required>
+              <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
+              <button id="pv-meta-cancel" class="fd-button fd-button--transparent" type="button" data-i18n="ed.sv.cancel">Abbrechen</button>
+              <span id="pv-meta-msg" class="form-msg"></span>
+            </form>
+          </div>
+          <button id="pv-edit" class="fd-button" type="button" hidden data-i18n="pv.edit">Bearbeiten</button>
+          <a id="pv-open" class="fd-button" target="_blank" rel="noopener" data-i18n="pv.open">Öffnen</a>
+          <a id="pv-download" class="fd-button" data-i18n="pv.download">Herunterladen</a>
+          <button id="pv-trash" class="fd-button pv-trash" type="button" hidden data-i18n="pv.trash">Löschen</button>
+          <button id="pv-layout" class="fd-button fd-button--transparent pv-layout" type="button"></button>
+          <button id="pv-close" class="fd-button fd-button--transparent" type="button" aria-label="Schließen">&#10005;</button>
+        </div>
+        <div id="pv-tags" class="tag-edit pv-tags"></div>
+        <div id="pv-body" class="preview__body"></div>
+      </section>
+      </div>
+    </div>
+
+    <!-- ============================== Rules page ============================== -->
+    <div id="rules" class="rules" hidden>
+      <aside class="rules-tree">
+        <a href="#/" class="settings-back" data-i18n="set.back">← Zurück zum Archiv</a>
+        <h2 class="fd-title fd-title--h4" data-i18n="rules.title">Regeln</h2>
+        <div class="seg" role="tablist">
+          <button id="rv-senders" class="seg__btn" type="button" role="tab" data-i18n="snd.tab">Absender</button>
+          <button id="rv-folders" class="seg__btn" type="button" role="tab" data-i18n="snd.tab.expert">Ordner (Experten)</button>
+        </div>
+        <p id="snd-side" class="set-hint" data-i18n="snd.side">Wer dir schreibt und wohin die Post kommt. Ordnung! lernt beim Ablegen mit und fragt dich, ob es sich etwas merken soll.</p>
+        <div id="rules-expert-side">
+        <p id="rules-summary" class="set-hint"></p>
+        <div class="gen-box">
+          <button id="rules-generate" class="fd-button" type="button" data-i18n="rules.gen">Regeln aus dem Bestand erzeugen</button>
+          <button id="rules-starter" class="fd-button gen-second" type="button" data-i18n="rules.starter">Standardregeln übernehmen</button>
+          <p id="rules-gen-status" class="field-hint"></p>
+        </div>
+        <div id="rules-tree" class="tree"></div>
+        </div>
+      </aside>
+      <div class="splitter splitter--col" id="split-rules" role="separator" aria-orientation="vertical"></div>
+      <div class="settings-body">
+        <div id="rules-senders" class="set-pane" hidden>
+          <h3 class="fd-title fd-title--h4" data-i18n="snd.title">Absender</h3>
+          <p class="set-hint" data-i18n="snd.intro">Wer dir schreibt und in welchem Ordner seine Post liegt.</p>
+          <div class="snd-legend">
+            <span><span class="lamp lamp--green"></span> <span data-i18n="grade.green">sicher</span></span>
+            <span><span class="lamp lamp--yellow"></span> <span data-i18n="grade.yellow">meistens</span></span>
+            <span><span class="lamp lamp--red"></span> <span data-i18n="grade.red">rät oder weiß es nicht</span></span>
+          </div>
+          <input id="snd-search" class="fd-input snd-search" type="search" data-i18n-placeholder="snd.search" placeholder="Absender suchen …">
+          <div id="snd-list" class="snd-list"></div>
+          <div class="list-more"><button id="snd-more" class="fd-button" type="button" hidden data-i18n="list.more">Mehr laden</button></div>
+        </div>
+        <div id="rules-empty" class="set-pane">
+          <h3 class="fd-title fd-title--h4" data-i18n="rules.title">Regeln</h3>
+          <p class="set-hint" data-i18n="rules.intro">Wähle links einen Ordner.</p>
+        </div>
+        <div id="rules-folder" class="set-pane" hidden>
+          <h3 id="rf-title" class="fd-title fd-title--h4"></h3>
+          <p id="rf-path" class="set-hint mono"></p>
+
+          <div class="card">
+            <h4 class="fd-title fd-title--h5 card-title" data-i18n="rules.card">Beschreibung des Ordners</h4>
+            <p class="set-hint" data-i18n="rules.card.hint">Freiwillig: ein, zwei Sätze, was in diesen Ordner gehört. Hilft der KI beim Einsortieren und dir später beim Wiederfinden.</p>
+            <textarea id="rf-desc" class="fd-textarea rf-desc" rows="2" data-i18n-placeholder="rules.desc.ph"></textarea>
+            <div class="form-actions"><span id="rf-desc-msg" class="form-msg"></span>
+              <button id="rf-desc-save" class="fd-button" type="button" data-i18n="btn.save">Speichern</button></div>
+          </div>
+
+          <div class="card">
+            <div class="pane-head">
+              <h4 class="fd-title fd-title--h5 card-title" data-i18n="rules.rules">Regeln</h4>
+              <button id="rf-new" class="fd-button fd-button--emphasized" type="button" data-i18n="rules.new">Neue Regel</button>
+            </div>
+            <div id="rf-editor" class="rule-editor" hidden>
+              <div id="re-conds" class="re-conds"></div>
+              <div class="inline">
+                <button id="re-add" class="fd-button fd-button--transparent" type="button" data-i18n="rules.addcond">+ Bedingung (und)</button>
+              </div>
+              <div id="re-stats" class="re-stats"></div>
+              <div class="form-actions">
+                <span id="re-msg" class="form-msg"></span>
+                <button id="re-cancel" class="fd-button" type="button" data-i18n="btn.cancel">Abbrechen</button>
+                <button id="re-test" class="fd-button" type="button" data-i18n="rules.test">Gegen Bestand prüfen</button>
+                <button id="re-save" class="fd-button fd-button--emphasized" type="button" data-i18n="btn.save">Speichern</button>
+              </div>
+            </div>
+            <div id="rf-rules" class="rule-list"></div>
+          </div>
+
+          <div class="card">
+            <div class="pane-head">
+              <h4 class="fd-title fd-title--h5 card-title" data-i18n="rules.suggest">Vorschläge</h4>
+              <div class="inline">
+                <button id="rf-suggest" class="fd-button" type="button" data-i18n="rules.suggest.run">Vorschläge ermitteln</button>
+                <button id="rf-ai" class="fd-button" type="button" data-i18n="rules.ai.run">KI-Vorschläge</button>
+              </div>
+            </div>
+            <p class="set-hint" data-i18n="rules.suggest.hint">Gesucht wird ohne KI: Kennungen und Wörter, die in diesem Ordner häufig und anderswo (fast) nie vorkommen.</p>
+            <p id="rf-sugg-meta" class="field-hint"></p>
+            <div id="rf-suggestions" class="rule-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================== Inbox ============================== -->
+    <div id="inboxpage" class="rules" hidden>
+      <aside class="rules-tree ib-side">
+        <a href="#/" class="settings-back" data-i18n="set.back">← Zurück zum Archiv</a>
+        <h2 class="fd-title fd-title--h4" data-i18n="ib.title">Posteingang</h2>
+        <p id="ib-summary" class="set-hint"></p>
+        <div class="ib-tools">
+          <select id="ib-status" class="fd-input">
+            <option value="new" data-i18n="ib.s.new">Zu erledigen</option>
+            <option value="filed" data-i18n="ib.s.filed">Abgelegt (Original im Eingang)</option>
+            <option value="dismissed" data-i18n="ib.s.dismissed">Verworfen</option>
+          </select>
+          <button id="ib-rescan" class="fd-button fd-button--transparent" type="button" data-i18n-title="ib.rescan" aria-label="Eingang neu lesen">&#8635;</button>
+          <button id="ib-upload" class="fd-button fd-button--emphasized ib-upload" type="button" data-i18n="ib.up" data-i18n-title="ib.up.title">⬆ Hochladen</button>
+          <input id="ib-file" type="file" multiple hidden
+                 accept="application/pdf,image/*,.heic,.heif,.pdf,.jpg,.jpeg,.png,.tif,.tiff,.docx,.txt">
+        </div>
+        <div class="gen-box" id="ib-bulk">
+          <button id="ib-file-agree" class="fd-button" type="button" data-i18n="ib.agree">Übereinstimmende ablegen</button>
+          <p class="field-hint" data-i18n="ib.agree.hint">Legt alles ab, bei dem Regel und Eingangsordner dasselbe sagen.</p>
+        </div>
+        <div id="ib-list" class="ib-list"></div>
+      </aside>
+      <div class="splitter splitter--col" id="split-inbox" role="separator" aria-orientation="vertical"></div>
+      <div class="settings-body ib-main">
+        <p id="ib-warn" class="ib-warn" hidden></p>
+        <div id="ib-learn"></div>
+        <div id="ib-empty" class="set-pane">
+          <h3 class="fd-title fd-title--h4" data-i18n="ib.title">Posteingang</h3>
+          <p id="ib-empty-text" class="set-hint"></p>
+        </div>
+        <div id="ib-detail" class="ib-detail" hidden>
+          <form id="ib-form" class="card ib-form" autocomplete="off">
+            <h4 id="ib-name" class="fd-title fd-title--h5 card-title"></h4>
+            <p id="ib-rel" class="set-hint mono"></p>
+            <div id="ib-why" class="ib-why"></div>
+            <div id="ib-cands" class="ib-cands"></div>
+            <p id="ib-dup" class="ib-dup" hidden></p>
+            <div class="form-grid ib-grid">
+              <label class="fd-form-label" for="ib-area" data-i18n="col.area">Bereich</label>
+              <select class="fd-input" id="ib-area"></select>
+              <label class="fd-form-label" for="ib-folder" data-i18n="ib.folder">Ordner</label>
+              <input class="fd-input mono" id="ib-folder" data-picker="ib-folders" autocomplete="off">
+              <label class="fd-form-label" for="ib-title" data-i18n="col.title">Titel</label>
+              <input class="fd-input" id="ib-title">
+              <label class="fd-form-label" for="ib-date" data-i18n="col.date">Datum</label>
+              <input class="fd-input" id="ib-date" type="date">
+              <span class="fd-form-label" data-i18n="tags.title">Tags</span>
+              <div id="ib-tags" class="tag-edit"></div>
+              <span class="fd-form-label" data-i18n="ib.name">Dateiname</span>
+              <span id="ib-filename" class="mono ib-filename"></span>
+            </div>
+            <datalist id="ib-folders"></datalist>
+            <div class="form-actions">
+              <span id="ib-msg" class="form-msg"></span>
+              <button id="ib-ai" class="fd-button" type="button" data-i18n="ib.ai">KI fragen</button>
+              <button id="ib-delete" class="fd-button fd-button--transparent ib-delete" type="button" data-i18n="ib.delete">Löschen</button>
+              <button id="ib-dismiss" class="fd-button fd-button--transparent" type="button" data-i18n="ib.dismiss">Verwerfen</button>
+              <button id="ib-submit" class="fd-button fd-button--emphasized" type="submit" data-i18n="ib.file">Ablegen</button>
+            </div>
+          </form>
+          <div id="ib-preview" class="ib-preview"></div>
+          <dialog id="ai-dlg" class="ai-dlg" aria-labelledby="ai-dlg-title">
+            <form method="dialog" class="ai-dlg-form">
+              <h4 id="ai-dlg-title" class="fd-title fd-title--h5" data-i18n="ib.ai.pick">Welche Anweisung?</h4>
+              <div id="ai-dlg-list" class="ai-choices" role="radiogroup"></div>
+              <p class="set-hint" data-i18n="ib.ai.pick.hint">Pfeiltasten wählen, Enter fragt die KI.</p>
+              <div class="form-actions">
+                <a href="#/einstellungen/ki" id="ai-dlg-edit" class="ai-dlg-edit" data-i18n="ib.ai.pick.edit">Anweisungen bearbeiten</a>
+                <button class="fd-button fd-button--transparent" value="cancel" data-i18n="ib.ai.dlg.cancel">Abbrechen</button>
+                <button id="ai-dlg-ask" class="fd-button fd-button--emphasized" value="ask" data-i18n="ib.ai">KI fragen</button>
+              </div>
+            </form>
+          </dialog>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================== Trash ============================== -->
+    <div id="trashpage" class="rules" hidden>
+      <div class="settings-body">
+        <a href="#/" class="settings-back" data-i18n="set.back">← Zurück zum Archiv</a>
+        <h3 class="fd-title fd-title--h4" data-i18n="tr.title">Papierkorb</h3>
+        <p class="set-hint" data-i18n="tr.intro">Gelöschte Dokumente. „Wiederherstellen“ legt ein Dokument an seinen alten Platz zurück.</p>
+        <table class="fd-table trash-table">
+          <thead class="fd-table__header"><tr class="fd-table__row">
+            <th class="fd-table__cell" data-i18n="tr.deleted">Gelöscht</th>
+            <th class="fd-table__cell" data-i18n="col.title">Titel</th>
+            <th class="fd-table__cell" data-i18n="tr.from">Lag in</th>
+            <th class="fd-table__cell"></th>
+          </tr></thead>
+          <tbody id="trash-rows" class="fd-table__body"></tbody>
+        </table>
+        <p id="trash-empty" class="list-empty" hidden data-i18n="tr.empty">Der Papierkorb ist leer.</p>
+        <p id="trash-rule" class="set-hint"></p>
+      </div>
+    </div>
+
+    <!-- ============================== Import planner ============================== -->
+    <div id="importpage" class="rules" hidden>
+      <div class="settings-body import-main">
+        <a href="#/" class="settings-back" data-i18n="set.back">← Zurück zum Archiv</a>
+        <h3 class="fd-title fd-title--h4" data-i18n="imp.title">Import</h3>
+        <p class="set-hint" data-i18n="imp.intro">Hier wird nur geplant, wohin jeder Ordner beim Import kommt. Es wird nichts kopiert oder verschoben.</p>
+        <div id="imp-summary" class="imp-summary"></div>
+        <div class="imp-toolbar">
+          <select id="imp-filter" class="fd-input">
+            <option value="todo" data-i18n="imp.f.todo">Hinweise und Änderungen</option>
+            <option value="open" data-i18n="imp.f.open">Noch offen</option>
+            <option value="all" data-i18n="imp.f.all">Alle Ordner</option>
+          </select>
+          <input id="imp-search" class="fd-input" type="search" data-i18n-placeholder="imp.search" placeholder="Ordner suchen …">
+          <button id="imp-confirm-all" class="fd-button" type="button" data-i18n="imp.confirmall">Alle bestätigen</button>
+        </div>
+        <datalist id="imp-targets"></datalist>
+        <div id="imp-rows" class="imp-rows"></div>
+      </div>
+      <div class="splitter splitter--col" id="split-import" role="separator" aria-orientation="vertical"></div>
+      <aside class="import-preview">
+        <h4 class="fd-title fd-title--h5" data-i18n="imp.preview">Zielstruktur</h4>
+        <div id="imp-tree" class="tree"></div>
+      </aside>
+    </div>
+
+    <!-- ============================== Settings page ============================== -->
+    <div id="settings" class="settings" hidden>
+      <nav class="settings-nav" aria-label="Einstellungen">
+        <a href="#/" class="settings-back" data-i18n="set.back">← Zurück zum Archiv</a>
+        <h2 class="fd-title fd-title--h4" data-i18n="set.title">Einstellungen</h2>
+        <a class="set-link" href="#/einstellungen/konto" data-pane="account" data-i18n="set.account">Mein Konto</a>
+        <a class="set-link admin-only" href="#/einstellungen/benutzer" data-pane="users" data-i18n="set.users">Benutzer</a>
+        <a class="set-link admin-only" href="#/einstellungen/ablage" data-pane="storage" data-i18n="set.storage">Ablage</a>
+        <a class="set-link admin-only" href="#/einstellungen/ki" data-pane="ai" data-i18n="set.ai">KI</a>
+        <a class="set-link admin-only" href="#/einstellungen/system" data-pane="system" data-i18n="set.system">System</a>
+      </nav>
+      <div class="settings-body">
+
+        <section class="set-pane" data-pane="account">
+          <h3 class="fd-title fd-title--h4" data-i18n="set.account">Mein Konto</h3>
+          <p id="acc-who" class="set-hint"></p>
+          <p class="only-mobile-block"><button id="acc-logout" class="fd-button" type="button" data-i18n="app.logout">Abmelden</button></p>
+          <div class="form-grid card acc-lang">
+            <label class="fd-form-label" for="acc-lang" data-i18n="acc.lang">Sprache</label>
+            <div>
+              <select id="acc-lang" class="fd-input">
+                <option value="de">Deutsch</option>
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+                <option value="it">Italiano</option>
+              </select>
+              <div class="field-hint" data-i18n="acc.lang.hint">Gilt für dieses Konto auf allen Geräten.</div>
+            </div>
+          </div>
+          <form id="pw-form" class="form-grid card">
+            <label class="fd-form-label" for="pw-old" data-i18n="acc.old">Aktuelles Passwort</label>
+            <input class="fd-input" id="pw-old" type="password" autocomplete="current-password" required>
+            <label class="fd-form-label" for="pw-new" data-i18n="acc.new">Neues Passwort</label>
+            <input class="fd-input" id="pw-new" type="password" autocomplete="new-password" minlength="8" required>
+            <span></span>
+            <div><button class="fd-button fd-button--emphasized" type="submit" data-i18n="acc.change">Passwort ändern</button>
+            <span id="pw-msg" class="form-msg"></span></div>
+          </form>
+        </section>
+
+        <section class="set-pane" data-pane="users" hidden>
+          <div class="pane-head">
+            <h3 class="fd-title fd-title--h4" data-i18n="set.users">Benutzer</h3>
+            <button id="usr-new" class="fd-button fd-button--emphasized" type="button" data-i18n="usr.new">Neuer Benutzer</button>
+          </div>
+          <table class="fd-table card">
+            <thead class="fd-table__header"><tr class="fd-table__row">
+              <th class="fd-table__cell" data-i18n="usr.name">Benutzer</th>
+              <th class="fd-table__cell" data-i18n="usr.role">Rolle</th>
+              <th class="fd-table__cell" data-i18n="usr.areas">Bereiche</th>
+              <th class="fd-table__cell"></th>
+            </tr></thead>
+            <tbody id="usr-rows" class="fd-table__body"></tbody>
+          </table>
+          <form id="usr-form" class="card usr-form" hidden>
+            <h4 id="usr-form-title" class="fd-title fd-title--h5"></h4>
+            <div class="form-grid">
+              <label class="fd-form-label" for="usr-name" data-i18n="usr.name">Benutzer</label>
+              <input class="fd-input" id="usr-name" autocomplete="off" pattern="[a-z0-9][a-z0-9._-]{0,31}" required>
+              <label class="fd-form-label" for="usr-display" data-i18n="usr.display">Anzeigename</label>
+              <input class="fd-input" id="usr-display" autocomplete="off">
+              <label class="fd-form-label" for="usr-pass" data-i18n="usr.pass">Passwort</label>
+              <input class="fd-input" id="usr-pass" type="password" autocomplete="new-password" minlength="8">
+              <span></span>
+              <label class="check"><input type="checkbox" id="usr-admin"> <span data-i18n="usr.admin">Administrator</span></label>
+              <span class="fd-form-label" data-i18n="usr.areas">Bereiche</span>
+              <div id="usr-areas" class="area-perms"></div>
+            </div>
+            <div class="form-actions">
+              <span id="usr-msg" class="form-msg"></span>
+              <button id="usr-cancel" class="fd-button" type="button" data-i18n="btn.cancel">Abbrechen</button>
+              <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="set-pane" data-pane="folders" hidden>
+          <h3 class="fd-title fd-title--h4" data-i18n="set.folders">Ordner</h3>
+          <p class="set-hint" data-i18n="fo.intro">Die Ordnerstruktur gilt für alle Bereiche. Ein Ordner entsteht in einem Bereich erst, wenn dort das erste Dokument hineinkommt – leere Ordner siehst du nur hier, bei den Regeln und beim Import.</p>
+          <div class="card">
+            <div class="inline fo-add">
+              <input id="fo-new" class="fd-input" autocomplete="off" data-i18n-placeholder="fo.new.ph" placeholder="Neuer Ordner, z. B. Auto/T-Roc/Versicherung">
+              <button id="fo-add" class="fd-button fd-button--emphasized" type="button" data-i18n="fo.add">Anlegen</button>
+              <button id="fo-starter" class="fd-button" type="button" data-i18n="fo.starter">Startvorlage „Haushalt“</button>
+            </div>
+            <p id="fo-msg" class="form-msg"></p>
+            <p id="fo-ro" class="set-hint" hidden data-i18n="fo.readonly">Das Archiv ist nur lesend eingehängt: Ordner mit Dokumenten lassen sich erst nach dem Import umbenennen oder verschieben. Leere Ordner gehen immer.</p>
+            <div id="fo-tree" class="fo-tree"></div>
+          </div>
+        </section>
+
+        <section class="set-pane" data-pane="storage" hidden>
+          <h3 class="fd-title fd-title--h4" data-i18n="set.storage">Ablage</h3>
+          <p class="set-hint" data-i18n="st.intro">Wo das Archiv liegt und aus welchen Ordnern neue Dokumente kommen. Zur Auswahl stehen die Ordner, die dem Container zur Verfügung stehen.</p>
+          <form id="st-form" autocomplete="off">
+            <div class="card">
+              <h4 class="fd-title fd-title--h5 card-title" data-i18n="st.archive">Archivordner</h4>
+              <div class="form-grid">
+                <label class="fd-form-label" for="st-archive" data-i18n="st.path">Pfad</label>
+                <div>
+                  <div class="inline">
+                    <input class="fd-input" id="st-archive" autocomplete="off">
+                    <button class="fd-button" type="button" data-pick="st-archive" data-i18n="st.browse">Durchsuchen</button>
+                  </div>
+                  <div id="st-archive-status" class="field-hint"></div>
+                </div>
+              </div>
+              <div class="picker" data-for="st-archive" hidden></div>
+            </div>
+
+            <div class="card">
+              <h4 class="fd-title fd-title--h5 card-title" data-i18n="st.ref">Lernbestand</h4>
+              <p class="set-hint" data-i18n="st.ref.hint">Bereits sortierte Dokumente, an denen die Regeln gemessen und gelernt werden – zum Beispiel die alten Paperless-Originale. Wird nur gelesen und erscheint nicht im Archiv.</p>
+              <div class="form-grid">
+                <label class="fd-form-label" for="st-reference" data-i18n="st.path">Pfad</label>
+                <div>
+                  <div class="inline">
+                    <input class="fd-input" id="st-reference" autocomplete="off" data-i18n-placeholder="st.ref.none">
+                    <button class="fd-button" type="button" data-pick="st-reference" data-i18n="st.browse">Durchsuchen</button>
+                  </div>
+                  <div id="st-reference-status" class="field-hint"></div>
+                </div>
+              </div>
+              <div class="picker" data-for="st-reference" hidden></div>
+            </div>
+
+            <div class="card">
+              <h4 class="fd-title fd-title--h5 card-title" data-i18n="st.trash">Papierkorb</h4>
+              <p class="set-hint" data-i18n="st.trash.hint">Gelöschte Dokumente liegen im Papierkorb (.papierkorb im Archiv). Nach dieser Frist löscht Ordnung! sie einmal am Tag endgültig. 0 heißt: nie.</p>
+              <div class="form-grid">
+                <label class="fd-form-label" for="st-trash-days" data-i18n="st.trash.days">Endgültig löschen nach</label>
+                <div class="inline"><input class="fd-input st-trash-days" id="st-trash-days" type="number" min="0" max="3650" step="1"> <span data-i18n="st.trash.unit">Tagen</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h4 class="fd-title fd-title--h5 card-title" data-i18n="st.areas">Bereiche</h4>
+              <p class="set-hint" data-i18n="st.areas.hint">Anzeigename je Bereich.</p>
+              <div id="st-areas" class="form-grid"></div>
+              <h5 class="fd-title fd-title--h6 st-newarea-title" data-i18n="st.area.new">Neuer Bereich</h5>
+              <p class="set-hint" data-i18n="st.area.hint2"></p>
+              <div class="inline st-newarea">
+                <input id="st-area-name" class="fd-input" maxlength="40" autocomplete="off" data-i18n-placeholder="st.area.name.ph">
+                <input id="st-area-label" class="fd-input" maxlength="40" autocomplete="off" data-i18n-placeholder="st.area.label.ph">
+                <button id="st-area-add" class="fd-button" type="button" data-i18n="st.area.add">Bereich anlegen</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="pane-head">
+                <h4 class="fd-title fd-title--h5 card-title" data-i18n="st.inboxes">Eingangsordner</h4>
+                <button id="st-add" class="fd-button" type="button" data-i18n="st.add">Eingangsordner hinzufügen</button>
+              </div>
+              <p class="set-hint" data-i18n="st.inbox.note">Aktive Eingangsordner werden jede Minute gelesen (auch Unterordner). Neue Dokumente erscheinen im Posteingang und werden erst nach deiner Bestätigung abgelegt.</p>
+              <div id="st-inboxes" class="inbox-list"></div>
+            </div>
+
+            <div class="form-actions">
+              <span id="st-msg" class="form-msg"></span>
+              <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
+            </div>
+          </form>
+
+          <div class="card switch-card">
+            <h4 class="fd-title fd-title--h5 card-title" data-i18n="st.switch">Mit frischem Archiv neu anfangen</h4>
+            <p class="set-hint" data-i18n="st.switch.hint">Das jetzige Archiv wird zum Lernbestand, der gewählte Ordner zum neuen, beschreibbaren Archiv. Regeln und Ordnerbeschreibungen ziehen auf die Ordnernamen aus dem Import-Plan um, die Zielordner des Plans werden als Ordnervorlage angelegt. Auf der Platte wird nichts kopiert, verschoben oder gelöscht.</p>
+            <div class="form-grid">
+              <label class="fd-form-label" for="st-switch" data-i18n="st.switch.path">Neues Archiv</label>
+              <div>
+                <div class="inline">
+                  <input class="fd-input" id="st-switch" autocomplete="off">
+                  <button class="fd-button" type="button" data-pick="st-switch" data-i18n="st.browse">Durchsuchen</button>
+                </div>
+              </div>
+            </div>
+            <div class="picker" data-for="st-switch" hidden></div>
+            <div class="form-actions">
+              <span id="st-switch-msg" class="form-msg"></span>
+              <button id="st-switch-go" class="fd-button" type="button" data-i18n="st.switch.go">Archiv umstellen …</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="set-pane" data-pane="ai" hidden>
+          <h3 class="fd-title fd-title--h4" data-i18n="set.ai">KI</h3>
+          <p class="set-hint" data-i18n="ai.intro">Die KI macht nur Vorschläge. Einsortiert wird nach geprüften Regeln oder nach deiner Bestätigung.</p>
+          <form id="ai-form" class="card" autocomplete="off" data-bwignore="true">
+            <div class="form-grid">
+              <span></span>
+              <label class="check"><input type="checkbox" id="ai-enabled"> <span data-i18n="ai.enabled">KI-Vorschläge verwenden</span></label>
+              <label class="fd-form-label" for="ai-provider" data-i18n="ai.provider">Anbieter</label>
+              <select class="fd-input" id="ai-provider">
+                <option value="anthropic">Claude (Anthropic)</option>
+                <option value="ollama" data-i18n="ai.ollama">Ollama (eigener Server)</option>
+                <option value="openai" data-i18n="ai.openai">Anderer OpenAI-kompatibler Server</option>
+              </select>
+              <label class="fd-form-label ai-openai-only" for="ai-baseurl" data-i18n="ai.baseurl">Server-Adresse</label>
+              <input class="fd-input ai-openai-only" id="ai-baseurl" placeholder="http://ollama-server:11434" autocomplete="off">
+              <label class="fd-form-label" for="ai-model" data-i18n="ai.model">Modell</label>
+              <div>
+                <div class="inline">
+                  <select class="fd-input" id="ai-model-select"></select>
+                  <button id="ai-reload-models" class="fd-button fd-button--transparent" type="button" data-i18n-title="ai.reload" aria-label="Liste neu laden">&#8635;</button>
+                </div>
+                <input class="fd-input" id="ai-model" autocomplete="off" placeholder="z. B. qwen3:14b" hidden>
+                <div id="ai-models-note" class="field-hint"></div>
+                <div id="ai-price" class="field-hint"></div>
+              </div>
+              <label class="fd-form-label" for="ai-key" data-i18n="ai.key">API-Schlüssel</label>
+              <div class="inline">
+                <input class="fd-input masked" id="ai-key" name="ai-credential" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-bwignore="true" data-1p-ignore="true" data-lpignore="true" data-form-type="other">
+                <button id="ai-clear-key" class="fd-button fd-button--transparent" type="button" data-i18n="ai.clearkey">Entfernen</button>
+              </div>
+              <label class="fd-form-label" for="ai-limit" data-i18n="ai.limit">Monatslimit (USD)</label>
+              <div>
+                <input class="fd-input ai-limit" id="ai-limit" type="number" min="0" step="1">
+                <div id="ai-usage" class="field-hint"></div>
+              </div>
+              <span class="fd-form-label" data-i18n="ai.exclude">Nie an die KI senden</span>
+              <div id="ai-exclude" class="area-checks"></div>
+              <span></span>
+              <label class="check"><input type="checkbox" id="ai-inbox-auto"> <span data-i18n="ai.inboxauto">Posteingang: KI automatisch fragen, wenn weder Regel noch Eingangsordner weiterhelfen</span></label>
+            </div>
+            <div class="ai-prompts">
+              <h4 class="fd-title fd-title--h5" data-i18n="ai.prompts">Anweisungen für „KI fragen“</h4>
+              <p class="set-hint" data-i18n="ai.prompts.hint">Im Posteingang wählst du eine davon aus, die Standard-Anweisung ist vorausgewählt. Dateiname, Ordnerliste, Dokumenttext und Antwortformat hängt Ordnung! selbst an.</p>
+              <div id="ai-prompts"></div>
+              <button id="ai-prompt-add" class="fd-button" type="button" data-i18n="ai.prompts.add">Neue Anweisung</button>
+            </div>
+            <div class="form-actions">
+              <span id="ai-msg" class="form-msg"></span>
+              <button id="ai-test" class="fd-button" type="button" data-i18n="ai.test">Verbindung testen</button>
+              <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="set-pane" data-pane="system" hidden>
+          <h3 class="fd-title fd-title--h4" data-i18n="set.system">System</h3>
+          <div class="card">
+            <dl id="sys-info" class="sys-info"></dl>
+            <button id="sys-rescan" class="fd-button" type="button" data-i18n="sys.rescan">Ordner jetzt neu einlesen</button>
+          </div>
+          <div id="sys-errors" class="card sys-errors" hidden>
+            <h4 class="fd-title fd-title--h5 card-title" data-i18n="sys.err.title">Dokumente ohne lesbaren Text</h4>
+            <p class="set-hint" data-i18n="sys.err.hint"></p>
+            <ul id="sys-err-list" class="sys-err-list"></ul>
+            <button id="sys-err-retry" class="fd-button" type="button" data-i18n="sys.err.retry">Erneut lesen</button>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </section>
+
+  <dialog id="mp-dlg" class="ai-dlg ed-dlg" aria-labelledby="mp-dlg-title">
+    <form id="mp-form" class="ai-dlg-form">
+      <h4 id="mp-dlg-title" class="fd-title fd-title--h5"></h4>
+      <label class="fd-form-label" for="mp-name" data-i18n="mp.name">Name</label>
+      <input id="mp-name" class="fd-input" required maxlength="40" data-i18n-placeholder="mp.name.ph">
+      <label class="fd-form-label" for="mp-area" data-i18n="mp.area">Gehört zu</label>
+      <select id="mp-area" class="fd-input"></select>
+      <p class="set-hint" data-i18n="mp.area.hint">Sehen kann die Mappe nur, wer diesen Bereich lesen darf.</p>
+      <div class="form-actions">
+        <span id="mp-msg" class="form-msg"></span>
+        <button id="mp-cancel" class="fd-button fd-button--transparent" type="button" data-i18n="ed.sv.cancel">Abbrechen</button>
+        <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- ============================== PDF editor ============================== -->
+  <div id="editor" class="editor" hidden>
+    <div class="editor__bar">
+      <button id="ed-close" class="fd-button fd-button--transparent" type="button" data-i18n="ed.back">← Zurück</button>
+      <div id="ed-title" class="editor__title"></div>
+      <div class="ed-tools" role="toolbar">
+        <button class="fd-button" type="button" data-tool="text" data-i18n="ed.text">Text</button>
+        <button class="fd-button" type="button" data-tool="check"><span aria-hidden="true">✓ </span><span data-i18n="ed.check">Haken</span></button>
+        <button class="fd-button" type="button" data-tool="cross"><span aria-hidden="true">✗ </span><span data-i18n="ed.cross">Kreuz</span></button>
+        <button class="fd-button" type="button" data-tool="date" data-i18n="ed.date">Datum</button>
+        <span class="ed-split">
+          <button class="fd-button" type="button" data-tool="sign" data-i18n="ed.sign">Unterschrift</button>
+          <button id="ed-sign-new" class="fd-button" type="button" data-i18n-title="sg.new" title="Neu unterschreiben">✎</button>
+        </span>
+      </div>
+      <div class="ed-zoom">
+        <button id="ed-zoom-out" class="fd-button fd-button--transparent" type="button" data-i18n-title="ed.zoomout" title="Kleiner">−</button>
+        <span id="ed-zoom"></span>
+        <button id="ed-zoom-in" class="fd-button fd-button--transparent" type="button" data-i18n-title="ed.zoomin" title="Größer">+</button>
+      </div>
+      <button id="ed-save" class="fd-button fd-button--emphasized" type="button" data-i18n="ed.save">Speichern …</button>
+    </div>
+    <div id="ed-hint" class="editor__hint"></div>
+    <div id="ed-pages" class="editor__pages"></div>
+
+    <dialog id="ed-save-dlg" class="ai-dlg ed-dlg" aria-labelledby="ed-sv-title">
+      <form id="ed-sv-form" class="ai-dlg-form">
+        <h4 id="ed-sv-title" class="fd-title fd-title--h5" data-i18n="ed.sv.title">Als neues Dokument speichern</h4>
+        <label class="fd-form-label" for="ed-sv-name" data-i18n="ed.sv.name">Titel</label>
+        <input id="ed-sv-name" class="fd-input" required maxlength="150">
+        <label class="fd-form-label" for="ed-sv-date" data-i18n="ed.sv.date">Datum</label>
+        <input id="ed-sv-date" class="fd-input" type="date">
+        <label id="ed-sv-flatten-row" class="check"><input type="checkbox" id="ed-sv-flatten"> <span data-i18n="ed.sv.flatten">Formular festschreiben</span></label>
+        <p class="set-hint" data-i18n="ed.sv.hint">Das Original bleibt unverändert.</p>
+        <div class="form-actions">
+          <span id="ed-sv-msg" class="form-msg"></span>
+          <button id="ed-sv-cancel" class="fd-button fd-button--transparent" type="button" data-i18n="ed.sv.cancel">Abbrechen</button>
+          <button id="ed-sv-ok" class="fd-button fd-button--emphasized" type="submit" data-i18n="ed.sv.ok">Speichern</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="sg-dlg" class="ai-dlg ed-dlg" aria-labelledby="sg-title">
+      <form method="dialog" class="ai-dlg-form">
+        <h4 id="sg-title" class="fd-title fd-title--h5" data-i18n="sg.title">Deine Unterschrift</h4>
+        <p class="set-hint" data-i18n="sg.hint">Mit Maus, Finger oder Stift ins Feld schreiben.</p>
+        <canvas id="sg-pad" class="sg-pad" width="900" height="300"></canvas>
+        <div class="sg-row">
+          <button id="sg-clear" class="fd-button" type="button" data-i18n="sg.clear">Leeren</button>
+          <label class="fd-button sg-upload"><span data-i18n="sg.upload">Bild laden …</span><input id="sg-file" type="file" accept="image/*" hidden></label>
+          <button id="sg-remove" class="fd-button fd-button--transparent sg-remove" type="button" data-i18n="sg.remove">Gespeicherte löschen</button>
+        </div>
+        <div class="form-actions">
+          <span id="sg-msg" class="form-msg"></span>
+          <button id="sg-cancel" class="fd-button fd-button--transparent" type="button" data-i18n="sg.cancel">Abbrechen</button>
+          <button id="sg-use" class="fd-button fd-button--emphasized" type="button" data-i18n="sg.use">Speichern und einsetzen</button>
+        </div>
+      </form>
+    </dialog>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="editor.js"></script>
+  <script src="i18n-fr.js"></script>
+  <script src="i18n-it.js"></script>
+</body>
+</html>

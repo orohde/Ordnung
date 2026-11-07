@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 130">
+  <title>Ordnung!</title>
+  <rect width="130" height="130" rx="28" fill="#0a2a5c"/>
+  <rect x="22" y="28" width="20" height="76" rx="3" fill="#4da3ff"/>
+  <circle cx="32" cy="88" r="5" fill="#0a2a5c"/>
+  <rect x="46" y="28" width="20" height="76" rx="3" fill="#0070f2"/>
+  <circle cx="56" cy="88" r="5" fill="#0a2a5c"/>
+  <rect x="70" y="28" width="20" height="76" rx="3" fill="#2b5fa8"/>
+  <circle cx="80" cy="88" r="5" fill="#0a2a5c"/>
+  <rect x="96" y="28" width="12" height="56" rx="6" fill="#ffb020"/>
+  <circle cx="102" cy="97" r="7" fill="#ffb020"/>
+</svg>

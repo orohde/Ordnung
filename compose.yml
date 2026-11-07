@@ -1,0 +1,17 @@
+# Example deployment. Adjust the host paths and set a password in .env:
+#   ORDNUNG_ADMIN_USER=admin
+#   ORDNUNG_ADMIN_PASSWORD=change-me
+services:
+  ordnung:
+    image: ghcr.io/orohde/ordnung:latest
+    container_name: ordnung
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8440}:8000"
+    volumes:
+      - ./archiv:/archiv      # your document folders – Ordnung! files new documents here
+      - ./data:/data          # index, settings, accounts
+      - ./eingang:/eingang    # optional: scanner / inbox folders
+    environment:
+      - ORDNUNG_ADMIN_USER=${ORDNUNG_ADMIN_USER:-admin}
+      - ORDNUNG_ADMIN_PASSWORD=${ORDNUNG_ADMIN_PASSWORD:?set ORDNUNG_ADMIN_PASSWORD in .env}
