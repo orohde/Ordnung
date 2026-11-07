@@ -83,6 +83,7 @@ class AreaIn(BaseModel):
 
 class MoveIn(BaseModel):
     folder: str = Field(max_length=1000)
+    area: str | None = Field(None, max_length=40, description="target area; default: the document's own")
 
 
 class DocMetaIn(BaseModel):
@@ -678,10 +679,15 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
 
     @app.post("/api/documents/{doc_id}/move", tags=["archive"])
     def document_move(doc_id: str, body: MoveIn, user: User = Depends(current_user)):
-        """Move a document into another folder of its area (drag and drop in the tree)."""
+        """Move a document into another folder, also into another area (needs write access to both)."""
         doc = _writable_doc(doc_id, user)
+        if body.area and body.area != doc["area"]:
+            if not any(a["name"] == body.area for a in app.state.index.areas()):
+                raise HTTPException(status_code=400, detail="unknown area")
+            if not user.can_write(body.area):
+                raise HTTPException(status_code=403, detail="no write access to the target area")
         try:
-            path = move_doc(app.state.index.archive, doc, body.folder)
+            path = move_doc(app.state.index.archive, doc, body.folder, body.area)
         except (DocOpError, OSError) as exc:
             raise HTTPException(status_code=409 if "exists" in str(exc) else 400, detail=str(exc)) from exc
         _rescan()

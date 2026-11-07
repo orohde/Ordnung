@@ -81,6 +81,24 @@ const I18N = {
     'err.invalid area name': "Kurzname: Kleinbuchstaben, Ziffern, Punkt, Binde- oder Unterstrich.",
     'err.area exists': "Diesen Bereich gibt es schon.",
     'err.area contains documents': "In diesem Bereich liegen Dokumente, er lässt sich nicht entfernen.",
+    "dm.menu": "Dokument-Menü",
+    "dm.edit": "Eigenschaften bearbeiten …",
+    "dm.open": "Öffnen",
+    "dm.download": "Herunterladen",
+    "dm.folder": "Im Ordnerbaum zeigen",
+    "dm.trash": "In den Papierkorb",
+    "dm.dlg": "Dokument bearbeiten",
+    "dm.title": "Titel",
+    "dm.date": "Datum",
+    "dm.area": "Bereich",
+    "dm.dir": "Ordner",
+    "dm.root": "(oberste Ebene)",
+    "dm.tags": "Tags",
+    "dm.area.hint": "Nach dem Speichern sehen es alle, die „{area}“ lesen dürfen. Tags und Mappen bleiben erhalten.",
+    "dm.saved": "„{title}“ gespeichert.",
+    "err.unknown area": "Diesen Bereich gibt es nicht.",
+    "err.no write access to the target area": "Im Zielbereich darfst du nichts ablegen.",
+    "err.target exists": "Am Ziel liegt schon eine Datei mit diesem Namen.",
     'ib.title': 'Posteingang', 'ib.short': 'Eingang', 'ib.s.new': 'Zu erledigen', 'ib.s.filed': 'Abgelegt (Original im Eingang)',
     'ib.s.dismissed': 'Verworfen', 'ib.rescan': 'Eingang neu lesen', 'ib.agree': 'Übereinstimmende ablegen',
     'ib.agree.hint': 'Legt alles ab, bei dem Regel und Eingangsordner dasselbe sagen.',
@@ -304,6 +322,24 @@ const I18N = {
     'err.invalid area name': "Short name: lowercase letters, digits, dot, hyphen or underscore.",
     'err.area exists': "This area already exists.",
     'err.area contains documents': "This area holds documents and cannot be removed.",
+    "dm.menu": "Document menu",
+    "dm.edit": "Edit properties …",
+    "dm.open": "Open",
+    "dm.download": "Download",
+    "dm.folder": "Show in the folder tree",
+    "dm.trash": "Move to trash",
+    "dm.dlg": "Edit document",
+    "dm.title": "Title",
+    "dm.date": "Date",
+    "dm.area": "Area",
+    "dm.dir": "Folder",
+    "dm.root": "(top level)",
+    "dm.tags": "Tags",
+    "dm.area.hint": "After saving, everyone who may read “{area}” sees it. Tags and folders (Mappen) are kept.",
+    "dm.saved": "“{title}” saved.",
+    "err.unknown area": "This area does not exist.",
+    "err.no write access to the target area": "You may not file documents in the target area.",
+    "err.target exists": "A file with this name already exists there.",
     'ib.title': 'Inbox', 'ib.short': 'Inbox', 'ib.s.new': 'To do', 'ib.s.filed': 'Filed (original left in the inbox)',
     'ib.s.dismissed': 'Dismissed', 'ib.rescan': 'Read inbox again', 'ib.agree': 'File matching ones',
     'ib.agree.hint': 'Files everything where rule and inbox folder agree.',
@@ -800,7 +836,8 @@ function renderList() {
       `<td class="fd-table__cell col-check"><input type="checkbox"${State.sel.has(doc.id) ? ' checked' : ''} aria-label="${esc(doc.title)}"></td>` +
       `<td class="fd-table__cell col-date">${esc(formatDate(doc.date))}</td>` +
       `<td class="fd-table__cell"><div class="doc-title">${esc(doc.title)}</div>${tags}${sub}</td>` +
-      `<td class="fd-table__cell col-area"><span class="doc-area"><span class="area-dot" style="--dot:${areaColor(doc.area)}"></span>${esc(areaLabel(doc.area))}</span></td>`;
+      `<td class="fd-table__cell col-area"><span class="doc-area"><span class="area-dot" style="--dot:${areaColor(doc.area)}"></span>${esc(areaLabel(doc.area))}</span></td>` +
+      `<td class="fd-table__cell col-menu"><button type="button" class="doc-menu" title="${esc(t('dm.menu'))}" aria-label="${esc(t('dm.menu'))}">⋯</button></td>`;
     const box = tr.querySelector('.col-check input');
     box.addEventListener('click', ev => ev.stopPropagation());
     box.addEventListener('change', () => {
@@ -809,6 +846,9 @@ function renderList() {
     });
     tr.querySelector('.col-check').addEventListener('click', ev => ev.stopPropagation());
     tr.addEventListener('click', () => openPreview(doc));
+    const menuBtn = tr.querySelector('.doc-menu');
+    menuBtn.addEventListener('click', ev => { ev.stopPropagation(); docMenu(menuBtn, doc); });
+    tr.querySelector('.col-menu').addEventListener('click', ev => ev.stopPropagation());
     const go = tr.querySelector('.goto-folder');
     if (go) go.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); selectFolder(go.dataset.folder); });
     if (linked && canWrite(doc)) {
@@ -2834,12 +2874,11 @@ async function refreshArchive() {
   await Promise.all([loadDocs(), loadTree(), loadStatus()].map(p => p.catch(() => null)));
 }
 
-async function trashSelected() {
-  const doc = State.selected;
+async function trashSelected(doc = State.selected) {
   if (!doc) return;
   try {
     const r = await api(`documents/${doc.id}/trash`, { method: 'POST' });
-    closePreview();
+    if (State.selected && State.selected.id === doc.id) closePreview();
     State.sel.delete(doc.id);
     await refreshArchive();
     toast(esc(t('op.trashed', { title: doc.title })), {
@@ -2929,7 +2968,7 @@ async function moveDocs(ids, folder, label) {
 }
 
 function initDocOps() {
-  $('pv-trash').addEventListener('click', trashSelected);
+  $('pv-trash').addEventListener('click', () => trashSelected());
   document.addEventListener('keydown', ev => {
     if (ev.key !== 'Delete' || !State.selected || !canWrite(State.selected)) return;
     if (!$('editor').hidden || document.querySelector('dialog[open]')) return;
@@ -2965,6 +3004,114 @@ function initMeta() {
       $('pv-meta-msg').textContent = e.message;
     }
   });
+}
+
+// ------------------------------------------------- document menu (⋯)
+
+function docMenu(anchor, doc) {
+  document.querySelector('.fo-menu')?.remove();
+  const menu = document.createElement('div');
+  menu.className = 'fo-menu';
+  menu.setAttribute('role', 'menu');
+  const url = `api/documents/${doc.id}/file`;
+  const write = canWrite(doc);
+  menu.innerHTML =
+    (write ? `<button type="button" role="menuitem" data-k="edit">${esc(t('dm.edit'))}</button>` : '') +
+    `<a role="menuitem" href="${esc(url)}" target="_blank" rel="noopener">${esc(t('dm.open'))}</a>` +
+    `<a role="menuitem" href="${esc(url)}?download=true">${esc(t('dm.download'))}</a>` +
+    `<button type="button" role="menuitem" data-k="folder">${esc(t('dm.folder'))}</button>` +
+    (write ? `<button type="button" role="menuitem" data-k="delete">${esc(t('dm.trash'))}</button>` : '');
+  document.body.appendChild(menu);
+  const r = anchor.getBoundingClientRect();
+  menu.style.left = Math.max(8, Math.min(r.right - menu.offsetWidth, innerWidth - menu.offsetWidth - 8)) + 'px';
+  menu.style.top = (r.bottom + 4 + menu.offsetHeight > innerHeight ? r.top - menu.offsetHeight - 4 : r.bottom + 4) + 'px';
+  const close = ev => { if (!menu.contains(ev.target)) { menu.remove(); removeEventListener('pointerdown', close, true); } };
+  addEventListener('pointerdown', close, true);
+  menu.addEventListener('click', ev => {
+    const el = ev.target.closest('[role=menuitem]');
+    if (!el) return;
+    menu.remove();
+    removeEventListener('pointerdown', close, true);
+    const k = el.dataset.k;
+    if (k === 'edit') docDialog(doc);
+    else if (k === 'delete') trashSelected(doc);
+    else if (k === 'folder') {
+      selectFolder(doc.folder || '');
+      setTimeout(() => document.querySelector('.tree-row.is-selected')?.scrollIntoView({ block: 'nearest' }), 300);
+    }
+  });
+}
+
+function flatFolders(node, out = []) {
+  for (const child of node.children || []) { out.push(child.path); flatFolders(child, out); }
+  return out;
+}
+
+async function fillFolders(area, current) {
+  const sel = $('dm-folder');
+  const req = sel.dataset.req = String(Date.now() + Math.random());
+  let paths = [];
+  try { paths = flatFolders(await api('tree?areas=' + encodeURIComponent(area))); } catch { /* top level only */ }
+  if (sel.dataset.req !== req) return;              // the area changed meanwhile
+  if (current && !paths.includes(current)) paths.push(current);
+  paths.sort((a, b) => a.localeCompare(b, LANG));
+  sel.innerHTML = `<option value="">${esc(t('dm.root'))}</option>` +
+    paths.map(p => `<option value="${esc(p)}">${esc(p.replaceAll('/', ' › '))}</option>`).join('');
+  sel.value = paths.includes(current) ? current : '';
+}
+
+async function docDialog(doc) {
+  const dlg = $('dm-dlg');
+  const writable = State.areas.map(a => a.name).filter(a => a && (State.me.write_areas || []).includes(a));
+  const start = { title: doc.title, date: doc.date || new Date().toISOString().slice(0, 10),
+                  area: doc.area, folder: doc.folder || '', tags: [...(doc.tags || [])] };
+  $('dm-title').value = start.title;
+  $('dm-date').value = start.date;
+  $('dm-area').innerHTML = writable.map(a => `<option value="${esc(a)}">${esc(areaLabel(a))}</option>`).join('');
+  $('dm-area').value = start.area;
+  $('dm-area-hint').hidden = true;
+  $('dm-msg').textContent = '';
+  let tags = start.tags;
+  tagEditor($('dm-tags'), tags, async next => { tags = next; return next; });
+  // open at once with the current folder, the full list follows
+  $('dm-folder').innerHTML = `<option value="${esc(start.folder)}">${esc(start.folder ? start.folder.replaceAll('/', ' › ') : t('dm.root'))}</option>`;
+  fillFolders(start.area, start.folder);
+  $('dm-area').onchange = async () => {
+    const area = $('dm-area').value;
+    const hint = $('dm-area-hint');
+    hint.hidden = area === start.area;
+    hint.textContent = t('dm.area.hint', { area: areaLabel(area) });
+    await fillFolders(area, $('dm-folder').value);    // keep the folder if the new area has it too
+  };
+  $('dm-cancel').onclick = () => dlg.close();
+  $('dm-form').onsubmit = async ev => {
+    ev.preventDefault();
+    const now = { title: $('dm-title').value.trim(), date: $('dm-date').value,
+                  area: $('dm-area').value, folder: $('dm-folder').value, tags: $('dm-tags').flush() };
+    const same = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+    try {
+      if (now.title !== start.title || now.date !== start.date) {
+        await api(`documents/${doc.id}`, { method: 'PATCH', body: JSON.stringify({ title: now.title, date: now.date }) });
+        start.title = now.title; start.date = now.date;           // a later step may fail; don't rename twice
+      }
+      if (now.area !== start.area || now.folder !== start.folder) {
+        await api(`documents/${doc.id}/move`, { method: 'POST', body: JSON.stringify({ folder: now.folder, area: now.area }) });
+        start.area = now.area; start.folder = now.folder;
+      }
+      if (!same(now.tags, start.tags)) {
+        await api(`documents/${doc.id}/tags`, { method: 'PUT', body: JSON.stringify({ tags: now.tags }) });
+      }
+      dlg.close();
+      await refreshArchive();
+      loadTags();
+      if (State.selected && State.selected.id === doc.id) openPreview(await api(`documents/${doc.id}`));
+      toast(esc(t('dm.saved', { title: now.title })), null, 3000);
+    } catch (e) {
+      $('dm-msg').textContent = errText(e);
+    }
+  };
+  dlg.showModal();
+  $('dm-title').focus();
 }
 
 // ------------------------------------------------------------- trash

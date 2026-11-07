@@ -804,3 +804,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .st-newarea-title { margin: 1.25rem 0 0.25rem; }
 .st-newarea { flex-wrap: wrap; gap: 0.5rem; }
 .st-newarea .fd-input { flex: 1 1 12rem; }
+
+/* ⋯ menu at the end of every document row */
+.col-menu { width: 2.5rem; text-align: right; }
+.doc-menu { border: 0; background: none; color: inherit; cursor: pointer; padding: 0.1rem 0.45rem; border-radius: 0.25rem;
+  font-size: 1.1rem; line-height: 1; opacity: 0.45; }
+.fd-table__row:hover .doc-menu, .doc-menu:focus-visible { opacity: 1; }
+.doc-menu:hover { background: var(--sapButton_Lite_Hover_Background, rgba(0,0,0,.08)); }
+@media (hover: none) { .doc-menu { opacity: 0.8; } }
+#dm-tags { padding: 0.25rem 0; }

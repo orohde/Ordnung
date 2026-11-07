@@ -156,3 +156,29 @@ def test_mappe_belongs_to_area(client: TestClient):
     # move a Mappe to another area
     assert client.patch("/api/mappen", json={"old": "Pflegegrad", "area": "erika"}).status_code == 200
     assert "Pflegegrad" in [m["name"] for m in erika.get("/api/mappen").json()]
+
+
+def test_move_into_other_area(client: TestClient, settings):
+    login(client, "oliver", "geheim123")
+    doc = _doc(client, "kontoauszug")
+    client.post("/api/areas", json={"name": "haus"})
+    res = client.post(f"/api/documents/{doc['id']}/move", json={"folder": doc["folder"], "area": "haus"})
+    assert res.status_code == 200, res.text
+    assert res.json()["path"].startswith("haus/")
+    assert (settings.archive / res.json()["path"]).is_file() and not (settings.archive / doc["path"]).exists()
+    moved = client.get(f"/api/documents/{doc['id']}").json()
+    assert moved["area"] == "haus"
+    assert client.post(f"/api/documents/{doc['id']}/move", json={"folder": "", "area": "gibtsnicht"}).status_code == 400
+    assert client.post(f"/api/documents/{doc['id']}/move", json={"folder": "", "area": "../x"}).status_code == 400
+
+
+def test_move_into_area_without_write_access(client: TestClient):
+    login(client, "oliver", "geheim123")
+    doc = _doc(client, "rechtsschutz")
+    client.post("/api/areas", json={"name": "haus"})
+    client.post("/api/users", json={"name": "erika2", "password": "erika-pass",
+                                    "areas": {doc["area"]: "write", "haus": "read"}})
+    erika = TestClient(client.app)
+    login(erika, "erika2", "erika-pass")
+    res = erika.post(f"/api/documents/{doc['id']}/move", json={"folder": "", "area": "haus"})
+    assert res.status_code == 403

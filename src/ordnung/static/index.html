@@ -113,6 +113,7 @@
               <th class="fd-table__cell col-date" data-i18n="col.date">Datum</th>
               <th class="fd-table__cell" data-i18n="col.title">Titel</th>
               <th class="fd-table__cell col-area" data-i18n="col.area">Bereich</th>
+              <th class="fd-table__cell col-menu"></th>
             </tr>
           </thead>
           <tbody id="doc-rows" class="fd-table__body"></tbody>
@@ -626,6 +627,28 @@
       <div class="form-actions">
         <span id="mp-msg" class="form-msg"></span>
         <button id="mp-cancel" class="fd-button fd-button--transparent" type="button" data-i18n="ed.sv.cancel">Abbrechen</button>
+        <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dm-dlg" class="ai-dlg ed-dlg" aria-labelledby="dm-dlg-title">
+    <form id="dm-form" class="ai-dlg-form">
+      <h4 id="dm-dlg-title" class="fd-title fd-title--h5" data-i18n="dm.dlg">Dokument bearbeiten</h4>
+      <label class="fd-form-label" for="dm-title" data-i18n="dm.title">Titel</label>
+      <input id="dm-title" class="fd-input" required maxlength="200" autocomplete="off">
+      <label class="fd-form-label" for="dm-date" data-i18n="dm.date">Datum</label>
+      <input id="dm-date" class="fd-input" type="date" required>
+      <label class="fd-form-label" for="dm-area" data-i18n="dm.area">Bereich</label>
+      <select id="dm-area" class="fd-input"></select>
+      <p id="dm-area-hint" class="set-hint" hidden></p>
+      <label class="fd-form-label" for="dm-folder" data-i18n="dm.dir">Ordner</label>
+      <select id="dm-folder" class="fd-input"></select>
+      <label class="fd-form-label" data-i18n="dm.tags">Tags</label>
+      <div id="dm-tags" class="tag-edit"></div>
+      <div class="form-actions">
+        <span id="dm-msg" class="form-msg"></span>
+        <button id="dm-cancel" class="fd-button fd-button--transparent" type="button" data-i18n="ed.sv.cancel">Abbrechen</button>
         <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
       </div>
     </form>

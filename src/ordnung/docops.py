@@ -39,8 +39,8 @@ def _source(archive: Path, doc: dict) -> Path:
     return src
 
 
-def move(archive: Path, doc: dict, folder: str) -> str:
-    """Move ``doc`` into ``folder`` of its own area; returns the new relative path."""
+def move(archive: Path, doc: dict, folder: str, area: str | None = None) -> str:
+    """Move ``doc`` into ``folder`` of ``area`` (default: its own); returns the new relative path."""
     _writable(archive)
     folder = (folder or "").strip().strip("/")
     if folder:
@@ -48,10 +48,13 @@ def move(archive: Path, doc: dict, folder: str) -> str:
             folder = clean_path(folder)
         except FolderError as exc:
             raise DocOpError(str(exc)) from exc
-    if folder == (doc.get("folder") or ""):
+    area = area or doc["area"]
+    if area.startswith((".", "_")) or "/" in area or not (archive / area).is_dir():
+        raise DocOpError("unknown area")
+    if area == doc["area"] and folder == (doc.get("folder") or ""):
         raise DocOpError("already in this folder")
     src = _source(archive, doc)
-    target_dir = archive / doc["area"] / folder if folder else archive / doc["area"]
+    target_dir = archive / area / folder if folder else archive / area
     dest = target_dir / src.name
     with _lock:
         if dest.exists():
