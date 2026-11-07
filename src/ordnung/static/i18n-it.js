@@ -276,4 +276,8 @@ I18N.it = {
     "err.unknown area": "Quest’area non esiste.",
     "err.no write access to the target area": "Nell’area di destinazione non puoi archiviare nulla.",
     "err.target exists": "Lì esiste già un file con questo nome.",
+    "st.after.delete": "elimina l’originale dopo la verifica della copia",
+    "st.after.days": "Elimina dopo",
+    "st.after.days.hint": "Ordnung! confronta prima la copia nell’archivio con l’originale (checksum) ed elimina solo se sono identiche. 0 = subito dopo l’archiviazione, altrimenti l’originale attende in «_importiert». Ciò che vi si trova già viene ripulito una volta al giorno, sempre dopo la verifica.",
+    "err.invalid delete_days": "I giorni devono essere tra 0 e 3650.",
 };

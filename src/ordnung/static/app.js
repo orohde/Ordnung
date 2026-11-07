@@ -196,6 +196,10 @@ const I18N = {
     'st.add': 'Eingangsordner hinzufügen', 'st.name': 'Name', 'st.area': 'Bereich', 'st.area.none': 'beim Einsortieren wählen',
     'st.enabled': 'aktiv', 'st.after': 'Nach dem Einsortieren', 'st.after.move': 'Original nach „_importiert“ verschieben',
     'st.after.keep': 'Original im Eingang lassen', 'st.remove': 'Entfernen',
+    "st.after.delete": "Original nach geprüfter Kopie löschen",
+    "st.after.days": "Löschen nach",
+    "st.after.days.hint": "Ordnung! vergleicht vorher die Kopie im Archiv mit dem Original (Prüfsumme) und löscht nur, wenn beide gleich sind. 0 = sofort nach dem Ablegen, sonst wartet das Original so lange in „_importiert“. Was dort schon liegt, räumt Ordnung! einmal am Tag mit auf, ebenfalls nur geprüft.",
+    "err.invalid delete_days": "Die Tage zum Löschen müssen zwischen 0 und 3650 liegen.",
     'st.ok.rw': 'vorhanden · lesbar · beschreibbar', 'st.ok.ro': 'vorhanden · nur lesbar', 'st.missing': 'nicht vorhanden oder nicht lesbar',
     'st.files': '{n} Dateien darin', 'st.saved': 'Gespeichert.', 'st.choose': 'Diesen Ordner wählen', 'st.up': 'eine Ebene höher',
     'st.roots': 'Verfügbare Ordner', 'st.nodirs': 'keine Unterordner',
@@ -436,6 +440,10 @@ const I18N = {
     'st.add': 'Add inbox folder', 'st.name': 'Name', 'st.area': 'Area', 'st.area.none': 'choose when filing',
     'st.enabled': 'active', 'st.after': 'After filing', 'st.after.move': 'move original to “_importiert”',
     'st.after.keep': 'leave original in the inbox', 'st.remove': 'Remove',
+    "st.after.delete": "delete original once the copy is verified",
+    "st.after.days": "Delete after",
+    "st.after.days.hint": "Ordnung! first compares the archive copy with the original (checksum) and deletes only if both are identical. 0 = right after filing, otherwise the original waits that long in “_importiert”. Files already there are cleaned up once a day as well, again only when verified.",
+    "err.invalid delete_days": "Days until deletion must be between 0 and 3650.",
     'st.ok.rw': 'exists · readable · writable', 'st.ok.ro': 'exists · read-only', 'st.missing': 'missing or not readable',
     'st.files': '{n} files inside', 'st.saved': 'Saved.', 'st.choose': 'Choose this folder', 'st.up': 'one level up',
     'st.roots': 'Available folders', 'st.nodirs': 'no subfolders',
@@ -1318,12 +1326,22 @@ function inboxCard(ib, i) {
       <select class="fd-input" data-f="area">${areaOpts.join('')}</select>
       <label class="fd-form-label">${esc(t('st.after'))}</label>
       <select class="fd-input" data-f="after_import">
-        <option value="move"${ib.after_import !== 'keep' ? ' selected' : ''}>${esc(t('st.after.move'))}</option>
+        <option value="move"${!['keep', 'delete'].includes(ib.after_import) ? ' selected' : ''}>${esc(t('st.after.move'))}</option>
+        <option value="delete"${ib.after_import === 'delete' ? ' selected' : ''}>${esc(t('st.after.delete'))}</option>
         <option value="keep"${ib.after_import === 'keep' ? ' selected' : ''}>${esc(t('st.after.keep'))}</option>
       </select>
+      <label class="fd-form-label" data-del>${esc(t('st.after.days'))}</label>
+      <div data-del>
+        <div class="inline"><input class="fd-input st-trash-days" data-f="delete_days" type="number" min="0" max="3650" step="1" value="${Number(ib.delete_days) || 0}"> <span>${esc(t('st.trash.unit'))}</span></div>
+        <div class="field-hint">${esc(t('st.after.days.hint'))}</div>
+      </div>
     </div>
     <div class="picker" data-for="st-inbox-${i}" hidden></div>`;
   el.querySelector('[data-act="remove"]').addEventListener('click', () => el.remove());
+  const after = el.querySelector('[data-f="after_import"]');
+  const showDays = () => el.querySelectorAll('[data-del]').forEach(x => { x.hidden = after.value !== 'delete'; });
+  after.addEventListener('change', showDays);
+  showDays();
   return el;
 }
 
@@ -1337,6 +1355,7 @@ function collectInboxes() {
       area: v('area').value,
       enabled: v('enabled').checked,
       after_import: v('after_import').value,
+      delete_days: Math.max(0, parseInt(v('delete_days').value, 10) || 0),
     };
   }).filter(i => i.path);
 }

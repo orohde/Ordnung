@@ -276,4 +276,8 @@ I18N.fr = {
     "err.unknown area": "Cet espace n’existe pas.",
     "err.no write access to the target area": "Tu ne peux rien classer dans l’espace cible.",
     "err.target exists": "Un fichier de ce nom existe déjà à cet endroit.",
+    "st.after.delete": "supprimer l’original une fois la copie vérifiée",
+    "st.after.days": "Supprimer après",
+    "st.after.days.hint": "Ordnung! compare d’abord la copie de l’archive avec l’original (somme de contrôle) et ne supprime que si les deux sont identiques. 0 = juste après le classement, sinon l’original attend ce délai dans « _importiert ». Ce qui s’y trouve déjà est nettoyé une fois par jour, toujours après vérification.",
+    "err.invalid delete_days": "Le nombre de jours doit être compris entre 0 et 3650.",
 };

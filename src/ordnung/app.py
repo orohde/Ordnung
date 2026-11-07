@@ -147,6 +147,7 @@ class InboxIn(BaseModel):
     area: str = ""
     enabled: bool = False
     after_import: str = "move"
+    delete_days: int = 0
 
 
 class StorageChange(BaseModel):
@@ -312,6 +313,12 @@ def _worker(app: FastAPI, stop: threading.Event) -> None:
                     log.info("trash: %d file(s) older than %d days deleted", removed, days)
             except Exception:  # noqa: BLE001
                 log.exception("emptying the trash failed")
+            try:
+                removed = app.state.inbox.purge_done()
+                if removed:
+                    log.info("inbox: %d verified original(s) deleted from _importiert", removed)
+            except Exception:  # noqa: BLE001
+                log.exception("cleaning up _importiert failed")
         app.state.wake.wait(INBOX_SECONDS)
         app.state.wake.clear()
 
@@ -1203,7 +1210,8 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         return {"items": app.state.inbox.items(status), "counts": app.state.inbox.counts(),
                 "archive_writable": path_status(str(app.state.index.archive))["writable"],
                 "inboxes": [{"id": i.id, "name": i.name, "area": i.area, "enabled": i.enabled,
-                             "after_import": i.after_import, "status": path_status(i.path)}
+                             "after_import": i.after_import, "delete_days": i.delete_days,
+                             "status": path_status(i.path)}
                             for i in app.state.storage.load().inboxes],
                 "folders": sorted(app.state.folders.effective(), key=str.casefold),
                 "areas": sorted(app.state.inbox.area_names())}

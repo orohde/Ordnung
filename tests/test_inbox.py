@@ -303,3 +303,72 @@ def test_delete_junk_from_inbox(env):
     assert c.get("/api/inbox").json()["items"] == []
     assert c.get("/api/inbox", params={"status": "dismissed"}).json()["items"] == []
     assert c.delete(f"/api/inbox/{item['key']}").status_code == 400
+
+
+def _file_one(app, c, inbox, fresh, text, name):
+    f = inbox / name
+    f.write_bytes(make_pdf(text))
+    settle(f)
+    process(app)
+    item = next(i for i in c.get("/api/inbox").json()["items"] if i["name"] == name)
+    res = c.post(f"/api/inbox/{item['key']}/file", json={"area": "oliver", "folder": "Post",
+                                                         "title": name[:-4], "date": "2026-11-01"})
+    assert res.status_code == 200, res.text
+    return f, res.json()
+
+
+def test_delete_after_verified_copy(env):
+    app, c, inbox, fresh = env
+    c.post("/api/storage/switch", json={"archive_path": str(fresh)})
+    add_inbox(c, inbox, area="oliver", after_import="delete", delete_days=0)
+    assert c.get("/api/storage").json()["inboxes"][0]["delete_days"] == 0
+    f, body = _file_one(app, c, inbox, fresh, "Brief Nummer eins", "brief1.pdf")
+    assert body["moved"] and not f.exists()
+    assert not (inbox / "_importiert").exists()
+    assert (fresh / body["path"]).read_bytes() == make_pdf("Brief Nummer eins")
+
+
+def test_delete_keeps_original_when_copy_differs(env, monkeypatch):
+    app, c, inbox, fresh = env
+    c.post("/api/storage/switch", json={"archive_path": str(fresh)})
+    add_inbox(c, inbox, area="oliver", after_import="delete", delete_days=0)
+    monkeypatch.setattr(type(app.state.inbox), "_same_content", staticmethod(lambda *a: False))
+    f, body = _file_one(app, c, inbox, fresh, "Brief Nummer zwei", "brief2.pdf")
+    assert not body["moved"] and f.exists()            # not verified: the original stays
+
+
+def test_delete_after_days(env):
+    app, c, inbox, fresh = env
+    c.post("/api/storage/switch", json={"archive_path": str(fresh)})
+    add_inbox(c, inbox, area="oliver", after_import="delete", delete_days=7)
+    f, body = _file_one(app, c, inbox, fresh, "Brief Nummer drei", "brief3.pdf")
+    parked = inbox / "_importiert" / "brief3.pdf"
+    assert body["moved"] and not f.exists() and parked.exists()
+    app.state.index.scan()
+    assert app.state.inbox.purge_done() == 0                      # too young
+    assert app.state.inbox.purge_done(now=time.time() + 8 * 86400) == 1
+    assert not parked.exists()
+    # a parked file whose archive copy is gone stays
+    stray = inbox / "_importiert" / "sub" / "fremd.pdf"
+    stray.parent.mkdir(parents=True)
+    stray.write_bytes(make_pdf("nicht im Archiv"))
+    assert app.state.inbox.purge_done(now=time.time() + 30 * 86400) == 0 and stray.exists()
+
+
+def test_delete_days_validated(env):
+    app, c, inbox, fresh = env
+    body = {"inboxes": [{"name": "S", "path": str(inbox), "after_import": "delete", "delete_days": -1}]}
+    assert c.put("/api/storage", json=body).status_code == 400
+
+
+def test_zero_days_cleans_up_old_parked_files(env):
+    app, c, inbox, fresh = env
+    c.post("/api/storage/switch", json={"archive_path": str(fresh)})
+    add_inbox(c, inbox, area="oliver", after_import="move")
+    f, body = _file_one(app, c, inbox, fresh, "Brief Nummer vier", "brief4.pdf")
+    parked = inbox / "_importiert" / "brief4.pdf"
+    assert parked.exists()
+    add_inbox(c, inbox, area="oliver", after_import="delete", delete_days=0)
+    app.state.index.scan()
+    assert app.state.inbox.purge_done() == 1 and not parked.exists()
+    assert not (inbox / "_importiert").exists() or not any((inbox / "_importiert").iterdir())

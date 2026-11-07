@@ -18,7 +18,7 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-AFTER_IMPORT = ("keep", "move")
+AFTER_IMPORT = ("keep", "move", "delete")
 SYSTEM_MOUNTS = {"/", "/proc", "/sys", "/dev", "/dev/shm", "/dev/pts", "/dev/mqueue",
                  "/etc/hosts", "/etc/hostname", "/etc/resolv.conf", "/sys/fs/cgroup"}
 
@@ -34,7 +34,8 @@ class Inbox:
     path: str
     area: str = ""
     enabled: bool = False
-    after_import: str = "move"   # keep: leave the file, move: to "_importiert" in the inbox
+    after_import: str = "move"   # keep: leave the file, move: to "_importiert", delete: see delete_days
+    delete_days: int = 0         # delete: 0 = right after the copy is verified, n = park in "_importiert" n days
 
 
 @dataclass
@@ -145,6 +146,12 @@ class StorageService:
                     after = raw.get("after_import", "move")
                     if after not in AFTER_IMPORT:
                         raise StorageError("invalid after_import")
+                    try:
+                        delete_days = int(raw.get("delete_days") or 0)
+                    except (TypeError, ValueError):
+                        raise StorageError("invalid delete_days") from None
+                    if not 0 <= delete_days <= 3650:
+                        raise StorageError("invalid delete_days")
                     cleaned.append(Inbox(
                         id=raw.get("id") or uuid.uuid4().hex[:8],
                         name=(raw.get("name") or Path(path).name).strip()[:60],
@@ -152,6 +159,7 @@ class StorageService:
                         area=(raw.get("area") or "").strip(),
                         enabled=bool(raw.get("enabled", False)),
                         after_import=after,
+                        delete_days=delete_days,
                     ))
                 config.inboxes = cleaned
             self._save(config)

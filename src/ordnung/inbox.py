@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 import shutil
@@ -41,6 +42,8 @@ from typing import Callable
 from .folders import FolderError, clean_path
 from .index import MIN_ID_LEN, SKIP_FILES, SKIP_NAMES, Index, fold, nfc, parse_name, sha256_file
 from .storage import Inbox, StorageService, path_status
+
+log = logging.getLogger("ordnung.inbox")
 
 DONE_DIR = "_importiert"
 EXTENSIONS = {"pdf", "png", "jpg", "jpeg", "tif", "tiff", "txt", "docx"}
@@ -624,7 +627,7 @@ class InboxService:
                     method=row["method"] or "text", error=row["error"]))
             rel_dest = dest.relative_to(archive).as_posix()
             self._recent[row["sha256"]] = rel_dest
-            moved = self._after_import(row, src)
+            moved = self._after_import(row, src, rel_dest)
             with self.connect() as con:
                 if moved:
                     con.execute("DELETE FROM items WHERE key=?", (key,))
@@ -634,7 +637,7 @@ class InboxService:
         return {"path": rel_dest, "moved": moved, "sha256": row["sha256"],
                 "learn": folder != (sugg.get("folder") or "") or "rule" not in (sugg.get("source") or "")}
 
-    def _after_import(self, row: sqlite3.Row, src: Path) -> bool:
+    def _after_import(self, row: sqlite3.Row, src: Path, archived_path: str = "") -> bool:
         inbox = next((i for i in self.inboxes(False) if i.id == row["inbox"]), None)
         if inbox and inbox.id == "upload":
             # an upload has done its job once the archive holds the copy
@@ -643,17 +646,71 @@ class InboxService:
                 return True
             except OSError:
                 return False
-        if not inbox or inbox.after_import != "move" or not path_status(inbox.path)["writable"]:
+        if not inbox or inbox.after_import not in ("move", "delete") or not path_status(inbox.path)["writable"]:
             return False
+        if inbox.after_import == "delete":
+            # only once the archive copy is proven identical to the original
+            if not archived_path or not self._same_content(src, self.index.archive / archived_path, row["sha256"]):
+                log.warning("inbox: archive copy of %s could not be verified, original kept", row["rel"])
+                return False
+            if inbox.delete_days <= 0:
+                try:
+                    src.unlink()
+                except OSError:
+                    return False
+                log.info("inbox: %s verified and deleted from the inbox", row["rel"])
+                return True
         dest = Path(inbox.path) / DONE_DIR / row["rel"]
         try:
             dest.parent.mkdir(parents=True, exist_ok=True)
             if dest.exists():
                 dest = dest.with_name(f"{dest.stem}_{row['sha256'][:6]}{dest.suffix}")
             os.replace(src, dest)
+            if inbox.after_import == "delete":
+                os.utime(dest)          # the waiting period starts now, not at scan time
         except OSError:
             return False
         return True
+
+    @staticmethod
+    def _same_content(src: Path, copy: Path, sha: str) -> bool:
+        try:
+            return copy.is_file() and sha256_file(copy) == sha and sha256_file(src) == sha
+        except OSError:
+            return False
+
+    def purge_done(self, now: float | None = None) -> int:
+        """Delete files parked in "_importiert" of delete-inboxes once their days are up.
+
+        A file goes only if the archive still holds a file with identical content
+        (checked by hashing both); otherwise it stays and is logged."""
+        now = now or time.time()
+        removed = 0
+        for inbox in self.storage.load().inboxes:
+            if inbox.after_import != "delete":
+                continue                  # 0 days: whatever still lies there (e.g. from "move") goes now
+            done = Path(inbox.path) / DONE_DIR
+            if not done.is_dir() or not path_status(str(done))["writable"]:
+                continue
+            for f in sorted(done.rglob("*")):
+                try:
+                    if not f.is_file() or f.is_symlink() or now - f.stat().st_mtime < inbox.delete_days * 86400:
+                        continue
+                    sha = sha256_file(f)
+                    archived = self._archived(sha)
+                    if not archived or not self._same_content(f, self.index.archive / archived, sha):
+                        log.warning("inbox: %s not found identical in the archive, kept", f)
+                        continue
+                    f.unlink()
+                    removed += 1
+                except OSError:
+                    log.exception("inbox: could not clean up %s", f)
+            for d in sorted((p for p in done.rglob("*") if p.is_dir()), key=lambda p: len(p.parts), reverse=True):
+                try:
+                    d.rmdir()             # only empty ones
+                except OSError:
+                    pass
+        return removed
 
     def dismiss(self, key: str, dismissed: bool = True) -> None:
         with self.connect() as con:
