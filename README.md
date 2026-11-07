@@ -58,6 +58,8 @@ Open `http://localhost:8440`, sign in, and set up your archive and inbox folders
 
 The image is built for `linux/amd64` and `linux/arm64` (Raspberry Pi, Apple silicon).
 
+On **Unraid**, install it from the *Apps* tab (template repository [orohde/unraid-templates](https://github.com/orohde/unraid-templates)).
+
 ### Settings
 
 | Variable | Default | Meaning |
@@ -68,6 +70,7 @@ The image is built for `linux/amd64` and `linux/arm64` (Raspberry Pi, Apple sili
 | `ORDNUNG_OCR_LANG` | `deu+eng` | Tesseract languages |
 | `ORDNUNG_RESCAN_MINUTES` | `10` | full rescan of the archive folders |
 | `ORDNUNG_STARTER` | `1` | ship a household folder template and starter rules on first start |
+| `PUID` / `PGID` / `UMASK` | `99` / `100` / `0002` | user, group and umask the app runs as when the container starts as root; fresh empty folders are handed over to that user (ignored with `--user`) |
 
 ## Try the demo
 

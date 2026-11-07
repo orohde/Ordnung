@@ -58,6 +58,8 @@ Dann `http://localhost:8440` öffnen, anmelden und unter **Einstellungen → Abl
 
 Das Image gibt es für `linux/amd64` und `linux/arm64` (Raspberry Pi, Apple Silicon).
 
+Unter **Unraid** installierst du es über den Reiter *Apps* (Vorlagen-Repo [orohde/unraid-templates](https://github.com/orohde/unraid-templates)).
+
 ### Einstellungen
 
 | Variable | Standard | Bedeutung |
@@ -68,6 +70,7 @@ Das Image gibt es für `linux/amd64` und `linux/arm64` (Raspberry Pi, Apple Sili
 | `ORDNUNG_OCR_LANG` | `deu+eng` | Sprachen für Tesseract |
 | `ORDNUNG_RESCAN_MINUTES` | `10` | vollständiges Neueinlesen der Archivordner |
 | `ORDNUNG_STARTER` | `1` | beim ersten Start Ordnervorlage „Haushalt“ und Startregeln anlegen |
+| `PUID` / `PGID` / `UMASK` | `99` / `100` / `0002` | Benutzer, Gruppe und umask, als die die App läuft, wenn der Container als root startet; frisch angelegte leere Ordner bekommt dieser Benutzer (bei `--user` ohne Wirkung) |
 
 ## Demo ausprobieren
 
