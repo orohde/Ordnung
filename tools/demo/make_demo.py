@@ -267,7 +267,7 @@ def setup(root: Path, lang: str, base: str, user: str, password: str) -> None:
             pass
     call("PATCH", f"users/{user}", {"display_name": "Max Muster"})
     try:
-        call("POST", "users", {"name": "erika", "password": "erika-demo", "display_name": "Erika Muster",
+        call("POST", "users", {"name": "erika", "password": "erika-demo-2026", "display_name": "Erika Muster",
                                "areas": {"erika": "write", "familie": "write", "haus": "write"}})
     except Exception:  # noqa: BLE001 – already there
         pass

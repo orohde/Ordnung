@@ -12,6 +12,7 @@ dependencies = [
     "pillow>=10.4",
     "anthropic>=2.6",
     "pillow-heif>=0.18",
+    "segno>=1.6",
 ]
 
 [project.optional-dependencies]

@@ -16,13 +16,15 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import __version__
 from .ai import AIError, AIService
-from .auth import COOKIE, SESSION_DAYS, User, current_user, make_session, require_admin
+from .altablage import ALT, cutoff, from_alt, is_alt, prune_empty
+from .auth import (User, client_ip, cookie_name, current_user, is_external, is_https,
+                   require_admin, session_token)
 from .config import Settings, load_settings
 from .docops import DocOpError
 from .docops import move as move_doc
@@ -35,13 +37,16 @@ from .index import Index
 from .textextract import extract, render_thumb, tesseract_available
 from .folders import STARTER_HOUSEHOLD, FolderError, FolderTemplate
 from .importplan import ImportPlanner
-from .inbox import AI_INSTRUCTIONS, InboxError, InboxService, inbox_prompts
+from .inbox import AI_INSTRUCTIONS, SETTLE_SECONDS, InboxError, InboxService, inbox_prompts
+from .mailin import MailError, MailInbox, MailStore
 from .prefs import PrefsStore
 from .rules import RuleError, RuleService, check_conditions
 from .senders import SenderBook, SenderService, describe
 from .tags import TagError, TagStore
 from .tags import clean as clean_tag
 from .storage import StorageError, StorageService, path_status
+from .security import (LoginGuard, Networks, Notifier, SecurityStore, SessionStore, describe_agent,
+                       otpauth_uri, qr_data_uri)
 from .users import UserError, UserStore
 
 log = logging.getLogger("ordnung")
@@ -86,6 +91,15 @@ class MoveIn(BaseModel):
     area: str | None = Field(None, max_length=40, description="target area; default: the document's own")
 
 
+class AltIn(BaseModel):
+    ids: list[str] = Field(default_factory=list, max_length=5000, description="single documents")
+    folder: str | None = Field(None, max_length=1000, description="a whole folder with its subfolders")
+    older_than_years: int | None = Field(None, ge=1, le=200, description="everything dated before today minus N years")
+    areas: str | None = Field(None, max_length=1000, description="comma-separated areas (folder and years)")
+    restore: bool = Field(False, description="take documents back out of the Altablage")
+    dry_run: bool = Field(False, description="only count what would move")
+
+
 class DocMetaIn(BaseModel):
     title: str = Field(max_length=200)
     date: str = Field(max_length=10)
@@ -96,8 +110,45 @@ class RestoreIn(BaseModel):
 
 
 class Login(BaseModel):
-    username: str
-    password: str
+    username: str = Field(max_length=100)
+    password: str = Field(max_length=1000)
+    code: str | None = Field(None, max_length=20, description="second factor: app code or recovery code")
+
+
+class PasswordConfirm(BaseModel):
+    password: str = Field(max_length=1000)
+
+
+class CodeIn(BaseModel):
+    code: str = Field(max_length=20)
+
+
+class TotpOff(BaseModel):
+    password: str = Field(max_length=1000)
+    code: str = Field(max_length=20)
+
+
+class SecurityChange(BaseModel):
+    require_2fa_external: bool | None = None
+    require_2fa_internal: bool | None = None
+    ntfy_url: str | None = Field(None, max_length=500)
+    ntfy_token: str | None = Field(None, max_length=200)
+    clear_ntfy_token: bool = False
+    notify_external_login: bool | None = None
+    notify_lockout: bool | None = None
+    notify_2fa_changes: bool | None = None
+
+
+class MailChange(BaseModel):
+    enabled: bool | None = None
+    host: str | None = Field(None, max_length=200)
+    port: int | None = None
+    user: str | None = Field(None, max_length=200)
+    password: str | None = Field(None, max_length=500)
+    clear_password: bool = False
+    folder: str | None = Field(None, max_length=200)
+    check_auth: bool | None = None
+    reject_days: int | None = None
 
 
 class TreePrefs(BaseModel):
@@ -111,6 +162,8 @@ class NewUser(BaseModel):
     display_name: str = ""
     is_admin: bool = False
     areas: dict[str, str] = Field(default_factory=dict)
+    emails: list[str] = Field(default_factory=list)
+    mail_area: str = ""
 
 
 class UserChange(BaseModel):
@@ -118,6 +171,10 @@ class UserChange(BaseModel):
     password: str | None = None
     is_admin: bool | None = None
     areas: dict[str, str] | None = None
+    emails: list[str] | None = None
+    mail_area: str | None = None
+    reset_totp: bool = False
+    sign_out: bool = False
 
 
 class AIChange(BaseModel):
@@ -290,6 +347,12 @@ def _worker(app: FastAPI, stop: threading.Event) -> None:
                     log.info("learning set: %s", reference.scan())
                     reference.extract_pending(extractor, stop=stop, workers=settings.text_workers)
             inbox: InboxService = app.state.inbox
+            try:
+                fetched = app.state.mail.fetch()
+                if fetched.get("mails"):
+                    log.info("mail inbox: %s", fetched)
+            except MailError as exc:
+                log.warning("mail inbox: %s", exc)
             result = inbox.scan()
             if result.get("added"):
                 log.info("inbox: %s", result)
@@ -349,6 +412,11 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     app.state.storage = StorageService(settings.data / "storage.json", settings.archive, extra_roots)
     app.state.index = Index(settings.db_path, app.state.storage.archive())
     app.state.users = UserStore(settings.users_path)
+    app.state.sessions = SessionStore(settings.data / "sessions.json")
+    app.state.security = SecurityStore(settings.data / "security.json")
+    app.state.notify = Notifier(app.state.security)
+    app.state.guard = LoginGuard()
+    app.state.networks = Networks(settings.internal_networks)
     app.state.wake = threading.Event()
     app.state.ai = AIService(settings.data / "ai.json")
     app.state.rules = RuleService(settings.data / "rules.json", app.state.index)
@@ -360,7 +428,9 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     app.state.folders = FolderTemplate(settings.data / "folders.json", app.state.index)
     app.state.inbox = InboxService(settings.data / "inbox.db", app.state.storage, app.state.index,
                                    app.state.rules, app.state.folders, app.state.importplan,
-                                   upload_dir=settings.data / "hochgeladen")
+                                   upload_dir=settings.data / "hochgeladen", mail_dir=settings.data / "mail")
+    app.state.mail = MailInbox(MailStore(settings.data / "mail.json"), app.state.users,
+                               settings.data / "mail", SETTLE_SECONDS)
     app.state.last_purge = ""
     app.state.full_scan = threading.Event()
     app.state.full_scan.set()
@@ -426,27 +496,72 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
 
     @app.post("/api/login", tags=["auth"])
     def login(body: Login, request: Request, response: Response):
-        account = app.state.users.authenticate(body.username.strip().lower(), body.password)
+        name = body.username.strip().lower()
+        external = is_external(request)
+        ip = client_ip(request)
+        guard: LoginGuard = app.state.guard
+
+        def refuse(status: int, detail: str, count: bool = True):
+            if count:
+                failures, seconds = guard.fail(name, external)
+                if seconds and failures % 5 == 0:
+                    app.state.notify.send(
+                        "notify_lockout", "lock.title", "lock.body", priority=4, tags="warning",
+                        user=name, count=failures, ip=ip, minutes=max(1, seconds // 60),
+                        where=app.state.notify.text("where.ext" if external else "where.int"))
+                time.sleep(1)
+            raise HTTPException(status_code=status, detail=detail)
+
+        wait = guard.locked_for(name, external)
+        if wait:
+            raise HTTPException(status_code=429, detail="locked", headers={"Retry-After": str(wait)})
+        account = app.state.users.authenticate(name, body.password)
         if not account:
-            time.sleep(1)
-            raise HTTPException(status_code=401, detail="invalid credentials")
-        secure = request.headers.get("x-forwarded-proto", request.url.scheme) == "https"
+            refuse(401, "invalid credentials")
+        policy = app.state.security.load()
+        if external and policy.require_2fa_external and not account.has_totp:
+            refuse(403, "second factor required outside", count=False)
+        mfa = False
+        if account.has_totp and (external or policy.require_2fa_internal or body.code):
+            if not body.code:
+                raise HTTPException(status_code=401, detail="code required")
+            kind = app.state.users.second_factor(name, body.code)
+            if not kind:
+                refuse(401, "invalid code")
+            mfa = True
+            if kind == "recovery":
+                left = app.state.users.get(name).public()["recovery_left"]
+                app.state.notify.send("notify_2fa_changes", "recovery.title", "recovery.body",
+                                      priority=4, tags="key", user=name, left=left, ip=ip)
+        guard.success(name, external)
+        agent = request.headers.get("user-agent", "")
+        token = app.state.sessions.create(name, ip=ip, agent=agent, external=external, mfa=mfa)
         response.set_cookie(
-            COOKIE, make_session(settings, account.name), max_age=SESSION_DAYS * 86400,
-            httponly=True, samesite="lax", secure=secure,
+            cookie_name(request), token, max_age=SessionStore.max_age(external),
+            httponly=True, samesite="lax", secure=is_https(request), path="/",
         )
+        if external:
+            app.state.notify.send("notify_external_login", "external.title", "external.body",
+                                  user=name, ip=ip, agent=describe_agent(agent))
         return account.public()
 
     @app.post("/api/logout", tags=["auth"])
-    def logout(response: Response):
-        response.delete_cookie(COOKIE)
+    def logout(request: Request, response: Response):
+        token = session_token(request)
+        if token:
+            app.state.sessions.revoke_token(token)
+        response.delete_cookie(cookie_name(request), path="/", secure=is_https(request), httponly=True)
         return {"ok": True}
 
     # ------------------------------------------------------ authenticated
 
     @app.get("/api/me", tags=["auth"])
-    def me(user: User = Depends(current_user)):
+    def me(request: Request, user: User = Depends(current_user)):
+        account = app.state.users.get(user.name)
         return {"name": user.name, "display_name": user.display_name,
+                "totp": bool(account and account.has_totp),
+                "recovery_left": account.public()["recovery_left"] if account else 0,
+                "external": is_external(request),
                 "is_admin": user.is_admin, "areas": allowed_areas(user),
                 "write_areas": [a for a in allowed_areas(user) if user.can_write(a)],
                 "signature": app.state.signatures.get(user.name) is not None,
@@ -489,14 +604,149 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         return app.state.prefs.get(user.name)
 
     @app.post("/api/me/password", tags=["auth"])
-    def change_own_password(body: PasswordChange, user: User = Depends(current_user)):
+    def change_own_password(body: PasswordChange, request: Request, user: User = Depends(current_user)):
         if not app.state.users.authenticate(user.name, body.old):
             raise HTTPException(status_code=403, detail="wrong password")
         try:
             app.state.users.update(user.name, password=body.new)
         except UserError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+        # whoever knew the old password is signed out everywhere else
+        return {"ok": True, "signed_out": app.state.sessions.revoke(user.name, keep_token=session_token(request))}
+
+    def _account_user(user: User):
+        account = app.state.users.get(user.name)
+        if not account:
+            raise HTTPException(status_code=400, detail="only for personal accounts")
+        return account
+
+    @app.get("/api/me/sessions", tags=["auth"])
+    def my_sessions(request: Request, user: User = Depends(current_user)):
+        mine = app.state.sessions.get(session_token(request))
+        return [{"id": s.id, "device": describe_agent(s.agent), "agent": s.agent, "ip": s.ip,
+                 "created": s.created, "last_seen": s.last_seen, "expires": s.expires,
+                 "external": s.external, "mfa": s.mfa, "current": bool(mine and mine.id == s.id)}
+                for s in app.state.sessions.for_user(user.name)]
+
+    @app.delete("/api/me/sessions/{session_id}", tags=["auth"])
+    def end_session(session_id: str, user: User = Depends(current_user)):
+        if not app.state.sessions.revoke(user.name, session_id=session_id):
+            raise HTTPException(status_code=404, detail="unknown session")
         return {"ok": True}
+
+    @app.post("/api/me/sessions/others", tags=["auth"])
+    def end_other_sessions(request: Request, user: User = Depends(current_user)):
+        return {"signed_out": app.state.sessions.revoke(user.name, keep_token=session_token(request))}
+
+    @app.post("/api/me/totp/setup", tags=["auth"])
+    def totp_setup(body: PasswordConfirm, user: User = Depends(current_user)):
+        account = _account_user(user)
+        if not app.state.users.authenticate(user.name, body.password):
+            raise HTTPException(status_code=403, detail="wrong password")
+        if account.has_totp:
+            raise HTTPException(status_code=400, detail="second factor already on")
+        secret = app.state.users.totp_begin(user.name)
+        uri = otpauth_uri(secret, user.name)
+        return {"secret": " ".join(secret[i:i + 4] for i in range(0, len(secret), 4)),
+                "uri": uri, "qr": qr_data_uri(uri)}
+
+    @app.post("/api/me/totp/enable", tags=["auth"])
+    def totp_enable(body: CodeIn, request: Request, user: User = Depends(current_user)):
+        _account_user(user)
+        try:
+            codes = app.state.users.totp_confirm(user.name, body.code)
+        except UserError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        token = session_token(request)
+        app.state.sessions.mark_mfa(token)
+        # sessions from before the second factor existed must not stay valid
+        app.state.sessions.revoke(user.name, keep_token=token)
+        app.state.notify.send("notify_2fa_changes", "2fa.on.title", "2fa.on.body", tags="key", user=user.name)
+        return {"recovery_codes": codes}
+
+    @app.post("/api/me/totp/disable", tags=["auth"])
+    def totp_disable(body: TotpOff, user: User = Depends(current_user)):
+        _account_user(user)
+        if not app.state.users.authenticate(user.name, body.password):
+            raise HTTPException(status_code=403, detail="wrong password")
+        if not app.state.users.second_factor(user.name, body.code):
+            raise HTTPException(status_code=400, detail="invalid code")
+        app.state.users.totp_off(user.name)
+        app.state.notify.send("notify_2fa_changes", "2fa.off.title", "2fa.off.body", priority=4,
+                              tags="warning", user=user.name, by=user.name)
+        return {"ok": True}
+
+    @app.post("/api/me/totp/recovery", tags=["auth"])
+    def totp_recovery(body: CodeIn, user: User = Depends(current_user)):
+        _account_user(user)
+        if app.state.users.second_factor(user.name, body.code) != "totp":
+            raise HTTPException(status_code=400, detail="invalid code")
+        return {"recovery_codes": app.state.users.new_recovery(user.name)}
+
+    @app.get("/api/security", tags=["security"])
+    def get_security(user: User = Depends(require_admin)):
+        accounts = app.state.users.all()
+        return {**app.state.security.load().public(),
+                "without_2fa": [a.name for a in accounts if not a.has_totp]}
+
+    @app.put("/api/security", tags=["security"])
+    def put_security(body: SecurityChange, user: User = Depends(require_admin)):
+        changes = body.model_dump(exclude_unset=True)
+        prefs = app.state.prefs.get(user.name) if user.name != "api" else {}
+        if prefs.get("language") in ("de", "en"):
+            changes["language"] = prefs["language"]
+        if changes.get("require_2fa_external"):
+            account = app.state.users.get(user.name)
+            if account and not account.has_totp:
+                raise HTTPException(status_code=400, detail="set up your own second factor first")
+        try:
+            app.state.security.update(changes)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return get_security(user)
+
+    @app.post("/api/security/test", tags=["security"])
+    def test_security(user: User = Depends(require_admin)):
+        error = app.state.notify.send("", "test.title", "test.body", wait=True, tags="white_check_mark")
+        if error:
+            raise HTTPException(status_code=400, detail=error)
+        return {"ok": True}
+
+    # ------------------------------------------------------------ mail inbox
+
+    @app.get("/api/mail", tags=["mail"])
+    def get_mail(user: User = Depends(require_admin)):
+        senders = [{"name": a.name, "display_name": a.display_name, "emails": a.emails, "area": a.own_area()}
+                   for a in app.state.users.all()]
+        return {**app.state.mail.store.load().public(), "events": app.state.mail.store.events(),
+                "senders": senders}
+
+    @app.put("/api/mail", tags=["mail"])
+    def put_mail(body: MailChange, user: User = Depends(require_admin)):
+        try:
+            app.state.mail.store.update(body.model_dump(exclude_unset=True))
+        except (MailError, ValueError) as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        app.state.wake.set()
+        return get_mail(user)
+
+    @app.post("/api/mail/test", tags=["mail"])
+    def test_mail(user: User = Depends(require_admin)):
+        try:
+            return app.state.mail.test()
+        except MailError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    @app.post("/api/mail/fetch", tags=["mail"])
+    def fetch_mail(user: User = Depends(require_admin)):
+        try:
+            result = app.state.mail.fetch(force=True)
+        except MailError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        if result.get("files"):
+            app.state.inbox.scan()
+            kick(full=False)
+        return result
 
     @app.get("/api/status", tags=["system"])
     def status(user: User = Depends(current_user)):
@@ -574,6 +824,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         q: str = "",
         areas: str | None = Query(None, description="comma-separated areas"),
         tags: str | None = Query(None, description="comma-separated tags, all must be present"),
+        alt: bool = Query(False, description="also search the Altablage"),
         limit: int = Query(500, ge=1, le=5000),
         offset: int = Query(0, ge=0),
         user: User = Depends(current_user),
@@ -590,9 +841,13 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
             else:
                 words.append(word)
         shas = store.shas_with_all(wanted) if wanted else None
+        # a Mappe gathers on purpose, so it shows its documents from the Altablage, too
+        mappen = {m["name"].casefold() for m in store.mappen()} if wanted else set()
+        alt = alt or any(w.casefold() in mappen for w in wanted)
         result = app.state.index.documents(
             pick_areas(user, areas), folder="" if wanted and not folder else folder,
             recursive=recursive or bool(wanted), query=" ".join(words), limit=limit, offset=offset, shas=shas,
+            alt=alt,
         )
         tagmap = store.mapping()
         hidden = store.hidden_for(user.can_read)
@@ -611,11 +866,17 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     # ------------------------------------------------------------- tags
 
     @app.get("/api/tags", tags=["tags"])
-    def tag_list(areas: str | None = Query(None), user: User = Depends(current_user)):
-        """Tags with the number of visible documents carrying them."""
+    def tag_list(areas: str | None = Query(None),
+                 alt: bool = Query(False, description="also count documents in the Altablage"),
+                 user: User = Depends(current_user)):
+        """Tags with the number of visible documents carrying them.
+
+        Documents in the Altablage count only with ``alt``, so tags that exist only
+        there stay out of the sidebar until the Altablage is shown.
+        """
         # Mappen have their own list in the sidebar, so they are not repeated as tags
         mappen = {m["name"].casefold() for m in app.state.tags.mappen()}
-        return [t for t in app.state.tags.counts(app.state.index.shas(pick_areas(user, areas)))
+        return [t for t in app.state.tags.counts(app.state.index.shas(pick_areas(user, areas), alt=alt))
                 if t["name"].casefold() not in mappen]
 
     @app.put("/api/documents/{doc_id}/tags", tags=["tags"])
@@ -722,6 +983,71 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         _rescan()
         return {"path": path, "id": doc["id"]}
 
+    @app.post("/api/altablage", tags=["archive"])
+    def altablage(body: AltIn, user: User = Depends(current_user)):
+        """Move documents into the Altablage (``<area>/Altablage/<folder>``) or back to their old folder.
+
+        Pick them by ``ids``, by ``folder`` (with subfolders) or by age (``older_than_years``).
+        ``dry_run`` only tells how many documents from which folders would move.
+        """
+        if sum(bool(x) for x in (body.ids, body.folder, body.older_than_years)) != 1:
+            raise HTTPException(status_code=400, detail="give ids, folder or older_than_years")
+        index = app.state.index
+        writable = [a for a in pick_areas(user, body.areas) if user.can_write(a)]
+        many = 1_000_000
+        if body.ids:
+            docs = []
+            for doc_id in body.ids:
+                doc = index.document(doc_id, writable)
+                if not doc:
+                    raise HTTPException(status_code=404, detail="document not found")
+                docs.append(doc)
+        elif body.folder:
+            folder = body.folder.strip("/")
+            if body.restore and not is_alt(folder):
+                folder = f"{ALT}/{folder}"
+            if not body.restore and is_alt(folder):
+                raise HTTPException(status_code=400, detail="already in the Altablage")
+            docs = index.documents(writable, folder=folder, recursive=True, alt=True, limit=many)["items"]
+        else:
+            if body.restore:
+                raise HTTPException(status_code=400, detail="restore by age is not supported")
+            docs = index.documents(writable, recursive=True, before=cutoff(body.older_than_years),
+                                   limit=many)["items"]
+        docs = [d for d in docs if is_alt(d["folder"]) == body.restore]
+
+        if body.dry_run:
+            counts: dict[str, int] = {}
+            for d in docs:
+                counts[d["folder"]] = counts.get(d["folder"], 0) + 1
+            return {"count": len(docs),
+                    "folders": [{"folder": f, "count": n} for f, n in
+                                sorted(counts.items(), key=lambda x: (-x[1], x[0].casefold()))]}
+
+        archive = index.archive
+        moved, failed, emptied = [], [], set()
+        for d in docs:
+            target = from_alt(d["folder"]) if body.restore else f"{ALT}/{d['folder']}".rstrip("/")
+            try:
+                move_doc(archive, d, target)
+            except (DocOpError, OSError) as exc:
+                failed.append({"id": d["id"], "title": d["title"], "error": str(exc)})
+                continue
+            moved.append(d["id"])
+            emptied.add((archive / d["path"]).parent)
+        prune_empty(archive, emptied)
+        removed_template = False
+        if moved:
+            _rescan()
+            if body.folder and not body.restore and not failed and user.is_admin:
+                # the folder is done with: keep it out of the plan, too (it comes back with a restore)
+                try:
+                    app.state.folders.delete(body.folder.strip("/"))
+                    removed_template = True
+                except FolderError:
+                    pass
+        return {"moved": len(moved), "ids": moved, "failed": failed, "folder_removed": removed_template}
+
     @app.get("/api/trash", tags=["archive"])
     def trash_items(user: User = Depends(current_user)):
         return {"items": trash_list(app.state.index.archive, user.can_read),
@@ -796,7 +1122,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         _visible_mappe(name, user)
         shas = app.state.tags.shas_with_all([name])
         docs = [d for d in app.state.index.documents(allowed_areas(user), recursive=True, limit=5000,
-                                                     shas=shas)["items"]]
+                                                     shas=shas, alt=True)["items"]]
         if not docs:
             raise HTTPException(status_code=404, detail="mappe is empty")
         seen, unique = set(), []
@@ -873,10 +1199,20 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     def update_user(name: str, body: UserChange, user: User = Depends(require_admin)):
         if name == user.name and body.is_admin is False:
             raise HTTPException(status_code=400, detail="cannot remove your own admin role")
+        changes = body.model_dump(exclude_unset=True)
+        reset_totp = changes.pop("reset_totp", False)
+        sign_out = changes.pop("sign_out", False)
         try:
-            return app.state.users.update(name, **body.model_dump(exclude_unset=True)).public()
+            account = app.state.users.update(name, **changes)
+            if reset_totp and account.has_totp:
+                app.state.users.totp_off(name)
+                app.state.notify.send("notify_2fa_changes", "2fa.off.title", "2fa.off.body", priority=4,
+                                      tags="warning", user=name, by=user.name)
         except UserError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+        if (sign_out or changes.get("password") or reset_totp) and name != user.name:
+            app.state.sessions.revoke(name)
+        return app.state.users.get(name).public()
 
     @app.delete("/api/users/{name}", tags=["users"])
     def delete_user(name: str, user: User = Depends(require_admin)):
@@ -887,6 +1223,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         except UserError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         app.state.prefs.forget(name)
+        app.state.sessions.revoke(name)
         return {"ok": True}
 
     @app.get("/api/storage", tags=["storage"])
@@ -1361,6 +1698,29 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         return {"text": result.text[:200], "model": result.model, "seconds": result.seconds,
                 "input_tokens": result.input_tokens, "output_tokens": result.output_tokens,
                 "cost": round(result.cost, 6)}
+
+    @app.middleware("http")
+    async def same_origin_only(request: Request, call_next):
+        """Changes only from pages of this very host (protection against cross-site requests).
+
+        Browsers say where a request comes from in Sec-Fetch-Site; older ones only send
+        Origin. Requests without either (scripts, the API token) carry no cookies of a
+        victim and pass.
+        """
+        if request.method not in ("GET", "HEAD", "OPTIONS") and request.url.path.startswith("/api/"):
+            site = request.headers.get("sec-fetch-site")
+            origin = request.headers.get("origin")
+            refused = False
+            if site:
+                refused = site not in ("same-origin", "none")
+            elif origin and origin != "null":
+                host = request.headers.get("x-forwarded-host") or request.headers.get("host", "")
+                refused = origin.split("://", 1)[-1].rstrip("/") != host.split(",")[0].strip()
+            elif origin == "null":
+                refused = True
+            if refused:
+                return JSONResponse({"detail": "cross-site request refused"}, status_code=403)
+        return await call_next(request)
 
     @app.middleware("http")
     async def no_stale_ui(request: Request, call_next):

@@ -39,10 +39,10 @@ def test_edited_refuses_junk_and_readers(client: TestClient):
     bad = client.post(f"/api/documents/{doc['id']}/edited",
                       json={"pdf": base64.b64encode(b"hallo").decode(), "title": "x"})
     assert bad.status_code == 400
-    client.post("/api/users", json={"name": "erika", "password": "erika-pass",
+    client.post("/api/users", json={"name": "erika", "password": "erika-pass-2026",
                                     "areas": {"gemeinsam": "read"}})
     erika = TestClient(client.app)
-    login(erika, "erika", "erika-pass")
+    login(erika, "erika", "erika-pass-2026")
     assert erika.get("/api/me").json()["write_areas"] == []
     res = erika.post(f"/api/documents/{doc['id']}/edited",
                      json={"pdf": base64.b64encode(make_pdf("x")).decode(), "title": "x"})

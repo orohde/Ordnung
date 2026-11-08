@@ -19,6 +19,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+from .altablage import ALT
+
 MIN_ID_LEN = 6
 SCHEMA_VERSION = "2"
 SKIP_NAMES = {"@eaDir", "#recycle", "lost+found"}
@@ -414,7 +416,7 @@ class Index:
                     part, {"name": part, "path": "/".join(path), "count": 0, "own": 0,
                            "areas": set(), "children": {}})
         if not areas:
-            return _finish(root)
+            return {**_finish(root), "alt": None}
         marks = ",".join("?" * len(areas))
         with self.connect() as con:
             rows = con.execute(
@@ -422,7 +424,23 @@ class Index:
                 "GROUP BY area, folder",
                 areas,
             ).fetchall()
+        alt = {"name": ALT, "path": ALT, "count": 0, "own": 0, "areas": set(), "children": {}}
         for row in rows:
+            folder = row["folder"]
+            if folder == ALT or folder.startswith(ALT + "/"):
+                # the Altablage is its own little tree, kept out of "all documents"
+                node = alt
+                node["count"] += row["n"]
+                node["areas"].add(row["area"])
+                parts = folder.split("/")[1:]
+                for i, part in enumerate(parts):
+                    node = node["children"].setdefault(
+                        part, {"name": part, "path": "/".join([ALT, *parts[:i + 1]]), "count": 0, "own": 0,
+                               "areas": set(), "children": {}})
+                    node["count"] += row["n"]
+                    node["areas"].add(row["area"])
+                node["own"] += row["n"]
+                continue
             node = root
             node["count"] += row["n"]
             node["areas"].add(row["area"])
@@ -438,7 +456,9 @@ class Index:
                     node["count"] += row["n"]
                     node["areas"].add(row["area"])
             node["own"] += row["n"]
-        return _finish(root)
+        result = _finish(root)
+        result["alt"] = _finish(alt)
+        return result
 
     def documents(
         self,
@@ -449,8 +469,14 @@ class Index:
         limit: int = 500,
         offset: int = 0,
         shas: set[str] | None = None,
+        alt: bool = False,
+        before: str | None = None,
     ) -> dict:
-        """``shas`` limits the result to these contents (tag filter); empty set = nothing."""
+        """``shas`` limits the result to these contents (tag filter); empty set = nothing.
+
+        The Altablage is left out unless ``alt`` is set or ``folder`` lies inside it.
+        ``before`` keeps only documents dated before this ISO date (undated ones never match).
+        """
         if not areas or shas is not None and not shas:
             return {"total": 0, "items": []}
         marks = ",".join("?" * len(areas))
@@ -469,6 +495,12 @@ class Index:
                 args.append(folder)
         elif not recursive:
             where.append("f.folder = ''")
+        if not alt and not (folder == ALT or folder.startswith(ALT + "/")):
+            where.append("NOT (f.folder = ? OR f.folder LIKE ? ESCAPE '\\')")
+            args += [ALT, _like_escape(ALT) + "/%"]
+        if before:
+            where.append("f.doc_date IS NOT NULL AND f.doc_date < ?")
+            args.append(before)
 
         tokens = fold(query).split()
         long_tokens = [t for t in tokens if len(t) >= 3]
@@ -500,13 +532,18 @@ class Index:
                 ).fetchall()
         return {"total": total, "items": [_public(r) for r in rows]}
 
-    def shas(self, areas: list[str]) -> set[str]:
-        """Contents present in these areas."""
+    def shas(self, areas: list[str], alt: bool = True) -> set[str]:
+        """Contents present in these areas (``alt=False``: outside the Altablage)."""
         if not areas:
             return set()
         marks = ",".join("?" * len(areas))
+        sql = f"SELECT DISTINCT sha256 FROM files WHERE area IN ({marks})"
+        args = list(areas)
+        if not alt:
+            sql += " AND NOT (folder = ? OR folder LIKE ? ESCAPE '\\')"
+            args += [ALT, _like_escape(ALT) + "/%"]
         with self.connect() as con:
-            return {r[0] for r in con.execute(f"SELECT DISTINCT sha256 FROM files WHERE area IN ({marks})", areas)}
+            return {r[0] for r in con.execute(sql, args)}
 
     def document(self, doc_id: str, areas: list[str]) -> dict | None:
         """Look up a document by (prefix of) its id, limited to ``areas``."""

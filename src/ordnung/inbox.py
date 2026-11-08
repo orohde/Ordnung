@@ -156,9 +156,10 @@ def guess_date(text: str) -> str | None:
 
 class InboxService:
     def __init__(self, db_path: Path, storage: StorageService, index: Index, rules, folders, importplan,
-                 upload_dir: Path | None = None):
+                 upload_dir: Path | None = None, mail_dir: Path | None = None):
         self.db_path = db_path
         self.upload_dir = upload_dir      # built-in inbox for files uploaded in the browser
+        self.mail_dir = mail_dir          # built-in inbox for PDFs from the mail inbox (<area>/<file>)
         self.storage = storage
         self.index = index
         self.rules = rules
@@ -186,6 +187,9 @@ class InboxService:
         found = [i for i in self.storage.load().inboxes if i.enabled or not enabled_only]
         if self.upload_dir is not None:
             found.append(Inbox(id="upload", name="Hochgeladen", path=str(self.upload_dir),
+                               area="", enabled=True, after_import="move"))
+        if self.mail_dir is not None:
+            found.append(Inbox(id="mail", name="E-Mail", path=str(self.mail_dir),
                                area="", enabled=True, after_import="move"))
         return found
 

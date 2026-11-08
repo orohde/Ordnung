@@ -16,6 +16,7 @@ import os
 import threading
 from pathlib import Path
 
+from .altablage import ALT
 from .index import Index, fold
 
 INVALID = set('<>:"\\|?*')
@@ -87,7 +88,9 @@ class FolderTemplate:
     def on_disk(self) -> dict[str, int]:
         """Folders that hold documents (over all areas) with their own document count."""
         with self.index.connect() as con:
-            rows = con.execute("SELECT folder, COUNT(*) FROM files WHERE folder != '' GROUP BY folder")
+            # the Altablage is no filing target and no part of the plan
+            rows = con.execute("SELECT folder, COUNT(*) FROM files WHERE folder != '' AND folder != ? "
+                               "AND folder NOT LIKE ? GROUP BY folder", (ALT, ALT + "/%"))
             return {r[0]: r[1] for r in rows}
 
     def effective(self) -> set[str]:

@@ -70,9 +70,9 @@ def test_match_for_inbox(client: TestClient):
 
 
 def test_rules_admin_only(client: TestClient):
-    client.post("/api/users", json={"name": "gast", "password": "gast-pass"})
+    client.post("/api/users", json={"name": "gast", "password": "gast-pass-2026"})
     guest = TestClient(client.app)
-    guest.post("/api/login", json={"username": "gast", "password": "gast-pass"})
+    guest.post("/api/login", json={"username": "gast", "password": "gast-pass-2026"})
     assert guest.get("/api/rules").status_code == 403
 
 

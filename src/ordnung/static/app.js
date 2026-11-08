@@ -87,6 +87,20 @@ const I18N = {
     "dm.download": "Herunterladen",
     "dm.folder": "Im Ordnerbaum zeigen",
     "dm.trash": "In den Papierkorb",
+    'alt.name': 'Altablage', 'alt.tip': 'Alte Unterlagen: ausgeblendet, aber jederzeit erreichbar',
+    'alt.search': 'Altablage mitsuchen', 'alt.badge': 'Altablage',
+    'alt.doc.to': 'In die Altablage', 'alt.doc.back': 'Aus der Altablage zurückholen',
+    'alt.fo.to': 'Ordner in die Altablage …', 'alt.fo.back': 'Ordner zurückholen',
+    'alt.fo.q': 'Alle {n} Dokumente aus „{folder}“ in die Altablage verschieben?\n\nSie bleiben erhalten, sind nur nicht mehr im Baum und in der Suche zu sehen und lassen sich jederzeit zurückholen.',
+    'alt.moved': '{n} in die Altablage verschoben.', 'alt.restored': '{n} aus der Altablage zurückgeholt.',
+    'alt.failed': '{n} ließen sich nicht verschieben (am Ziel liegt schon eine gleichnamige Datei).',
+    'alt.years': 'Alte Dokumente einsortieren …', 'alt.dlg': 'Alte Dokumente in die Altablage',
+    'alt.dlg.years': 'Älter als (Jahre)',
+    'alt.dlg.hint': 'Maßgeblich ist das Dokumentdatum. Dokumente ohne Datum bleiben, wo sie sind. Es zählen die oben gewählten Bereiche.',
+    'alt.dlg.count': '{n} Dokumente vor dem {date} würden verschoben:', 'alt.dlg.none': 'Keine Dokumente vor dem {date}.',
+    'alt.dlg.more': '… und {n} weitere Ordner', 'alt.dlg.go': 'Verschieben',
+    'alt.bulk': 'In die Altablage', 'alt.bulk.back': 'Zurückholen',
+    'err.already in the Altablage': 'Das liegt schon in der Altablage.',
     "dm.dlg": "Dokument bearbeiten",
     "dm.title": "Titel",
     "dm.date": "Datum",
@@ -226,6 +240,74 @@ const I18N = {
     'ai.models.builtin': 'Eingebaute Liste – Abfrage beim Anbieter nicht möglich: {reason}',
     'acc.who': 'Angemeldet als {name}', 'acc.old': 'Aktuelles Passwort', 'acc.new': 'Neues Passwort',
     'acc.change': 'Passwort ändern', 'acc.ok': 'Passwort geändert.',
+    "login.code": "Code aus der App",
+    "login.code.hint": "Oder einer deiner Wiederherstellungscodes.",
+    "login.need.code": "Bitte den Code aus deiner Authenticator-App eingeben.",
+    "login.bad.code": "Der Code stimmt nicht oder wurde schon benutzt.",
+    "login.locked": "Zu viele Fehlversuche. Bitte in {s} Sekunden noch einmal versuchen.",
+    "login.need.2fa": "Von außen geht die Anmeldung nur mit zweitem Faktor. Richte ihn im Heimnetz unter Einstellungen → Mein Konto ein.",
+    "acc.ok.out": "Passwort geändert. {n} andere Geräte wurden abgemeldet.",
+    "mfa.title": "Zweiter Faktor",
+    "mfa.state.on": "Eingeschaltet. Von außen fragt Ordnung! nach dem Code aus der App. Noch {n} Wiederherstellungscodes übrig.",
+    "mfa.state.off": "Nicht eingerichtet. Mit einem zweiten Faktor reicht ein gestohlenes Passwort nicht mehr, um von außen hineinzukommen.",
+    "mfa.setup": "Einrichten",
+    "mfa.scan": "Scanne den Code mit einer Authenticator-App (zum Beispiel Bitwarden, 2FAS, Aegis oder Google Authenticator) und gib dann die sechs Ziffern ein, die sie anzeigt.",
+    "mfa.manual": "Oder von Hand eingeben:",
+    "mfa.confirm": "Einschalten",
+    "mfa.codes.hint": "Deine Wiederherstellungscodes. Mit jedem kommst du einmal hinein, falls das Telefon weg ist. Lege sie jetzt sicher ab, zum Beispiel im Passwortmanager. Ordnung! zeigt sie nicht noch einmal.",
+    "mfa.copy": "Kopieren",
+    "mfa.copied": "Kopiert.",
+    "mfa.done": "Ich habe sie gesichert",
+    "mfa.renew": "Neue Wiederherstellungscodes",
+    "mfa.off": "Zweiten Faktor ausschalten",
+    "mfa.code.or": "Code oder Wiederherstellungscode",
+    "mfa.off.btn": "Ausschalten",
+    "mfa.off.q": "Zweiten Faktor wirklich ausschalten? Von außen reicht dann wieder das Passwort.",
+    "mfa.off.ok": "Der zweite Faktor ist aus.",
+    "ses.title": "Angemeldete Geräte",
+    "ses.others": "Alle anderen abmelden",
+    "ses.this": "dieses Gerät",
+    "ses.out": "von außen",
+    "ses.in": "Heimnetz",
+    "ses.mfa": "mit Code",
+    "ses.seen": "zuletzt {time}",
+    "ses.since": "angemeldet {time}",
+    "ses.end": "Abmelden",
+    "ses.ended": "{n} Geräte abgemeldet.",
+    "usr.mfa": "Zweiter Faktor",
+    "usr.mfa.on": "an",
+    "usr.mfa.off": "aus",
+    "usr.signout": "Auf allen Geräten abmelden",
+    "usr.resettotp": "Zweiten Faktor zurücksetzen (wenn das Telefon verloren ist)",
+    "set.security": "Sicherheit",
+    "sec.policy": "Anmeldung",
+    "sec.ext": "Von außen nur mit zweitem Faktor",
+    "sec.ext.hint": "Konten ohne zweiten Faktor können sich dann nur noch im Heimnetz anmelden. Einschalten lässt sich das erst, wenn dein eigenes Konto einen hat.",
+    "sec.int": "Zweiten Faktor auch im Heimnetz verlangen",
+    "sec.int.hint": "Sonst reicht zu Hause das Passwort. Von außen fragt Ordnung! immer nach dem Code, wenn ein Konto einen zweiten Faktor hat.",
+    "sec.without": "Noch ohne zweiten Faktor: {names}. Diese Konten kommen dann nur noch im Heimnetz hinein.",
+    "sec.ntfy": "Benachrichtigungen per ntfy",
+    "sec.url": "Topic-Adresse",
+    "sec.token": "Zugangs-Token",
+    "sec.token.set": "gespeichert – leer lassen = unverändert",
+    "sec.when": "Melden bei",
+    "sec.n.ext": "jeder Anmeldung von außen",
+    "sec.n.lock": "gesperrtem Konto nach Fehlversuchen",
+    "sec.n.2fa": "Änderungen am zweiten Faktor und benutzten Wiederherstellungscodes",
+    "sec.test": "Testnachricht",
+    "sec.test.ok": "Testnachricht verschickt.",
+    "sec.saved": "Gespeichert.",
+    "sec.where.in": "Du bist gerade im Heimnetz angemeldet.",
+    "sec.where.out": "Du bist gerade von außen angemeldet.",
+    "err.invalid code": "Der Code stimmt nicht.",
+    "err.second factor already on": "Der zweite Faktor ist schon eingeschaltet.",
+    "err.no second factor being set up": "Bitte die Einrichtung neu beginnen.",
+    "err.set up your own second factor first": "Richte zuerst für dein eigenes Konto den zweiten Faktor ein, sonst sperrst du dich von außen aus.",
+    "err.ntfy address must start with http:// or https://": "Die ntfy-Adresse muss mit http:// oder https:// beginnen.",
+    "err.cross-site request refused": "Anfrage von einer fremden Seite abgelehnt.",
+    "err.password too short (min. 12)": "Das Passwort braucht mindestens 12 Zeichen.",
+    "err.only for personal accounts": "Das geht nur mit einem persönlichen Konto.",
+    "err.not configured": "Erst eine Topic-Adresse eintragen und speichern.",
     'usr.new': 'Neuer Benutzer', 'usr.edit': 'Benutzer {name} bearbeiten', 'usr.name': 'Benutzer',
     'usr.display': 'Anzeigename', 'usr.pass': 'Passwort', 'usr.pass.keep': 'leer lassen = unverändert',
     'usr.role': 'Rolle', 'usr.areas': 'Bereiche', 'usr.admin': 'Administrator (sieht alle Bereiche, darf Einstellungen ändern)',
@@ -249,6 +331,28 @@ const I18N = {
     'err.last administrator': 'Der letzte Administrator kann nicht entfernt werden.',
     'err.wrong password': 'Aktuelles Passwort stimmt nicht.', 'err.cannot delete yourself': 'Du kannst dich nicht selbst löschen.',
     'err.cannot remove your own admin role': 'Die eigene Admin-Rolle kann man nicht abgeben.',
+    'usr.emails': 'E-Mail-Adressen', 'usr.emails.hint': 'Von diesen Adressen nimmt der E-Mail-Eingang PDFs an. Mehrere mit Komma trennen.',
+    'usr.mailarea': 'Mails gehören zu', 'usr.mailarea.auto': 'automatisch (eigener Bereich)',
+    'set.mail': 'E-Mail-Eingang',
+    'ml.intro': 'PDFs per Mail an eine eigene Adresse schicken oder weiterleiten, etwa vom iPhone. Ordnung! holt die Mails jede Minute ab und legt die PDF-Anhänge in den Posteingang. Angenommen werden nur Mails von Adressen, die bei einem Benutzer hinterlegt sind; der Benutzer bestimmt den Bereich. Alles andere bleibt im Postfach, verschoben nach „Abgelehnt“ und nach der eingestellten Frist gelöscht.',
+    'ml.enabled': 'Mails abholen', 'ml.host': 'IMAP-Server', 'ml.user': 'Benutzer', 'ml.pass': 'Passwort',
+    'ml.pass.set': 'gespeichert – leer lassen = unverändert', 'ml.folder': 'Ordner im Postfach',
+    'ml.auth': 'Gefälschte Absender ablehnen (SPF/DKIM/DMARC des Mailservers)',
+    'ml.days': 'Abgelehnte Mails löschen nach', 'ml.days.unit': 'Tagen (0 = sofort)', 'err.invalid number of days': 'Ungültige Anzahl Tage.',
+    'ml.senders': 'Bekannte Absender', 'ml.senders.edit': 'Adressen bei den Benutzern eintragen',
+    'ml.senders.none': 'Noch bei keinem Benutzer eine E-Mail-Adresse hinterlegt – bis dahin wird jede Mail abgelehnt.',
+    'ml.area.pick': 'Bereich beim Einsortieren wählen',
+    'ml.test': 'Verbindung testen', 'ml.test.ok': 'Verbindung klappt, {n} Mail(s) warten.',
+    'ml.fetch': 'Jetzt abholen', 'ml.fetch.ok': '{n} Mail(s) abgeholt, {files} PDF(s) im Posteingang.', 'ml.fetch.busy': 'Läuft gerade schon.',
+    'ml.log': 'Zuletzt eingegangen', 'ml.log.none': 'Noch keine Mails abgeholt.',
+    'ml.ev.ok': '{n} PDF(s) → Posteingang ({area})', 'ml.ev.unknown_sender': 'abgelehnt: unbekannter Absender',
+    'ml.ev.forged': 'abgelehnt: Absender nicht echt (SPF/DKIM)', 'ml.ev.no_pdf': 'abgelehnt: kein PDF-Anhang',
+    'ml.ev.error': 'Fehler, wird erneut versucht: {detail}',
+    'err.invalid e-mail address': 'Keine gültige E-Mail-Adresse: {address}',
+    'err.e-mail address taken': 'Die Adresse {address} gehört schon zu {name}.',
+    'err.mail connection failed': 'Keine Verbindung zum Postfach: {detail}',
+    'err.server, user and password are needed': 'Server, Benutzer und Passwort eintragen.',
+    'err.invalid port': 'Ungültiger Port.',
   },
   en: {
     'login.user': 'User', 'login.pass': 'Password', 'login.submit': 'Sign in',
@@ -333,6 +437,20 @@ const I18N = {
     "dm.download": "Download",
     "dm.folder": "Show in the folder tree",
     "dm.trash": "Move to trash",
+    'alt.name': 'Old files', 'alt.tip': 'Old papers: hidden, but always at hand',
+    'alt.search': 'Search old files too', 'alt.badge': 'Old files',
+    'alt.doc.to': 'Move to old files', 'alt.doc.back': 'Take back from old files',
+    'alt.fo.to': 'Move folder to old files …', 'alt.fo.back': 'Take folder back',
+    'alt.fo.q': 'Move all {n} documents of “{folder}” to the old files?\n\nThey are kept, just no longer shown in the tree and the search, and can be taken back at any time.',
+    'alt.moved': '{n} moved to the old files.', 'alt.restored': '{n} taken back from the old files.',
+    'alt.failed': '{n} could not be moved (a file of the same name is already there).',
+    'alt.years': 'Put away old documents …', 'alt.dlg': 'Old documents to the old files',
+    'alt.dlg.years': 'Older than (years)',
+    'alt.dlg.hint': 'The document date decides. Documents without a date stay where they are. The areas chosen above count.',
+    'alt.dlg.count': '{n} documents before {date} would move:', 'alt.dlg.none': 'No documents before {date}.',
+    'alt.dlg.more': '… and {n} more folders', 'alt.dlg.go': 'Move',
+    'alt.bulk': 'To old files', 'alt.bulk.back': 'Take back',
+    'err.already in the Altablage': 'This is already in the old files.',
     "dm.dlg": "Edit document",
     "dm.title": "Title",
     "dm.date": "Date",
@@ -471,6 +589,74 @@ const I18N = {
     'ai.models.builtin': 'Built-in list – could not ask the provider: {reason}',
     'acc.who': 'Signed in as {name}', 'acc.old': 'Current password', 'acc.new': 'New password',
     'acc.change': 'Change password', 'acc.ok': 'Password changed.',
+    "login.code": "Code from the app",
+    "login.code.hint": "Or one of your recovery codes.",
+    "login.need.code": "Please enter the code from your authenticator app.",
+    "login.bad.code": "The code is wrong or was already used.",
+    "login.locked": "Too many failed attempts. Please try again in {s} seconds.",
+    "login.need.2fa": "From outside, signing in needs a second factor. Set it up at home under Settings → My account.",
+    "acc.ok.out": "Password changed. {n} other devices were signed out.",
+    "mfa.title": "Second factor",
+    "mfa.state.on": "On. From outside, Ordnung! asks for the code from the app. {n} recovery codes left.",
+    "mfa.state.off": "Not set up. With a second factor, a stolen password is no longer enough to get in from outside.",
+    "mfa.setup": "Set up",
+    "mfa.scan": "Scan the code with an authenticator app (for example Bitwarden, 2FAS, Aegis or Google Authenticator), then enter the six digits it shows.",
+    "mfa.manual": "Or enter it by hand:",
+    "mfa.confirm": "Turn on",
+    "mfa.codes.hint": "Your recovery codes. Each gets you in once if your phone is gone. Store them safely now, for example in your password manager. Ordnung! will not show them again.",
+    "mfa.copy": "Copy",
+    "mfa.copied": "Copied.",
+    "mfa.done": "I have saved them",
+    "mfa.renew": "New recovery codes",
+    "mfa.off": "Turn off second factor",
+    "mfa.code.or": "Code or recovery code",
+    "mfa.off.btn": "Turn off",
+    "mfa.off.q": "Really turn off the second factor? From outside, the password alone will be enough again.",
+    "mfa.off.ok": "The second factor is off.",
+    "ses.title": "Signed-in devices",
+    "ses.others": "Sign out all others",
+    "ses.this": "this device",
+    "ses.out": "from outside",
+    "ses.in": "home network",
+    "ses.mfa": "with code",
+    "ses.seen": "last seen {time}",
+    "ses.since": "signed in {time}",
+    "ses.end": "Sign out",
+    "ses.ended": "{n} devices signed out.",
+    "usr.mfa": "Second factor",
+    "usr.mfa.on": "on",
+    "usr.mfa.off": "off",
+    "usr.signout": "Sign out on all devices",
+    "usr.resettotp": "Reset second factor (if the phone is lost)",
+    "set.security": "Security",
+    "sec.policy": "Sign-in",
+    "sec.ext": "From outside only with a second factor",
+    "sec.ext.hint": "Accounts without a second factor can then sign in only from the home network. This can only be turned on once your own account has one.",
+    "sec.int": "Ask for the second factor at home too",
+    "sec.int.hint": "Otherwise the password is enough at home. From outside, Ordnung! always asks for the code if an account has a second factor.",
+    "sec.without": "Still without a second factor: {names}. These accounts will then only get in from the home network.",
+    "sec.ntfy": "Notifications via ntfy",
+    "sec.url": "Topic address",
+    "sec.token": "Access token",
+    "sec.token.set": "saved – leave empty = unchanged",
+    "sec.when": "Notify on",
+    "sec.n.ext": "every sign-in from outside",
+    "sec.n.lock": "an account locked after failed attempts",
+    "sec.n.2fa": "changes to the second factor and used recovery codes",
+    "sec.test": "Test message",
+    "sec.test.ok": "Test message sent.",
+    "sec.saved": "Saved.",
+    "sec.where.in": "You are signed in from the home network.",
+    "sec.where.out": "You are signed in from outside.",
+    "err.invalid code": "The code is wrong.",
+    "err.second factor already on": "The second factor is already on.",
+    "err.no second factor being set up": "Please start the setup again.",
+    "err.set up your own second factor first": "Set up the second factor for your own account first, or you would lock yourself out from outside.",
+    "err.ntfy address must start with http:// or https://": "The ntfy address must start with http:// or https://.",
+    "err.cross-site request refused": "Request from a foreign page refused.",
+    "err.password too short (min. 12)": "The password needs at least 12 characters.",
+    "err.only for personal accounts": "This only works with a personal account.",
+    "err.not configured": "Enter a topic address and save first.",
     'usr.new': 'New user', 'usr.edit': 'Edit user {name}', 'usr.name': 'User',
     'usr.display': 'Display name', 'usr.pass': 'Password', 'usr.pass.keep': 'leave empty = unchanged',
     'usr.role': 'Role', 'usr.areas': 'Areas', 'usr.admin': 'Administrator (sees all areas, may change settings)',
@@ -494,6 +680,28 @@ const I18N = {
     'err.last administrator': 'The last administrator cannot be removed.',
     'err.wrong password': 'Current password is wrong.', 'err.cannot delete yourself': 'You cannot delete yourself.',
     'err.cannot remove your own admin role': 'You cannot give up your own admin role.',
+    'usr.emails': 'E-mail addresses', 'usr.emails.hint': 'The mail inbox accepts PDFs from these addresses. Separate several with commas.',
+    'usr.mailarea': 'Mails belong to', 'usr.mailarea.auto': 'automatic (own area)',
+    'set.mail': 'Mail inbox',
+    'ml.intro': 'Send or forward PDFs to an address of their own, from the iPhone for example. Ordnung! collects the mails every minute and puts the PDF attachments into the inbox. Only mails from addresses stored with a user are taken; the user decides the area. Everything else stays in the mailbox, moved to “Abgelehnt” and deleted after the set number of days.',
+    'ml.enabled': 'Collect mails', 'ml.host': 'IMAP server', 'ml.user': 'User', 'ml.pass': 'Password',
+    'ml.pass.set': 'saved – leave empty to keep', 'ml.folder': 'Mailbox folder',
+    'ml.auth': 'Refuse forged senders (SPF/DKIM/DMARC of the mail server)',
+    'ml.days': 'Delete refused mails after', 'ml.days.unit': 'days (0 = at once)', 'err.invalid number of days': 'Invalid number of days.',
+    'ml.senders': 'Known senders', 'ml.senders.edit': 'Enter addresses with the users',
+    'ml.senders.none': 'No user has an e-mail address yet – until then every mail is refused.',
+    'ml.area.pick': 'choose the area when filing',
+    'ml.test': 'Test connection', 'ml.test.ok': 'Connection works, {n} mail(s) waiting.',
+    'ml.fetch': 'Collect now', 'ml.fetch.ok': '{n} mail(s) collected, {files} PDF(s) in the inbox.', 'ml.fetch.busy': 'Already running.',
+    'ml.log': 'Recently received', 'ml.log.none': 'No mails collected yet.',
+    'ml.ev.ok': '{n} PDF(s) → inbox ({area})', 'ml.ev.unknown_sender': 'refused: unknown sender',
+    'ml.ev.forged': 'refused: sender not genuine (SPF/DKIM)', 'ml.ev.no_pdf': 'refused: no PDF attachment',
+    'ml.ev.error': 'error, will be retried: {detail}',
+    'err.invalid e-mail address': 'Not a valid e-mail address: {address}',
+    'err.e-mail address taken': 'The address {address} already belongs to {name}.',
+    'err.mail connection failed': 'Cannot reach the mailbox: {detail}',
+    'err.server, user and password are needed': 'Enter server, user and password.',
+    'err.invalid port': 'Invalid port.',
   },
 };
 const LANGS = ['de', 'en', 'fr', 'it'];
@@ -558,6 +766,7 @@ const State = {
   active: new Set(),  // selected areas
   folder: store.get('folder', ''),
   recursive: store.get('recursive', true),
+  withAlt: false,          // search the Altablage too; on purpose not remembered
   query: '',
   open: new Set(store.get('open', [])),
   items: [],
@@ -587,6 +796,12 @@ const errText = e => {
   if (m) return t('err.unknown model', { model: m[1] });
   const d = /^already in the archive: (.+)$/.exec(e.message);
   if (d) return t('err.already in the archive', { path: d[1] });
+  const em = /^invalid e-mail address: (.+)$/.exec(e.message);
+  if (em) return t('err.invalid e-mail address', { address: em[1] });
+  const eo = /^e-mail address already belongs to ([^:]+): (.+)$/.exec(e.message);
+  if (eo) return t('err.e-mail address taken', { name: eo[1], address: eo[2] });
+  const ec = /^connection failed: (.*)$/.exec(e.message);
+  if (ec) return t('err.mail connection failed', { detail: ec[1] });
   return e.message;
 };
 
@@ -680,9 +895,22 @@ function renderTree() {
   box.innerHTML = '';
   const all = { ...treeData, name: t('tree.all'), path: '' };
   addNode(box, all, 0);
+  // the Altablage sits apart below the tree: old papers, out of sight but at hand
+  const alt = treeData.alt;
+  if (alt && (alt.count || writesAny())) {
+    const sep = document.createElement('div');
+    sep.className = 'tree-sep';
+    box.appendChild(sep);
+    addNode(box, { ...alt, name: t('alt.name') }, 1, true);
+  }
 }
 
-function addNode(box, node, depth) {
+const ALT = 'Altablage';
+const isAlt = folder => folder === ALT || (folder || '').startsWith(ALT + '/');
+const writesAny = () => !!State.me && (State.me.is_admin || (State.me.write_areas || []).length > 0);
+const altLabel = folder => isAlt(folder) ? [t('alt.name'), ...folder.split('/').slice(1)].join('/') : folder;
+
+function addNode(box, node, depth, altRoot = false) {
   const hasKids = node.children.length > 0;
   const isOpen = depth === 0 || State.open.has(node.path);
   const row = document.createElement('div');
@@ -693,11 +921,13 @@ function addNode(box, node, depth) {
     ? `<span class="tree-dots">${node.areas.map(a => `<span class="area-dot" style="--dot:${areaColor(a)}" title="${esc(areaLabel(a))}"></span>`).join('')}</span>`
     : '';
   if (!node.count && depth > 0) row.classList.add('is-empty');
+  if (isAlt(node.path)) row.classList.add('tree-row--alt');
+  if (altRoot) row.title = t('alt.tip');
   row.innerHTML =
     `<span class="tree-caret${isOpen ? ' is-open' : ''}">${hasKids && depth > 0 ? '›' : ''}</span>` +
     `<span class="tree-name">${esc(node.name)}</span>${dots}` +
     `<span class="tree-count">${node.count}</span>` +
-    (State.me && State.me.is_admin ? `<button type="button" class="tree-menu" title="${esc(t('fo.menu'))}" aria-label="${esc(t('fo.menu'))}">⋯</button>` : '');
+    (writesAny() ? `<button type="button" class="tree-menu" title="${esc(t('fo.menu'))}" aria-label="${esc(t('fo.menu'))}">⋯</button>` : '');
   const menuBtn = row.querySelector('.tree-menu');
   if (menuBtn) menuBtn.addEventListener('click', ev => { ev.stopPropagation(); folderMenu(menuBtn, node); });
   box.appendChild(row);
@@ -780,6 +1010,7 @@ function selectFolder(path) {
   renderTree();
   renderMappen();
   loadDocs();
+  loadTags();
 }
 
 // ----------------------------------------------------------------- list
@@ -796,6 +1027,7 @@ async function loadDocs(append = false) {
     'folder=' + encodeURIComponent(searching || State.tags.size ? '' : State.folder),
     'recursive=' + (searching || State.recursive),
     'tags=' + encodeURIComponent([...State.tags].join(',')),
+    'alt=' + State.withAlt,
     'q=' + encodeURIComponent(State.query),
     'limit=' + PAGE,
     'offset=' + offset,
@@ -809,7 +1041,7 @@ async function loadDocs(append = false) {
 
 function renderList() {
   const searching = State.query.trim().length > 0 || State.tags.size > 0;
-  const folderName = State.folder ? State.folder.split('/').pop() : t('tree.all');
+  const folderName = State.folder === ALT ? t('alt.name') : State.folder ? State.folder.split('/').pop() : t('tree.all');
   $('list-title').textContent = State.query.trim() ? `${t('list.search')}: ${State.query}`
     : State.mappe ? '📎 ' + State.mappe : (State.tags.size ? t('tags.filter') + ':' : folderName);
   const inMappe = !!State.mappe && !State.query.trim();
@@ -831,13 +1063,16 @@ function renderList() {
   const showFolder = searching || State.recursive;
   for (const doc of State.items) {
     const tr = document.createElement('tr');
-    tr.className = 'fd-table__row' + (State.selected && State.selected.id === doc.id ? ' is-selected' : '');
+    tr.className = 'fd-table__row' + (State.selected && State.selected.id === doc.id ? ' is-selected' : '') +
+      (isAlt(doc.folder) && (searching || !isAlt(State.folder)) ? ' is-alt' : '');
     const linked = State.mappe && !State.query.trim();
     const sub = (linked
       ? `<div class="doc-folder"><span class="link-badge">📎 ${esc(t('mp.linked'))}</span> ${esc(t('mp.in'))} ` +
         `<a href="#" class="goto-folder" data-folder="${esc(doc.folder)}">${esc((doc.folder || t('tree.root')).replaceAll('/', ' › '))}</a></div>`
       : showFolder && (searching || doc.folder !== State.folder)
-      ? `<div class="doc-folder">${esc(doc.folder || t('tree.root'))}</div>` : '') +
+      ? (isAlt(doc.folder) && (searching || !isAlt(State.folder))
+        ? `<div class="doc-folder"><span class="alt-badge">${esc(t('alt.badge'))}</span> ${esc(doc.folder.split('/').slice(1).join('/'))}</div>`
+        : `<div class="doc-folder">${esc(isAlt(doc.folder) ? altLabel(doc.folder) : (doc.folder || t('tree.root')))}</div>`) : '') +
       (doc.snippet ? `<div class="doc-snippet">${highlight(doc.snippet)}</div>` : '');
     const shownTags = (doc.tags || []).filter(x => !(linked && x === State.mappe));
     const tags = shownTags.length
@@ -1061,8 +1296,8 @@ async function loadStatus() {
 
 // -------------------------------------------------------------- settings
 
-const PANES = { konto: 'account', benutzer: 'users', ordner: 'folders', ablage: 'storage', ki: 'ai', system: 'system' };
-const ADMIN_PANES = new Set(['users', 'folders', 'storage', 'ai', 'system']);
+const PANES = { konto: 'account', benutzer: 'users', ordner: 'folders', ablage: 'storage', ki: 'ai', email: 'mail', sicherheit: 'security', system: 'system' };
+const ADMIN_PANES = new Set(['users', 'folders', 'storage', 'ai', 'mail', 'security', 'system']);
 
 function route() {
   if (!State.me) return;
@@ -1097,6 +1332,9 @@ function showPane(pane) {
   document.querySelectorAll('.set-pane').forEach(p => { p.hidden = p.dataset.pane !== pane; });
   if (pane !== 'users') $('usr-form').hidden = true;
   if (pane === 'users') loadUsers();
+  if (pane === 'account') loadAccountSecurity();
+  if (pane === 'security') loadSecurity();
+  if (pane === 'mail') loadMail();
   if (pane === 'ai') loadAI();
   if (pane === 'storage') loadStorage();
   if (pane === 'folders') loadFolders();
@@ -1124,6 +1362,7 @@ async function loadUsers() {
       `<td class="fd-table__cell"><div class="doc-title">${esc(u.display_name || u.name)}</div><div class="doc-folder">${esc(u.name)}</div></td>` +
       `<td class="fd-table__cell"><span class="role-badge">${t(u.is_admin ? 'usr.adminrole' : 'usr.userrole')}</span></td>` +
       `<td class="fd-table__cell">${esc(areas)}</td>` +
+      `<td class="fd-table__cell"><span class="mfa-badge${u.totp ? '' : ' is-off'}">${t(u.totp ? 'usr.mfa.on' : 'usr.mfa.off')}</span></td>` +
       `<td class="fd-table__cell usr-actions">` +
       `<button class="fd-button fd-button--transparent" data-act="edit">${t('btn.edit')}</button>` +
       (u.name === State.me.name ? '' : `<button class="fd-button fd-button--transparent fd-button--negative" data-act="del">${t('btn.delete')}</button>`) +
@@ -1147,6 +1386,10 @@ function editUser(u) {
   $('usr-pass').required = !u;
   $('usr-pass').placeholder = u ? t('usr.pass.keep') : '';
   $('usr-admin').checked = u ? u.is_admin : false;
+  $('usr-signout').checked = false;
+  $('usr-reset-totp').checked = false;
+  document.querySelectorAll('.usr-existing').forEach(el => { el.hidden = !u; });
+  document.querySelectorAll('.usr-mfa-reset').forEach(el => { el.hidden = !(u && u.totp); });
   const box = $('usr-areas');
   box.innerHTML = '';
   for (const area of State.areas) {
@@ -1163,6 +1406,11 @@ function editUser(u) {
     select.value = (u && u.areas[area.name]) || 'none';
     box.append(label, select);
   }
+  $('usr-emails').value = u ? (u.emails || []).join(', ') : '';
+  const mailArea = $('usr-mail-area');
+  mailArea.innerHTML = `<option value="">${esc(t('usr.mailarea.auto'))}</option>` +
+    State.areas.map(a => `<option value="${esc(a.name)}">${esc(areaLabel(a.name))}</option>`).join('');
+  mailArea.value = (u && u.mail_area) || '';
   syncAdminAreas();
   (u ? $('usr-display') : $('usr-name')).focus();
 }
@@ -1180,10 +1428,14 @@ async function saveUser(ev) {
     display_name: $('usr-display').value,
     is_admin: $('usr-admin').checked,
     areas,
+    emails: $('usr-emails').value.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean),
+    mail_area: $('usr-mail-area').value,
   };
   if ($('usr-pass').value) body.password = $('usr-pass').value;
   try {
     if (editing) {
+      if ($('usr-signout').checked) body.sign_out = true;
+      if ($('usr-reset-totp').checked) body.reset_totp = true;
       await api('users/' + encodeURIComponent(editing), { method: 'PATCH', body: JSON.stringify(body) });
     } else {
       body.name = $('usr-name').value.trim().toLowerCase();
@@ -1204,6 +1456,248 @@ async function deleteUser(u) {
   } catch (e) {
     alert(errText(e));
   }
+}
+
+// ------------------------------------------------- second factor, devices
+
+const fmtTime = ts => new Date(ts * 1000).toLocaleString(LANG, { dateStyle: 'short', timeStyle: 'short' });
+
+function mfaView(mode) {
+  // mode: 'off' | 'setup' | 'codes' | 'on'
+  $('mfa-start').hidden = mode !== 'off';
+  $('mfa-setup').hidden = mode !== 'setup';
+  $('mfa-codes').hidden = mode !== 'codes';
+  $('mfa-on').hidden = mode !== 'on';
+  document.querySelectorAll('#mfa-card .form-msg').forEach(el => { el.textContent = ''; });
+}
+
+async function loadAccountSecurity() {
+  if (State.me.name === 'api') { $('mfa-card').hidden = true; return; }
+  if (!$('mfa-codes').hidden || !$('mfa-setup').hidden) { loadSessions(); return; }   // mid-setup: keep it
+  State.me = await api('me');
+  $('mfa-state').textContent = State.me.totp
+    ? t('mfa.state.on', { n: State.me.recovery_left }) : t('mfa.state.off');
+  mfaView(State.me.totp ? 'on' : 'off');
+  loadSessions();
+}
+
+async function loadSessions() {
+  const list = await api('me/sessions');
+  const rows = $('ses-rows');
+  rows.innerHTML = '';
+  for (const s of list) {
+    const tr = document.createElement('tr');
+    tr.className = 'fd-table__row';
+    const where = [s.external ? t('ses.out') : t('ses.in'), s.ip, s.mfa ? t('ses.mfa') : ''].filter(Boolean).join(' · ');
+    tr.innerHTML =
+      `<td class="fd-table__cell"><div class="doc-title">${esc(s.device)}${s.current ? ` <span class="mfa-badge">${t('ses.this')}</span>` : ''}</div>` +
+      `<div class="doc-folder">${esc(where)}</div></td>` +
+      `<td class="fd-table__cell"><div class="doc-folder">${esc(t('ses.seen', { time: fmtTime(s.last_seen) }))}</div>` +
+      `<div class="doc-folder">${esc(t('ses.since', { time: fmtTime(s.created) }))}</div></td>` +
+      `<td class="fd-table__cell ses-act">` +
+      (s.current ? '' : `<button class="fd-button fd-button--transparent" type="button">${t('ses.end')}</button>`) + `</td>`;
+    tr.title = s.agent;
+    tr.querySelector('button')?.addEventListener('click', async () => {
+      await api('me/sessions/' + encodeURIComponent(s.id), { method: 'DELETE' });
+      loadSessions();
+    });
+    rows.appendChild(tr);
+  }
+  $('ses-others').hidden = list.length < 2;
+}
+
+function showRecoveryCodes(codes) {
+  $('mfa-code-list').textContent = codes.join('\n');
+  mfaView('codes');
+}
+
+function initAccountSecurity() {
+  $('mfa-start').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    try {
+      const r = await api('me/totp/setup', { method: 'POST', body: JSON.stringify({ password: $('mfa-pass').value }) });
+      $('mfa-pass').value = '';
+      $('mfa-qr').src = r.qr;
+      $('mfa-secret').textContent = r.secret;
+      mfaView('setup');
+      $('mfa-code').value = '';
+      $('mfa-code').focus();
+    } catch (e) { setMsg($('mfa-msg-start'), errText(e), false); }
+  });
+  $('mfa-abort').addEventListener('click', () => { mfaView('off'); });
+  $('mfa-confirm').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    try {
+      const r = await api('me/totp/enable', { method: 'POST', body: JSON.stringify({ code: $('mfa-code').value }) });
+      showRecoveryCodes(r.recovery_codes);
+    } catch (e) { setMsg($('mfa-msg-confirm'), errText(e), false); }
+  });
+  $('mfa-copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText($('mfa-code-list').textContent); toast(esc(t('mfa.copied')), null, 2500); }
+    catch { /* select-all on the list still works */ }
+  });
+  $('mfa-done').addEventListener('click', () => { $('mfa-codes').hidden = true; loadAccountSecurity(); });
+  $('mfa-renew').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    try {
+      const r = await api('me/totp/recovery', { method: 'POST', body: JSON.stringify({ code: $('mfa-renew-code').value }) });
+      $('mfa-renew-code').value = '';
+      showRecoveryCodes(r.recovery_codes);
+    } catch (e) { setMsg($('mfa-msg-renew'), errText(e), false); }
+  });
+  $('mfa-off-form').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    if (!confirm(t('mfa.off.q'))) return;
+    try {
+      await api('me/totp/disable', { method: 'POST',
+        body: JSON.stringify({ password: $('mfa-off-pass').value, code: $('mfa-off-code').value }) });
+      $('mfa-off-pass').value = ''; $('mfa-off-code').value = '';
+      toast(esc(t('mfa.off.ok')), null, 4000);
+      loadAccountSecurity();
+    } catch (e) { setMsg($('mfa-msg-off'), errText(e), false); }
+  });
+  $('ses-others').addEventListener('click', async () => {
+    const r = await api('me/sessions/others', { method: 'POST' });
+    toast(esc(t('ses.ended', { n: r.signed_out })), null, 4000);
+    loadSessions();
+  });
+}
+
+// ---------------------------------------------------------------- mail inbox
+
+let mailCfg = null;
+
+async function loadMail() {
+  mailCfg = await api('mail');
+  $('ml-enabled').checked = mailCfg.enabled;
+  $('ml-host').value = mailCfg.host;
+  $('ml-port').value = mailCfg.port;
+  $('ml-user').value = mailCfg.user;
+  $('ml-pass').value = '';
+  $('ml-pass').placeholder = mailCfg.has_password ? t('ml.pass.set') : '';
+  $('ml-clear-pass').hidden = !mailCfg.has_password;
+  $('ml-folder').value = mailCfg.folder;
+  $('ml-auth').checked = mailCfg.check_auth;
+  $('ml-days').value = mailCfg.reject_days;
+  const known = mailCfg.senders.filter(s => s.emails.length);
+  $('ml-senders').innerHTML = known.length
+    ? known.map(s => `<div class="ml-sender"><b>${esc(s.display_name || s.name)}</b> ` +
+        `<span>${s.emails.map(esc).join(', ')}</span> → ` +
+        `<span>${s.area ? `<span class="area-dot" style="--dot:${areaColor(s.area)}"></span> ${esc(areaLabel(s.area))}` : esc(t('ml.area.pick'))}</span></div>`).join('')
+    : `<p class="field-hint is-warn">${esc(t('ml.senders.none'))}</p>`;
+  renderMailLog();
+  $('ml-msg').textContent = '';
+}
+
+function renderMailLog() {
+  const events = mailCfg.events || [];
+  $('ml-log').innerHTML = events.length ? events.map(e => {
+    const when = new Date(e.time).toLocaleString(LANG, { dateStyle: 'short', timeStyle: 'short' });
+    const what = e.result === 'accepted'
+      ? t('ml.ev.ok', { n: e.files.length, area: e.area ? areaLabel(e.area) : t('ml.area.pick') })
+      : t('ml.ev.' + (e.reason === 'unknown_sender' || e.reason === 'forged' || e.reason === 'no_pdf' ? e.reason : 'error'), { detail: e.reason });
+    return `<div class="ml-ev ml-ev--${esc(e.result)}"><span class="ml-ev__when">${esc(when)}</span>` +
+      `<span class="ml-ev__from">${esc(e.from || '–')}</span><span class="ml-ev__subj">${esc(e.subject || '')}</span>` +
+      `<span class="ml-ev__what">${esc(what)}</span></div>`;
+  }).join('') : `<p class="field-hint">${esc(t('ml.log.none'))}</p>`;
+}
+
+async function saveMail(extra = {}) {
+  const body = {
+    enabled: $('ml-enabled').checked,
+    host: $('ml-host').value.trim(),
+    port: parseInt($('ml-port').value, 10) || 993,
+    user: $('ml-user').value.trim(),
+    folder: $('ml-folder').value.trim() || 'INBOX',
+    check_auth: $('ml-auth').checked,
+    reject_days: Math.max(0, parseInt($('ml-days').value, 10) || 0),
+    ...extra,
+  };
+  if ($('ml-pass').value.trim()) body.password = $('ml-pass').value.trim();
+  await api('mail', { method: 'PUT', body: JSON.stringify(body) });
+  await loadMail();
+}
+
+function initMail() {
+  $('ml-form').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    try { await saveMail(); setMsg($('ml-msg'), t('sec.saved'), true); }
+    catch (e) { setMsg($('ml-msg'), errText(e), false); }
+  });
+  $('ml-clear-pass').addEventListener('click', async () => {
+    try { await saveMail({ clear_password: true, enabled: false }); } catch (e) { setMsg($('ml-msg'), errText(e), false); }
+  });
+  $('ml-test').addEventListener('click', async () => {
+    try {
+      await saveMail();
+      const r = await api('mail/test', { method: 'POST' });
+      setMsg($('ml-msg'), t('ml.test.ok', { n: r.waiting }), true);
+    } catch (e) { setMsg($('ml-msg'), errText(e), false); }
+  });
+  $('ml-fetch').addEventListener('click', async () => {
+    try {
+      await saveMail();
+      const r = await api('mail/fetch', { method: 'POST' });
+      await loadMail();
+      setMsg($('ml-msg'), r.started ? t('ml.fetch.ok', { n: r.mails, files: r.files }) : t('ml.fetch.busy'), true);
+      loadStatus();
+    } catch (e) { setMsg($('ml-msg'), errText(e), false); }
+  });
+}
+
+// ---------------------------------------------------------------- security
+
+let security = null;
+
+async function loadSecurity() {
+  security = await api('security');
+  $('sec-where').textContent = t(State.me.external ? 'sec.where.out' : 'sec.where.in');
+  $('sec-ext').checked = security.require_2fa_external;
+  $('sec-int').checked = security.require_2fa_internal;
+  $('sec-url').value = security.ntfy_url;
+  $('sec-token').value = '';
+  $('sec-token').placeholder = security.has_ntfy_token ? t('sec.token.set') : 'tk_…';
+  $('sec-clear-token').hidden = !security.has_ntfy_token;
+  $('sec-n-ext').checked = security.notify_external_login;
+  $('sec-n-lock').checked = security.notify_lockout;
+  $('sec-n-2fa').checked = security.notify_2fa_changes;
+  const without = security.without_2fa;
+  $('sec-without').hidden = !without.length;
+  $('sec-without').textContent = t('sec.without', { names: without.join(', ') });
+  $('sec-msg').textContent = '';
+}
+
+async function saveSecurity(extra = {}) {
+  const body = {
+    require_2fa_external: $('sec-ext').checked,
+    require_2fa_internal: $('sec-int').checked,
+    ntfy_url: $('sec-url').value.trim(),
+    notify_external_login: $('sec-n-ext').checked,
+    notify_lockout: $('sec-n-lock').checked,
+    notify_2fa_changes: $('sec-n-2fa').checked,
+    ...extra,
+  };
+  if ($('sec-token').value.trim()) body.ntfy_token = $('sec-token').value.trim();
+  await api('security', { method: 'PUT', body: JSON.stringify(body) });
+  await loadSecurity();
+}
+
+function initSecurity() {
+  $('sec-form').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    try { await saveSecurity(); setMsg($('sec-msg'), t('sec.saved'), true); }
+    catch (e) { setMsg($('sec-msg'), errText(e), false); }
+  });
+  $('sec-clear-token').addEventListener('click', async () => {
+    try { await saveSecurity({ clear_ntfy_token: true }); } catch (e) { setMsg($('sec-msg'), errText(e), false); }
+  });
+  $('sec-test').addEventListener('click', async () => {
+    try {
+      await saveSecurity();
+      await api('security/test', { method: 'POST' });
+      setMsg($('sec-msg'), t('sec.test.ok'), true);
+    } catch (e) { setMsg($('sec-msg'), errText(e), false); }
+  });
 }
 
 async function loadSystem() {
@@ -2336,14 +2830,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   $('login-form').addEventListener('submit', async ev => {
     ev.preventDefault();
-    $('login-error').hidden = true;
+    const error = $('login-error');
+    error.hidden = true;
+    const body = { username: $('login-user').value.trim(), password: $('login-pass').value };
+    const code = $('login-code').value.trim();
+    if (!$('login-code-box').hidden && code) body.code = code;
     const res = await fetch('api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: $('login-user').value.trim(), password: $('login-pass').value }),
+      body: JSON.stringify(body),
     });
-    if (!res.ok) { $('login-error').hidden = false; return; }
+    if (!res.ok) {
+      let detail = '';
+      try { detail = (await res.json()).detail || ''; } catch { /* keep */ }
+      const msg = {
+        'code required': 'login.need.code', 'invalid code': 'login.bad.code',
+        'second factor required outside': 'login.need.2fa', 'locked': 'login.locked',
+      }[detail] || 'login.error';
+      if (detail === 'code required' || detail === 'invalid code') {
+        $('login-code-box').hidden = false;
+        $('login-code').value = '';
+        $('login-code').focus();
+      }
+      error.textContent = t(msg, { s: res.headers.get('Retry-After') || '60' });
+      error.hidden = false;
+      return;
+    }
     $('login-pass').value = '';
+    $('login-code').value = '';
+    $('login-code-box').hidden = true;
     showApp();
   });
 
@@ -2467,9 +2982,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('pw-form').addEventListener('submit', async ev => {
     ev.preventDefault();
     try {
-      await api('me/password', { method: 'POST', body: JSON.stringify({ old: $('pw-old').value, new: $('pw-new').value }) });
+      const r = await api('me/password', { method: 'POST', body: JSON.stringify({ old: $('pw-old').value, new: $('pw-new').value }) });
       $('pw-old').value = ''; $('pw-new').value = '';
-      setMsg($('pw-msg'), t('acc.ok'), true);
+      setMsg($('pw-msg'), r.signed_out ? t('acc.ok.out', { n: r.signed_out }) : t('acc.ok'), true);
+      if (r.signed_out) loadSessions();
     } catch (e) {
       setMsg($('pw-msg'), errText(e), false);
     }
@@ -2483,6 +2999,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     location.reload();
   });
   initEditor();
+  initAccountSecurity();
+  initSecurity();
+  initMail();
   initDocOps();
   initMeta();
   initUpload();
@@ -2637,12 +3156,17 @@ async function updateImportButton() {
 async function loadTags() {
   loadMappen();
   try {
-    State.tagList = await api('tags?' + areaParam());
+    State.tagList = await api('tags?' + areaParam() + '&alt=' + (State.withAlt || isAlt(State.folder)));
   } catch { return; }
   $('tag-list').innerHTML = State.tagList.map(x => `<option value="${esc(x.name)}">`).join('');
   const mappenKeys = new Set((State.mappen || []).map(m => m.name.toLowerCase()));
   const plain = State.tagList.filter(x => !mappenKeys.has(x.name.toLowerCase()));
   $('tag-panel').hidden = !plain.length;
+  const shut = store.get('tagsShut', false);
+  $('tag-panel').classList.toggle('is-shut', shut);
+  $('tag-head').setAttribute('aria-expanded', !shut);
+  $('tag-head').querySelector('.tree-caret').classList.toggle('is-open', !shut);
+  $('tag-head').querySelector('.tag-panel__n').textContent = plain.length;
   const cloud = $('tag-cloud');
   cloud.innerHTML = plain.map(x =>
     `<button type="button" class="tag tag--cloud" data-tag="${esc(x.name)}" aria-pressed="${State.tags.has(x.name)}">` +
@@ -2711,6 +3235,8 @@ function renderBulk() {
   [...State.sel].forEach(id => { if (!visible.has(id)) State.sel.delete(id); });
   $('bulk').hidden = !State.sel.size;
   $('bulk-count').textContent = t('tags.sel', { n: State.sel.size });
+  $('bulk-alt').textContent = t(isAlt(State.folder) && !State.query.trim() ? 'alt.bulk.back' : 'alt.bulk');
+  $('bulk-alt').hidden = !writesAny();
   const all = $('chk-all');
   all.checked = State.items.length > 0 && State.sel.size === State.items.length;
   all.indeterminate = State.sel.size > 0 && !all.checked;
@@ -2737,6 +3263,16 @@ function initTags() {
   $('bulk-add').addEventListener('click', () => bulkTag('add'));
   $('bulk-remove').addEventListener('click', () => bulkTag('remove'));
   $('bulk-clear').addEventListener('click', () => { State.sel.clear(); renderList(); });
+  $('bulk-alt').addEventListener('click', () => {
+    const chosen = State.items.filter(d => State.sel.has(d.id) && canWrite(d));
+    if (!chosen.length) return;
+    // in the Altablage the button takes back, elsewhere it puts away
+    const restore = isAlt(State.folder) && !State.query.trim();
+    const ids = chosen.filter(d => isAlt(d.folder) === restore).map(d => d.id);
+    if (ids.length) altMove({ ids }, restore).then(() => { State.sel.clear(); renderBulk(); });
+  });
+  $('chk-alt').addEventListener('change', ev => { State.withAlt = ev.target.checked; loadDocs(); loadTags(); });
+  $('tag-head').addEventListener('click', () => { store.set('tagsShut', !store.get('tagsShut', false)); loadTags(); });
   $('bulk-tag').addEventListener('keydown', ev => {
     if (ev.key === 'Enter' && (Picker.box.hidden || Picker.active < 0)) { ev.preventDefault(); bulkTag('add'); }
   });
@@ -2901,6 +3437,72 @@ async function refreshArchive() {
   await Promise.all([loadDocs(), loadTree(), loadStatus()].map(p => p.catch(() => null)));
 }
 
+// ------------------------------------------------------------ Altablage
+
+// Move documents into the Altablage or back; `what` is {ids}, {folder, areas} or {older_than_years, areas}.
+async function altMove(what, restore, undo = true) {
+  try {
+    const r = await api('altablage', { method: 'POST', body: JSON.stringify({ ...what, restore }) });
+    if (State.selected && r.ids.includes(State.selected.id)) closePreview();
+    // a folder that went away entirely: show its parent instead of an empty list
+    const shown = State.folder;
+    if (what.folder && !restore && (shown === what.folder || shown.startsWith(what.folder + '/'))) {
+      State.folder = what.folder.split('/').slice(0, -1).join('/');
+    } else if (what.folder && restore && isAlt(shown) && shown !== ALT) {
+      State.folder = shown.split('/').slice(1).join('/');     // follow the folder back to its old place
+    }
+    if (State.folder !== shown) store.set('folder', State.folder);
+    await refreshArchive();
+    let msg = t(restore ? 'alt.restored' : 'alt.moved', { n: r.moved });
+    if (r.failed.length) msg += ' ' + t('alt.failed', { n: r.failed.length });
+    toast(esc(msg), undo && r.ids.length ? { label: t('op.undo'), run: () => altMove({ ids: r.ids }, !restore, false) } : null,
+          r.failed.length ? 12000 : 8000);
+    return r;
+  } catch (e) {
+    toast(esc(errText(e)));
+  }
+}
+
+function altDialog() {
+  const dlg = $('alt-dlg');
+  const years = $('alt-years');
+  const box = $('alt-preview');
+  const areas = [...State.active].join(',');
+  $('alt-msg').textContent = '';
+  let timer = null, token = 0, count = 0;
+  const preview = async () => {
+    const n = parseInt(years.value, 10);
+    const mine = ++token;
+    if (!(n >= 1 && n <= 200)) { box.innerHTML = ''; $('alt-go').disabled = true; return; }
+    try {
+      const r = await api('altablage', { method: 'POST', body: JSON.stringify({ older_than_years: n, areas, dry_run: true }) });
+      if (mine !== token) return;
+      const d = new Date(); d.setFullYear(d.getFullYear() - n);
+      const date = formatDate(d.toISOString().slice(0, 10));
+      count = r.count;
+      $('alt-go').disabled = !count;
+      const top = r.folders.slice(0, 12);
+      box.innerHTML = !count ? `<p class="set-hint">${esc(t('alt.dlg.none', { date }))}</p>` :
+        `<p>${esc(t('alt.dlg.count', { n: count, date }))}</p><ul class="alt-list">` +
+        top.map(f => `<li><span>${prettyFolder(f.folder || t('tree.root'))}</span><span class="tree-count">${f.count}</span></li>`).join('') +
+        `</ul>` + (r.folders.length > top.length ? `<p class="set-hint">${esc(t('alt.dlg.more', { n: r.folders.length - top.length }))}</p>` : '');
+    } catch (e) {
+      if (mine === token) box.innerHTML = `<p class="form-msg">${esc(errText(e))}</p>`;
+    }
+  };
+  years.oninput = () => { clearTimeout(timer); timer = setTimeout(preview, 300); };
+  $('alt-cancel').onclick = () => dlg.close();
+  $('alt-form').onsubmit = async ev => {
+    ev.preventDefault();
+    if (!count) return;
+    dlg.close();
+    await altMove({ older_than_years: parseInt(years.value, 10), areas }, false);
+  };
+  preview();
+  dlg.showModal();
+  years.select();
+}
+
 async function trashSelected(doc = State.selected) {
   if (!doc) return;
   try {
@@ -3047,6 +3649,7 @@ function docMenu(anchor, doc) {
     `<a role="menuitem" href="${esc(url)}" target="_blank" rel="noopener">${esc(t('dm.open'))}</a>` +
     `<a role="menuitem" href="${esc(url)}?download=true">${esc(t('dm.download'))}</a>` +
     `<button type="button" role="menuitem" data-k="folder">${esc(t('dm.folder'))}</button>` +
+    (write ? `<button type="button" role="menuitem" data-k="alt">${esc(t(isAlt(doc.folder) ? 'alt.doc.back' : 'alt.doc.to'))}</button>` : '') +
     (write ? `<button type="button" role="menuitem" data-k="delete">${esc(t('dm.trash'))}</button>` : '');
   document.body.appendChild(menu);
   const r = anchor.getBoundingClientRect();
@@ -3062,6 +3665,7 @@ function docMenu(anchor, doc) {
     const k = el.dataset.k;
     if (k === 'edit') docDialog(doc);
     else if (k === 'delete') trashSelected(doc);
+    else if (k === 'alt') altMove({ ids: [doc.id] }, isAlt(doc.folder));
     else if (k === 'folder') {
       selectFolder(doc.folder || '');
       setTimeout(() => document.querySelector('.tree-row.is-selected')?.scrollIntoView({ block: 'nearest' }), 300);
@@ -3181,11 +3785,18 @@ function folderMenu(anchor, node) {
   const menu = document.createElement('div');
   menu.className = 'fo-menu';
   menu.setAttribute('role', 'menu');
-  const entries = node.path
-    ? [['new', t('fo.new')], ['rename', t('fo.rename')], ['delete', t('fo.delete'), node.count > 0]]
-    : [['new', t('fo.newtop')]];
+  const admin = State.me && State.me.is_admin;
+  let entries;
+  if (node.path === ALT) entries = [['altyears', t('alt.years')]];
+  else if (isAlt(node.path)) entries = [['altback', t('alt.fo.back'), !node.count]];
+  else {
+    entries = !admin ? [] : node.path
+      ? [['new', t('fo.new')], ['rename', t('fo.rename')], ['delete', t('fo.delete'), node.count > 0]]
+      : [['new', t('fo.newtop')]];
+    entries.push(node.path ? ['altto', t('alt.fo.to'), !node.count] : ['altyears', t('alt.years')]);
+  }
   menu.innerHTML = entries.map(([k, label, off]) =>
-    `<button type="button" role="menuitem" data-k="${k}"${off ? ` disabled title="${esc(t('fo.notempty'))}"` : ''}>${esc(label)}</button>`).join('');
+    `<button type="button" role="menuitem" data-k="${k}"${off ? ` disabled${k === 'delete' ? ` title="${esc(t('fo.notempty'))}"` : ''}` : ''}>${esc(label)}</button>`).join('');
   document.body.appendChild(menu);
   const r = anchor.getBoundingClientRect();
   menu.style.left = Math.min(r.left, innerWidth - menu.offsetWidth - 8) + 'px';
@@ -3197,6 +3808,13 @@ function folderMenu(anchor, node) {
     if (!k) return;
     menu.remove();
     removeEventListener('pointerdown', close, true);
+    if (k === 'altyears') { altDialog(); return; }
+    if (k === 'altto') {
+      if (!confirm(t('alt.fo.q', { n: node.count, folder: node.path.replaceAll('/', ' › ') }))) return;
+      altMove({ folder: node.path, areas: [...State.active].join(',') }, false);
+      return;
+    }
+    if (k === 'altback') { altMove({ folder: node.path, areas: [...State.active].join(',') }, true); return; }
     try {
       if (k === 'new') {
         const name = prompt(node.path ? t('fo.new.q', { folder: node.path }) : t('fo.newtop.q'));

@@ -28,6 +28,11 @@
       <input class="fd-input" id="login-user" autocomplete="username" required>
       <label class="fd-form-label" for="login-pass" data-i18n="login.pass">Passwort</label>
       <input class="fd-input" id="login-pass" type="password" autocomplete="current-password" required>
+      <div id="login-code-box" class="login__code" hidden>
+        <label class="fd-form-label" for="login-code" data-i18n="login.code">Code aus der App</label>
+        <input class="fd-input" id="login-code" autocomplete="one-time-code" inputmode="numeric" maxlength="20" autocapitalize="off" spellcheck="false">
+        <p class="field-hint" data-i18n="login.code.hint">Oder einer deiner Wiederherstellungscodes.</p>
+      </div>
       <p id="login-error" class="login__error" hidden data-i18n="login.error">Anmeldung fehlgeschlagen.</p>
       <button class="fd-button fd-button--emphasized" type="submit" data-i18n="login.submit">Anmelden</button>
     </form>
@@ -61,6 +66,10 @@
         <input type="checkbox" id="chk-recursive" checked>
         <span data-i18n="list.recursive">mit Unterordnern</span>
       </label>
+      <label class="toolbar__check" data-i18n-title="alt.tip">
+        <input type="checkbox" id="chk-alt">
+        <span data-i18n="alt.search">Altablage mitsuchen</span>
+      </label>
       <span id="status" class="toolbar__status"></span>
     </div>
 
@@ -79,7 +88,11 @@
           <div id="mappen" class="tree" role="tree"></div>
         </div>
         <div id="tag-panel" class="tag-panel" hidden>
-          <h3 class="tag-panel__title" data-i18n="tags.title">Tags</h3>
+          <button id="tag-head" type="button" class="tag-panel__head" aria-expanded="true" aria-controls="tag-cloud">
+            <span class="tree-caret is-open">&#8250;</span>
+            <span class="tag-panel__title" data-i18n="tags.title">Tags</span>
+            <span class="tag-panel__n tree-count"></span>
+          </button>
           <div id="tag-cloud" class="tag-cloud"></div>
         </div>
         <datalist id="tag-list"></datalist>
@@ -103,6 +116,7 @@
           <input id="bulk-tag" class="fd-input bulk__input" data-picker="tag-list" autocomplete="off" data-i18n-placeholder="tags.ph">
           <button id="bulk-add" class="fd-button" type="button" data-i18n="tags.add">Tag hinzufügen</button>
           <button id="bulk-remove" class="fd-button fd-button--transparent" type="button" data-i18n="tags.remove">Tag entfernen</button>
+          <button id="bulk-alt" class="fd-button fd-button--transparent" type="button" data-i18n="alt.bulk">In die Altablage</button>
           <button id="bulk-clear" class="fd-button fd-button--transparent" type="button" data-i18n="tags.clearsel">Auswahl aufheben</button>
           <span id="bulk-msg" class="form-msg"></span>
         </div>
@@ -370,6 +384,8 @@
         <a class="set-link admin-only" href="#/einstellungen/benutzer" data-pane="users" data-i18n="set.users">Benutzer</a>
         <a class="set-link admin-only" href="#/einstellungen/ablage" data-pane="storage" data-i18n="set.storage">Ablage</a>
         <a class="set-link admin-only" href="#/einstellungen/ki" data-pane="ai" data-i18n="set.ai">KI</a>
+        <a class="set-link admin-only" href="#/einstellungen/email" data-pane="mail" data-i18n="set.mail">E-Mail-Eingang</a>
+        <a class="set-link admin-only" href="#/einstellungen/sicherheit" data-pane="security" data-i18n="set.security">Sicherheit</a>
         <a class="set-link admin-only" href="#/einstellungen/system" data-pane="system" data-i18n="set.system">System</a>
       </nav>
       <div class="settings-body">
@@ -394,11 +410,73 @@
             <label class="fd-form-label" for="pw-old" data-i18n="acc.old">Aktuelles Passwort</label>
             <input class="fd-input" id="pw-old" type="password" autocomplete="current-password" required>
             <label class="fd-form-label" for="pw-new" data-i18n="acc.new">Neues Passwort</label>
-            <input class="fd-input" id="pw-new" type="password" autocomplete="new-password" minlength="8" required>
+            <input class="fd-input" id="pw-new" type="password" autocomplete="new-password" minlength="12" required>
             <span></span>
             <div><button class="fd-button fd-button--emphasized" type="submit" data-i18n="acc.change">Passwort ändern</button>
             <span id="pw-msg" class="form-msg"></span></div>
           </form>
+          <div id="mfa-card" class="card mfa-card">
+            <h4 class="fd-title fd-title--h5 card-title" data-i18n="mfa.title">Zweiter Faktor</h4>
+            <p id="mfa-state" class="set-hint"></p>
+            <form id="mfa-start" class="form-grid" hidden>
+              <label class="fd-form-label" for="mfa-pass" data-i18n="acc.old">Aktuelles Passwort</label>
+              <input class="fd-input" id="mfa-pass" type="password" autocomplete="current-password" required>
+              <span></span>
+              <div><button class="fd-button fd-button--emphasized" type="submit" data-i18n="mfa.setup">Einrichten</button>
+              <span id="mfa-msg-start" class="form-msg"></span></div>
+            </form>
+            <div id="mfa-setup" hidden>
+              <p class="set-hint" data-i18n="mfa.scan">Scanne den Code mit einer Authenticator-App (zum Beispiel Bitwarden, 2FAS, Aegis oder Google Authenticator) und gib dann die sechs Ziffern ein, die sie anzeigt.</p>
+              <div class="mfa-qr"><img id="mfa-qr" alt="QR-Code"></div>
+              <p class="field-hint"><span data-i18n="mfa.manual">Oder von Hand eingeben:</span> <code id="mfa-secret" class="mfa-secret"></code></p>
+              <form id="mfa-confirm" class="form-grid">
+                <label class="fd-form-label" for="mfa-code" data-i18n="login.code">Code aus der App</label>
+                <input class="fd-input" id="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required>
+                <span></span>
+                <div><button class="fd-button fd-button--emphasized" type="submit" data-i18n="mfa.confirm">Einschalten</button>
+                <button id="mfa-abort" class="fd-button fd-button--transparent" type="button" data-i18n="btn.cancel">Abbrechen</button>
+                <span id="mfa-msg-confirm" class="form-msg"></span></div>
+              </form>
+            </div>
+            <div id="mfa-codes" hidden>
+              <p class="set-hint" data-i18n="mfa.codes.hint">Deine Wiederherstellungscodes. Mit jedem kommst du einmal hinein, falls das Telefon weg ist. Lege sie jetzt sicher ab, zum Beispiel im Passwortmanager. Ordnung! zeigt sie nicht noch einmal.</p>
+              <pre id="mfa-code-list" class="mfa-code-list"></pre>
+              <div class="form-actions">
+                <button id="mfa-copy" class="fd-button" type="button" data-i18n="mfa.copy">Kopieren</button>
+                <button id="mfa-done" class="fd-button fd-button--emphasized" type="button" data-i18n="mfa.done">Ich habe sie gesichert</button>
+              </div>
+            </div>
+            <div id="mfa-on" hidden>
+              <form id="mfa-renew" class="form-grid">
+                <label class="fd-form-label" for="mfa-renew-code" data-i18n="login.code">Code aus der App</label>
+                <input class="fd-input" id="mfa-renew-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required>
+                <span></span>
+                <div><button class="fd-button" type="submit" data-i18n="mfa.renew">Neue Wiederherstellungscodes</button>
+                <span id="mfa-msg-renew" class="form-msg"></span></div>
+              </form>
+              <details class="mfa-disable">
+                <summary data-i18n="mfa.off">Zweiten Faktor ausschalten</summary>
+                <form id="mfa-off-form" class="form-grid">
+                  <label class="fd-form-label" for="mfa-off-pass" data-i18n="acc.old">Aktuelles Passwort</label>
+                  <input class="fd-input" id="mfa-off-pass" type="password" autocomplete="current-password" required>
+                  <label class="fd-form-label" for="mfa-off-code" data-i18n="mfa.code.or">Code oder Wiederherstellungscode</label>
+                  <input class="fd-input" id="mfa-off-code" autocomplete="one-time-code" maxlength="20" required>
+                  <span></span>
+                  <div><button class="fd-button fd-button--negative" type="submit" data-i18n="mfa.off.btn">Ausschalten</button>
+                  <span id="mfa-msg-off" class="form-msg"></span></div>
+                </form>
+              </details>
+            </div>
+          </div>
+          <div class="card">
+            <div class="pane-head">
+              <h4 class="fd-title fd-title--h5 card-title" data-i18n="ses.title">Angemeldete Geräte</h4>
+              <button id="ses-others" class="fd-button" type="button" data-i18n="ses.others">Alle anderen abmelden</button>
+            </div>
+            <table class="fd-table ses-table">
+              <tbody id="ses-rows" class="fd-table__body"></tbody>
+            </table>
+          </div>
         </section>
 
         <section class="set-pane" data-pane="users" hidden>
@@ -411,6 +489,7 @@
               <th class="fd-table__cell" data-i18n="usr.name">Benutzer</th>
               <th class="fd-table__cell" data-i18n="usr.role">Rolle</th>
               <th class="fd-table__cell" data-i18n="usr.areas">Bereiche</th>
+              <th class="fd-table__cell" data-i18n="usr.mfa">Zweiter Faktor</th>
               <th class="fd-table__cell"></th>
             </tr></thead>
             <tbody id="usr-rows" class="fd-table__body"></tbody>
@@ -423,11 +502,22 @@
               <label class="fd-form-label" for="usr-display" data-i18n="usr.display">Anzeigename</label>
               <input class="fd-input" id="usr-display" autocomplete="off">
               <label class="fd-form-label" for="usr-pass" data-i18n="usr.pass">Passwort</label>
-              <input class="fd-input" id="usr-pass" type="password" autocomplete="new-password" minlength="8">
+              <input class="fd-input" id="usr-pass" type="password" autocomplete="new-password" minlength="12">
               <span></span>
               <label class="check"><input type="checkbox" id="usr-admin"> <span data-i18n="usr.admin">Administrator</span></label>
               <span class="fd-form-label" data-i18n="usr.areas">Bereiche</span>
               <div id="usr-areas" class="area-perms"></div>
+              <label class="fd-form-label" for="usr-emails" data-i18n="usr.emails">E-Mail-Adressen</label>
+              <div>
+                <input class="fd-input" id="usr-emails" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="erste@example.org, zweite@example.org">
+                <div class="field-hint" data-i18n="usr.emails.hint">Von diesen Adressen nimmt der E-Mail-Eingang PDFs an. Mehrere mit Komma trennen.</div>
+              </div>
+              <label class="fd-form-label" for="usr-mail-area" data-i18n="usr.mailarea">Mails gehören zu</label>
+              <select class="fd-select" id="usr-mail-area"></select>
+              <span class="usr-existing"></span>
+              <label class="check usr-existing"><input type="checkbox" id="usr-signout"> <span data-i18n="usr.signout">Auf allen Geräten abmelden</span></label>
+              <span class="usr-mfa-reset"></span>
+              <label class="check usr-mfa-reset"><input type="checkbox" id="usr-reset-totp"> <span data-i18n="usr.resettotp">Zweiten Faktor zurücksetzen (wenn das Telefon verloren ist)</span></label>
             </div>
             <div class="form-actions">
               <span id="usr-msg" class="form-msg"></span>
@@ -598,6 +688,89 @@
           </form>
         </section>
 
+        <section class="set-pane" data-pane="mail" hidden>
+          <h3 class="fd-title fd-title--h4" data-i18n="set.mail">E-Mail-Eingang</h3>
+          <p class="set-hint" data-i18n="ml.intro">PDFs per Mail an eine eigene Adresse schicken oder weiterleiten, etwa vom iPhone. Ordnung! holt die Mails jede Minute ab und legt die PDF-Anhänge in den Posteingang. Angenommen werden nur Mails von Adressen, die bei einem Benutzer hinterlegt sind; der Benutzer bestimmt den Bereich. Alles andere bleibt im Postfach, verschoben nach „Abgelehnt“ und nach der eingestellten Frist gelöscht.</p>
+          <form id="ml-form" autocomplete="off" data-bwignore="true">
+            <div class="card">
+              <label class="check"><input type="checkbox" id="ml-enabled"> <span data-i18n="ml.enabled">Mails abholen</span></label>
+              <div class="form-grid">
+                <label class="fd-form-label" for="ml-host" data-i18n="ml.host">IMAP-Server</label>
+                <div class="inline">
+                  <input class="fd-input" id="ml-host" placeholder="mail.infomaniak.com" autocomplete="off" spellcheck="false">
+                  <input class="fd-input ml-port" id="ml-port" type="number" min="1" max="65535" step="1" title="Port">
+                </div>
+                <label class="fd-form-label" for="ml-user" data-i18n="ml.user">Benutzer</label>
+                <input class="fd-input" id="ml-user" placeholder="eingang@example.org" autocomplete="off" autocapitalize="off" spellcheck="false" data-bwignore="true" data-1p-ignore="true" data-lpignore="true" data-form-type="other">
+                <label class="fd-form-label" for="ml-pass" data-i18n="ml.pass">Passwort</label>
+                <div class="inline">
+                  <input class="fd-input masked" id="ml-pass" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-bwignore="true" data-1p-ignore="true" data-lpignore="true" data-form-type="other">
+                  <button id="ml-clear-pass" class="fd-button fd-button--transparent" type="button" data-i18n="ai.clearkey">Entfernen</button>
+                </div>
+                <label class="fd-form-label" for="ml-folder" data-i18n="ml.folder">Ordner im Postfach</label>
+                <input class="fd-input" id="ml-folder" placeholder="INBOX" autocomplete="off" spellcheck="false">
+                <span></span>
+                <label class="check"><input type="checkbox" id="ml-auth"> <span data-i18n="ml.auth">Gefälschte Absender ablehnen (SPF/DKIM/DMARC des Mailservers)</span></label>
+                <label class="fd-form-label" for="ml-days" data-i18n="ml.days">Abgelehnte Mails löschen nach</label>
+                <div class="inline"><input class="fd-input st-trash-days" id="ml-days" type="number" min="0" max="3650" step="1"> <span data-i18n="ml.days.unit">Tagen (0 = sofort)</span></div>
+              </div>
+            </div>
+            <div class="card">
+              <h4 class="fd-title fd-title--h5 card-title" data-i18n="ml.senders">Bekannte Absender</h4>
+              <div id="ml-senders" class="ml-senders"></div>
+              <p class="field-hint"><a href="#/einstellungen/benutzer" data-i18n="ml.senders.edit">Adressen bei den Benutzern eintragen</a></p>
+            </div>
+            <div class="form-actions">
+              <span id="ml-msg" class="form-msg"></span>
+              <button id="ml-test" class="fd-button" type="button" data-i18n="ml.test">Verbindung testen</button>
+              <button id="ml-fetch" class="fd-button" type="button" data-i18n="ml.fetch">Jetzt abholen</button>
+              <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
+            </div>
+          </form>
+          <div class="card">
+            <h4 class="fd-title fd-title--h5 card-title" data-i18n="ml.log">Zuletzt eingegangen</h4>
+            <div id="ml-log" class="ml-log"></div>
+          </div>
+        </section>
+
+        <section class="set-pane" data-pane="security" hidden>
+          <h3 class="fd-title fd-title--h4" data-i18n="set.security">Sicherheit</h3>
+          <p id="sec-where" class="set-hint"></p>
+          <form id="sec-form" autocomplete="off" data-bwignore="true">
+            <div class="card">
+              <h4 class="fd-title fd-title--h5 card-title" data-i18n="sec.policy">Anmeldung</h4>
+              <label class="check"><input type="checkbox" id="sec-ext"> <span data-i18n="sec.ext">Von außen nur mit zweitem Faktor</span></label>
+              <p class="field-hint sec-hint" data-i18n="sec.ext.hint">Konten ohne zweiten Faktor können sich dann nur noch im Heimnetz anmelden. Einschalten lässt sich das erst, wenn dein eigenes Konto einen hat.</p>
+              <p id="sec-without" class="field-hint sec-hint is-warn" hidden></p>
+              <label class="check"><input type="checkbox" id="sec-int"> <span data-i18n="sec.int">Zweiten Faktor auch im Heimnetz verlangen</span></label>
+              <p class="field-hint sec-hint" data-i18n="sec.int.hint">Sonst reicht zu Hause das Passwort. Von außen fragt Ordnung! immer nach dem Code, wenn ein Konto einen zweiten Faktor hat.</p>
+            </div>
+            <div class="card">
+              <h4 class="fd-title fd-title--h5 card-title" data-i18n="sec.ntfy">Benachrichtigungen per ntfy</h4>
+              <div class="form-grid">
+                <label class="fd-form-label" for="sec-url" data-i18n="sec.url">Topic-Adresse</label>
+                <input class="fd-input" id="sec-url" placeholder="https://ntfy.example.org/ordnung" autocomplete="off" spellcheck="false">
+                <label class="fd-form-label" for="sec-token" data-i18n="sec.token">Zugangs-Token</label>
+                <div class="inline">
+                  <input class="fd-input masked" id="sec-token" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-bwignore="true" data-1p-ignore="true" data-lpignore="true" data-form-type="other">
+                  <button id="sec-clear-token" class="fd-button fd-button--transparent" type="button" data-i18n="ai.clearkey">Entfernen</button>
+                </div>
+                <span class="fd-form-label" data-i18n="sec.when">Melden bei</span>
+                <div class="sec-checks">
+                  <label class="check"><input type="checkbox" id="sec-n-ext"> <span data-i18n="sec.n.ext">jeder Anmeldung von außen</span></label>
+                  <label class="check"><input type="checkbox" id="sec-n-lock"> <span data-i18n="sec.n.lock">gesperrtem Konto nach Fehlversuchen</span></label>
+                  <label class="check"><input type="checkbox" id="sec-n-2fa"> <span data-i18n="sec.n.2fa">Änderungen am zweiten Faktor und benutzten Wiederherstellungscodes</span></label>
+                </div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <span id="sec-msg" class="form-msg"></span>
+              <button id="sec-test" class="fd-button" type="button" data-i18n="sec.test">Testnachricht</button>
+              <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
+            </div>
+          </form>
+        </section>
+
         <section class="set-pane" data-pane="system" hidden>
           <h3 class="fd-title fd-title--h4" data-i18n="set.system">System</h3>
           <div class="card">
@@ -650,6 +823,21 @@
         <span id="dm-msg" class="form-msg"></span>
         <button id="dm-cancel" class="fd-button fd-button--transparent" type="button" data-i18n="ed.sv.cancel">Abbrechen</button>
         <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="alt-dlg" class="ai-dlg ed-dlg" aria-labelledby="alt-dlg-title">
+    <form id="alt-form" class="ai-dlg-form">
+      <h4 id="alt-dlg-title" class="fd-title fd-title--h5" data-i18n="alt.dlg">Alte Dokumente in die Altablage</h4>
+      <label class="fd-form-label" for="alt-years" data-i18n="alt.dlg.years">Älter als (Jahre)</label>
+      <input id="alt-years" class="fd-input alt-years" type="number" min="1" max="200" step="1" value="10" required>
+      <p class="set-hint" data-i18n="alt.dlg.hint">Maßgeblich ist das Dokumentdatum.</p>
+      <div id="alt-preview" class="alt-preview" aria-live="polite"></div>
+      <div class="form-actions">
+        <span id="alt-msg" class="form-msg"></span>
+        <button id="alt-cancel" class="fd-button fd-button--transparent" type="button" data-i18n="ed.sv.cancel">Abbrechen</button>
+        <button id="alt-go" class="fd-button fd-button--emphasized" type="submit" data-i18n="alt.dlg.go">Verschieben</button>
       </div>
     </form>
   </dialog>

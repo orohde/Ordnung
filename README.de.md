@@ -19,10 +19,12 @@ Die meisten Dokumentenverwaltungen bauen auf Tags und Filter. Das ist mächtig, 
 - **Volltextsuche** über Titel, Ordner und den Text jeder Seite, auch bei Scans (Tesseract-OCR, Deutsch und Englisch). Halbe Wörter und kleine Tippfehler finden trotzdem. `#tag` filtert nach Tags.
 - **Posteingang mit Vorschlägen.** Scanner-Ordner werden beobachtet. Neue Dokumente warten im Posteingang mit Vorschlag für Ordner, Titel und Datum. Die Vorschläge kommen aus Regeln, aus dem Unterordner im Eingang oder auf Wunsch von einer KI (Claude, Ollama oder ein OpenAI-kompatibler Server). Abgelegt wird nichts ohne dich.
 - **Regeln für Menschen.** Ordnung! erkennt Absender an der Web- oder Mail-Adresse im Brief und fragt nach dem Ablegen: *„Post von Nordlicht Versicherung künftig nach Versicherungen › Nordlicht › Wohngebäude?“* Eine Ampel zeigt, wie zuverlässig eine Regel auf dem vorhandenen Archiv ist.
+- **E-Mail-Eingang.** PDFs an eine eigene Adresse schicken oder weiterleiten, auch vom Handy. Ordnung! holt sie per IMAP ab, nimmt nur PDF-Anhänge und nur Mails von Adressen, die bei einem Benutzer hinterlegt sind, und belegt den Bereich dieser Person vor.
 - **Hochladen vom Handy.** Mit der iPhone-Kamera fotografieren, mehrere Seiten werden eine PDF, HEIC wird automatisch umgewandelt. Läuft als Web-App auf dem Home-Bildschirm.
 - **PDF-Editor.** Formulare ausfüllen, Text, Haken, Datum und die gespeicherte Unterschrift einsetzen. Das Ergebnis wird als neues Dokument neben dem Original gespeichert, das Original bleibt unverändert.
 - **Mappen.** Dokumente aus vielen Ordnern sammeln, etwa *Steuererklärung 2026*, ohne sie zu verschieben. Eine Mappe lässt sich als ZIP oder als eine zusammengefügte PDF für den Steuerberater herunterladen.
 - **Tags, Papierkorb, Ziehen und Ablegen.** Dokumente auf Ordner ziehen verschiebt sie, auf Mappen ziehen verknüpft sie. Gelöschtes bleibt 30 Tage im Papierkorb (einstellbar).
+- **Altablage.** Alte Unterlagen, die man nicht mehr braucht, aber behalten will: einzeln, ordnerweise oder „alles älter als X Jahre“ nach `<bereich>/Altablage/`. Im Baum stehen sie abseits, die Suche findet sie nur auf Wunsch, Zurückholen stellt den alten Ordner wieder her.
 - **REST-API** für alles, was die Oberfläche kann, dokumentiert unter `/docs`.
 - **Umzug aus Paperless-ngx** mit einem Import-Planer.
 
@@ -70,7 +72,16 @@ Unter **Unraid** installierst du es über den Reiter *Apps* (Vorlagen-Repo [oroh
 | `ORDNUNG_OCR_LANG` | `deu+eng` | Sprachen für Tesseract |
 | `ORDNUNG_RESCAN_MINUTES` | `10` | vollständiges Neueinlesen der Archivordner |
 | `ORDNUNG_STARTER` | `1` | beim ersten Start Ordnervorlage „Haushalt“ und Startregeln anlegen |
+| `ORDNUNG_INTERNAL_NETWORKS` | private Bereiche | kommagetrennte CIDR-Bereiche, die als Heimnetz gelten (LAN, VPN); alles andere ist „außen“ |
 | `PUID` / `PGID` / `UMASK` | `99` / `100` / `0002` | Benutzer, Gruppe und umask, als die die App läuft, wenn der Container als root startet; frisch angelegte leere Ordner bekommt dieser Benutzer (bei `--user` ohne Wirkung) |
+
+### Anmeldung von außen
+
+Hinter einem Reverse Proxy, der `X-Forwarded-For` **überschreibt** (Caddy tut das von sich aus), erkennt Ordnung!, ob eine Anmeldung aus dem Heimnetz oder von außen kommt. Unter *Einstellungen → Sicherheit* lässt sich der Zugang von außen auf Konten mit zweitem Faktor beschränken (Authenticator-App, dazu zehn einmalige Wiederherstellungscodes). Jede Anmeldung von außen, gesperrte Konten und Änderungen am zweiten Faktor meldet Ordnung! auf Wunsch per [ntfy](https://ntfy.sh). Sitzungen liegen auf dem Server: Abmelden, Passwort ändern oder *Alle anderen abmelden* unter *Mein Konto* beenden sie wirklich. Nach fünf Fehlversuchen pausiert ein Konto eine Minute, danach doppelt so lange bis höchstens 15 Minuten, getrennt gezählt für innen und außen.
+
+### E-Mail-Eingang
+
+Ein eigenes Postfach anlegen (etwa `eingang@example.org`) und unter *Einstellungen → E-Mail-Eingang* IMAP-Server, Benutzer und Passwort eintragen. Bei den Benutzern unter *E-Mail-Adressen* hinterlegen, von welchen Adressen sie schicken (mehrere mit Komma). Ordnung! holt jede Minute ab und legt die PDF-Anhänge in den Posteingang, auch aus weitergeleiteten Mails. Der Bereich ist der des Absenders, einstellbar unter *Mails gehören zu*. Mails von fremden Adressen, ohne PDF oder mit gefälschtem Absender (laut `Authentication-Results` des Mailservers) wandern im Postfach nach `Abgelehnt` und werden nach 7 Tagen gelöscht (einstellbar, 0 = sofort). Angenommene liegen danach in `Abgelegt`.
 
 ## Demo ausprobieren
 

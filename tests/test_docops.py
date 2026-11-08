@@ -39,9 +39,9 @@ def test_trash_and_restore(client: TestClient, settings):
 def test_readers_cannot_move_or_trash(client: TestClient):
     login(client, "oliver", "geheim123")
     doc = _doc(client, "rechtsschutz")
-    client.post("/api/users", json={"name": "erika", "password": "erika-pass", "areas": {"gemeinsam": "read"}})
+    client.post("/api/users", json={"name": "erika", "password": "erika-pass-2026", "areas": {"gemeinsam": "read"}})
     erika = TestClient(client.app)
-    login(erika, "erika", "erika-pass")
+    login(erika, "erika", "erika-pass-2026")
     assert erika.post(f"/api/documents/{doc['id']}/trash").status_code == 403
     assert erika.post(f"/api/documents/{doc['id']}/move", json={"folder": "X"}).status_code == 403
 
@@ -68,9 +68,9 @@ def test_trash_listing_and_file(client: TestClient):
     assert [(i["title"], i["folder"], i["area"]) for i in items] == [("Kontoauszug", "Banken/DKB", "oliver")]
     assert client.get("/api/trash/file", params={"path": trash}).content.startswith(b"%PDF")
     assert client.get("/api/trash/file", params={"path": ".papierkorb/../../x"}).status_code == 404
-    client.post("/api/users", json={"name": "erika", "password": "erika-pass", "areas": {"erika": "write"}})
+    client.post("/api/users", json={"name": "erika", "password": "erika-pass-2026", "areas": {"erika": "write"}})
     erika = TestClient(client.app)
-    login(erika, "erika", "erika-pass")
+    login(erika, "erika", "erika-pass-2026")
     assert erika.get("/api/trash").json()["items"] == []
     assert erika.get("/api/trash/file", params={"path": trash}).status_code == 404
 
@@ -134,14 +134,14 @@ def test_trash_days_setting(client: TestClient):
 
 def test_mappe_belongs_to_area(client: TestClient):
     login(client, "oliver", "geheim123")
-    client.post("/api/users", json={"name": "erika", "password": "erika-pass",
+    client.post("/api/users", json={"name": "erika", "password": "erika-pass-2026",
                                     "areas": {"erika": "write", "gemeinsam": "read"}})
     assert client.post("/api/mappen", json={"name": "Pflegegrad", "area": "oliver"}).status_code == 201
     assert client.post("/api/mappen", json={"name": "Hochzeit", "area": "gemeinsam"}).status_code == 201
     rezept = _doc(client, "rezept")                          # in Erika's area, readable for her
     client.post("/api/tags/change", json={"ids": [rezept["id"]], "add": ["Pflegegrad", "privat"]})
     erika = TestClient(client.app)
-    login(erika, "erika", "erika-pass")
+    login(erika, "erika", "erika-pass-2026")
     assert [m["name"] for m in erika.get("/api/mappen").json()] == ["Hochzeit"]
     assert erika.get("/api/mappen/download", params={"name": "Pflegegrad"}).status_code == 404
     assert erika.get(f"/api/documents/{rezept['id']}").json()["tags"] == ["privat"]      # label hidden
@@ -176,9 +176,9 @@ def test_move_into_area_without_write_access(client: TestClient):
     login(client, "oliver", "geheim123")
     doc = _doc(client, "rechtsschutz")
     client.post("/api/areas", json={"name": "haus"})
-    client.post("/api/users", json={"name": "erika2", "password": "erika-pass",
+    client.post("/api/users", json={"name": "erika2", "password": "erika-pass-2026",
                                     "areas": {doc["area"]: "write", "haus": "read"}})
     erika = TestClient(client.app)
-    login(erika, "erika2", "erika-pass")
+    login(erika, "erika2", "erika-pass-2026")
     res = erika.post(f"/api/documents/{doc['id']}/move", json={"folder": "", "area": "haus"})
     assert res.status_code == 403

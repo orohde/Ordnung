@@ -47,7 +47,7 @@ def test_api_token(client: TestClient):
 def test_user_management_and_area_rights(client: TestClient, settings: Settings):
     login(client, "oliver", "geheim123")
     res = client.post("/api/users", json={
-        "name": "erika", "password": "erika-pass", "display_name": "Erika",
+        "name": "erika", "password": "erika-pass-2026", "display_name": "Erika",
         "areas": {"erika": "write", "gemeinsam": "read", "oliver": "bogus"},
     })
     assert res.status_code == 201, res.text
@@ -56,7 +56,7 @@ def test_user_management_and_area_rights(client: TestClient, settings: Settings)
     assert client.post("/api/users", json={"name": "kurz", "password": "123"}).status_code == 400
 
     erika = TestClient(client.app)
-    login(erika, "erika", "erika-pass")
+    login(erika, "erika", "erika-pass-2026")
     assert {a["name"] for a in erika.get("/api/areas").json()} == {"erika", "gemeinsam"}
     docs = erika.get("/api/documents", params={"recursive": True}).json()
     assert {d["area"] for d in docs["items"]} == {"erika", "gemeinsam"}
@@ -76,9 +76,9 @@ def test_admin_safeguards(client: TestClient):
 
 def test_deleted_user_loses_session(client: TestClient):
     login(client, "oliver", "geheim123")
-    client.post("/api/users", json={"name": "gast", "password": "gast-pass"})
+    client.post("/api/users", json={"name": "gast", "password": "gast-pass-2026"})
     guest = TestClient(client.app)
-    login(guest, "gast", "gast-pass")
+    login(guest, "gast", "gast-pass-2026")
     assert guest.get("/api/me").status_code == 200
     client.delete("/api/users/gast")
     assert guest.get("/api/me").status_code == 401
@@ -86,10 +86,10 @@ def test_deleted_user_loses_session(client: TestClient):
 
 def test_change_own_password(client: TestClient):
     login(client, "oliver", "geheim123")
-    assert client.post("/api/me/password", json={"old": "falsch", "new": "neu-12345"}).status_code == 403
-    assert client.post("/api/me/password", json={"old": "geheim123", "new": "neu-12345"}).status_code == 200
+    assert client.post("/api/me/password", json={"old": "falsch", "new": "neu-1234567890"}).status_code == 403
+    assert client.post("/api/me/password", json={"old": "geheim123", "new": "neu-1234567890"}).status_code == 200
     fresh = TestClient(client.app)
-    login(fresh, "oliver", "neu-12345")
+    login(fresh, "oliver", "neu-1234567890")
 
 
 def test_ai_settings_never_return_key(client: TestClient, settings: Settings):
@@ -131,9 +131,9 @@ def test_ai_openai_compatible(client: TestClient, monkeypatch):
 
 def test_ai_settings_admin_only(client: TestClient):
     login(client, "oliver", "geheim123")
-    client.post("/api/users", json={"name": "gast", "password": "gast-pass"})
+    client.post("/api/users", json={"name": "gast", "password": "gast-pass-2026"})
     guest = TestClient(client.app)
-    login(guest, "gast", "gast-pass")
+    login(guest, "gast", "gast-pass-2026")
     assert guest.get("/api/ai").status_code == 403
 
 
@@ -208,10 +208,10 @@ def test_tree_prefs_per_person(client: TestClient):
     assert client.get("/api/me/prefs").json()["tree_open"] == []
     res = client.put("/api/me/prefs", json={"tree_open": ["Haus/Strom", "Haus", "Haus", ""]})
     assert res.json()["tree_open"] == ["Haus", "Haus/Strom"]
-    assert client.post("/api/users", json={"name": "erika", "password": "erika-pass"}).status_code == 201
+    assert client.post("/api/users", json={"name": "erika", "password": "erika-pass-2026"}).status_code == 201
 
     erika = TestClient(client.app)
-    login(erika, "erika", "erika-pass")
+    login(erika, "erika", "erika-pass-2026")
     assert erika.get("/api/me/prefs").json()["tree_open"] == []
     erika.put("/api/me/prefs", json={"tree_open": ["Auto"]})
     assert client.get("/api/me/prefs").json()["tree_open"] == ["Haus", "Haus/Strom"]
@@ -258,9 +258,9 @@ def test_area_without_owner(client: TestClient, settings):
     assert client.post("/api/areas", json={"name": "Haus"}).status_code == 409
     assert client.post("/api/areas", json={"name": "../x"}).status_code == 400
     # nobody owns it – a member gets rights like for any other area
-    client.post("/api/users", json={"name": "erika", "password": "erika-pass", "areas": {"haus": "write"}})
+    client.post("/api/users", json={"name": "erika", "password": "erika-pass-2026", "areas": {"haus": "write"}})
     erika = TestClient(client.app)
-    login(erika, "erika", "erika-pass")
+    login(erika, "erika", "erika-pass-2026")
     assert [a["name"] for a in erika.get("/api/areas").json()] == ["haus"]
     assert erika.get("/api/me").json()["write_areas"] == ["haus"]
     # an area with documents stays, an empty one may go

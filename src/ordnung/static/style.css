@@ -137,12 +137,20 @@ body {
 }
 .tree-caret {
   flex: none;
-  width: 1.25rem;
-  text-align: center;
+  width: 1.75rem;
+  margin: -0.3rem 0;
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  line-height: 1;
+  border-radius: 0.25rem;
   color: var(--sapContent_IconColor, #556b82);
   transition: transform 0.15s;
 }
 .tree-caret.is-open { transform: rotate(90deg); }
+.tree-caret:not(:empty):hover { background: var(--sapButton_Lite_Hover_Background, rgba(0, 0, 0, 0.06)); }
 .tree-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tree-dots { display: inline-flex; gap: 0.15rem; }
 .tree-dots .area-dot { width: 0.45rem; height: 0.45rem; }
@@ -578,6 +586,14 @@ button.tag { cursor: pointer; }
 
 .tag-panel { padding: 0.75rem 1rem 1rem; border-top: 1px solid var(--sapGroup_TitleBorderColor, #d9d9d9); margin-top: 0.5rem; }
 .tag-panel__title { font-size: 0.8rem; font-weight: 600; margin: 0 0 0.5rem; color: var(--sapContent_LabelColor, #556b82); }
+.tag-panel__head {
+  display: flex; align-items: center; gap: 0.25rem; width: calc(100% + 0.5rem); margin: 0 0 0.5rem -0.5rem; padding: 0.2rem 0;
+  border: 0; background: none; color: inherit; font: inherit; cursor: pointer; text-align: left;
+}
+.tag-panel__head .tag-panel__title { flex: 1; margin: 0; }
+.tag-panel__head .tree-caret { margin: 0; align-self: center; height: 1.6rem; }
+.tag-panel.is-shut .tag-panel__head { margin-bottom: 0; }
+.tag-panel.is-shut .tag-cloud { display: none; }
 .tag-cloud { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 
 .col-check { width: 2rem; padding-right: 0 !important; }
@@ -815,3 +831,61 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .doc-menu:hover { background: var(--sapButton_Lite_Hover_Background, rgba(0,0,0,.08)); }
 @media (hover: none) { .doc-menu { opacity: 0.8; } }
 #dm-tags { padding: 0.25rem 0; }
+
+/* ----- Altablage: old papers, kept apart and a little quieter ----- */
+
+.tree-sep { margin: 0.6rem 0.75rem 0.3rem; border-top: 1px solid var(--sapList_BorderColor, #e5e5e5); }
+.tree-row--alt .tree-name, .tree-row--alt .tree-count { color: var(--sapContent_LabelColor, #556b82); }
+.tree-row--alt.is-selected .tree-name { color: inherit; }
+.fd-table__row.is-alt .doc-title { color: var(--sapContent_LabelColor, #556b82); }
+.alt-badge {
+  display: inline-block;
+  padding: 0 0.35rem;
+  border-radius: 0.5rem;
+  font-size: 0.7rem;
+  background: var(--sapNeutralBackground, #eff1f2);
+  color: var(--sapContent_LabelColor, #556b82);
+}
+.alt-years { max-width: 8rem; }
+.alt-preview { min-height: 2rem; }
+.alt-list { list-style: none; margin: 0.25rem 0; padding: 0; max-height: 14rem; overflow: auto; }
+.alt-list li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.15rem 0; }
+
+/* ---------------------------------------------------------- sign-in security */
+.login__code { display: contents; }
+.login__code[hidden] { display: none; }
+.mfa-qr { margin: 0.5rem 0 0.75rem; }
+.mfa-qr img { width: 12rem; height: 12rem; image-rendering: pixelated; border-radius: 0.5rem; background: #fff; padding: 0.25rem; }
+.mfa-secret { font-family: ui-monospace, monospace; letter-spacing: 0.05em; user-select: all; word-break: break-all; }
+.mfa-code-list { font-family: ui-monospace, monospace; font-size: 1rem; columns: 2; max-width: 22rem; padding: 0.75rem 1rem;
+  background: var(--sapList_Background, #fff); border: 1px solid var(--sapList_BorderColor, #e5e5e5); border-radius: 0.5rem; user-select: all; }
+.mfa-disable { margin-top: 1rem; }
+.mfa-disable summary { cursor: pointer; color: var(--sapNegativeTextColor, #aa0808); margin-bottom: 0.75rem; }
+.mfa-badge { display: inline-block; padding: 0.05rem 0.5rem; border-radius: 0.75rem; font-size: 0.75rem;
+  background: var(--sapSuccessBackground, #f5fae5); color: var(--sapPositiveTextColor, #256f3a); }
+.mfa-badge.is-off { background: var(--sapWarningBackground, #fff8d6); color: var(--sapCriticalTextColor, #b44f00); }
+.ses-table { width: 100%; }
+.ses-table .doc-folder { white-space: normal; }
+.ses-table .ses-act { text-align: right; white-space: nowrap; }
+.sec-hint { margin: 0.25rem 0 0.9rem 1.6rem; }
+.sec-hint.is-warn { color: var(--sapCriticalTextColor, #b44f00); }
+.sec-checks { display: grid; gap: 0.4rem; }
+
+/* ------------------------------------------------------------ mail inbox */
+#ml-host { flex: 1 1 auto; min-width: 0; width: auto; }
+.inline .ml-port { flex: 0 0 6rem; width: 6rem; }
+#ml-form .card > .check { display: block; margin-bottom: 0.75rem; }
+#ml-form .field-hint a { color: var(--sapLinkColor, #0064d9); }
+.ml-senders { display: grid; gap: 0.35rem; }
+.ml-sender span { color: var(--sapContent_LabelColor, #556b82); }
+.ml-log { display: grid; gap: 0.2rem; font-size: 0.85rem; }
+.ml-ev { display: grid; grid-template-columns: 8.5rem minmax(8rem, 1fr) minmax(8rem, 1.5fr) auto; gap: 0.5rem;
+  padding: 0.25rem 0; border-bottom: 1px solid var(--sapList_BorderColor, #e5e5e5); }
+.ml-ev span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ml-ev__when { color: var(--sapContent_LabelColor, #556b82); }
+.ml-ev--accepted .ml-ev__what { color: var(--sapPositiveTextColor, #256f3a); }
+.ml-ev--rejected .ml-ev__what, .ml-ev--error .ml-ev__what { color: var(--sapNegativeTextColor, #aa0808); }
+@media (max-width: 700px) {
+  .ml-ev { grid-template-columns: 1fr auto; }
+  .ml-ev__subj { grid-column: 1 / -1; }
+}

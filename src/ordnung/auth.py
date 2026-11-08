@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
-import base64
-import hashlib
 import hmac
-import time
 from dataclasses import dataclass
 
 from fastapi import HTTPException, Request
 
 from .config import Settings
 
-COOKIE = "ordnung_session"
-SESSION_DAYS = 30
+COOKIE = "ordnung_session"              # plain http (local testing, own LAN without TLS)
+COOKIE_SECURE = "__Host-ordnung_session"  # https: Secure, whole host only, no Domain
 
 
 @dataclass(frozen=True)
@@ -30,27 +27,29 @@ class User:
         return self.areas is None or self.areas.get(area) == "write"
 
 
-def _sign(secret: str, payload: str) -> str:
-    return hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
+def is_https(request: Request) -> bool:
+    return request.url.scheme == "https" or request.headers.get("x-forwarded-proto", "") == "https"
 
 
-def make_session(settings: Settings, user: str) -> str:
-    expires = int(time.time()) + SESSION_DAYS * 86400
-    payload = f"{user}|{expires}"
-    token = f"{payload}|{_sign(settings.secret, payload)}"
-    return base64.urlsafe_b64encode(token.encode()).decode()
+def cookie_name(request: Request) -> str:
+    return COOKIE_SECURE if is_https(request) else COOKIE
 
 
-def read_session(settings: Settings, value: str) -> str | None:
-    try:
-        user, expires, signature = base64.urlsafe_b64decode(value.encode()).decode().rsplit("|", 2)
-    except (ValueError, UnicodeDecodeError):
-        return None
-    if not hmac.compare_digest(signature, _sign(settings.secret, f"{user}|{expires}")):
-        return None
-    if int(expires) < time.time():
-        return None
-    return user
+def session_token(request: Request) -> str:
+    return request.cookies.get(cookie_name(request), "")
+
+
+def client_ip(request: Request) -> str:
+    return request.client.host if request.client else ""
+
+
+def is_external(request: Request) -> bool:
+    return not request.app.state.networks.is_internal(client_ip(request))
+
+
+def needs_mfa_outside(request: Request, account) -> bool:
+    """From outside, an account needs the second factor if it has one or policy demands it."""
+    return account.has_totp or request.app.state.security.load().require_2fa_external
 
 
 def current_user(request: Request) -> User:
@@ -59,17 +58,18 @@ def current_user(request: Request) -> User:
     if settings.api_token and header.startswith("Bearer "):
         if hmac.compare_digest(header[7:].encode(), settings.api_token.encode()):
             return User(name="api", display_name="API", is_admin=True)
-    cookie = request.cookies.get(COOKIE)
-    if cookie:
-        name = read_session(settings, cookie)
-        account = request.app.state.users.get(name) if name else None
-        if account:
-            return User(
-                name=account.name,
-                display_name=account.display_name or account.name,
-                is_admin=account.is_admin,
-                areas=None if account.is_admin else dict(account.areas),
-            )
+    session = request.app.state.sessions.get(session_token(request), client_ip(request))
+    account = request.app.state.users.get(session.user) if session else None
+    if account:
+        # a session from home without second factor does not open the door from outside
+        if not session.mfa and is_external(request) and needs_mfa_outside(request, account):
+            raise HTTPException(status_code=401, detail="not authenticated")
+        return User(
+            name=account.name,
+            display_name=account.display_name or account.name,
+            is_admin=account.is_admin,
+            areas=None if account.is_admin else dict(account.areas),
+        )
     raise HTTPException(status_code=401, detail="not authenticated")
 
 

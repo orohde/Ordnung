@@ -60,10 +60,10 @@ def test_tag_documents_filter_and_search(client: TestClient):
 def test_tags_need_write_access(client: TestClient):
     erika = doc_id(client, "erika/Gesundheit")
     kto = doc_id(client, "Kontoauszug")
-    client.post("/api/users", json={"name": "leser", "password": "geheim123",
+    client.post("/api/users", json={"name": "leser", "password": "leser-pass-2026",
                                     "areas": {"erika": "read", "oliver": "write"}})
     client.post("/api/logout")
-    assert client.post("/api/login", json={"username": "leser", "password": "geheim123"}).status_code == 200
+    assert client.post("/api/login", json={"username": "leser", "password": "leser-pass-2026"}).status_code == 200
     assert client.put(f"/api/documents/{erika}/tags", json={"tags": ["x"]}).status_code == 403
     assert client.post("/api/tags/change", json={"ids": [erika], "add": ["x"]}).status_code == 404
     assert client.put(f"/api/documents/{kto}/tags", json={"tags": ["Steuer"]}).status_code == 200

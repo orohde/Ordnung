@@ -19,10 +19,12 @@ Most document managers are built around tags and filters. That is powerful – a
 - **Full-text search** over title, folder and the text of every page, scans included (Tesseract OCR, German and English). Partial words and small typos still match. `#tag` filters by tag.
 - **Inbox with suggestions.** Scanner folders are watched; new documents wait in the inbox with a suggested folder, title and date. Suggestions come from rules, from the inbox subfolder, or – if you like – from an AI (Claude, Ollama or any OpenAI-compatible server). Nothing is filed without you.
 - **Rules for humans.** Ordnung! recognises senders by the web or mail address in the letter and asks after filing: *“Post from Nordlicht Insurance → Insurance › Nordlicht › Buildings from now on?”* – with a traffic light that shows how reliable a rule is on your existing archive.
+- **Mail inbox.** Send or forward PDFs to an address of their own, from the phone too. Ordnung! collects them via IMAP, takes PDF attachments only and only from addresses stored with a user, and presets that person's area.
 - **Upload from the phone.** Take photos with the iPhone camera; several pages become one PDF, HEIC is converted automatically. Works as a home-screen web app.
 - **PDF editor.** Fill in forms, add text, ticks, the date and your stored signature. The result is saved as a new document next to the original, which stays untouched.
 - **Collections.** Gather documents from many folders – *Tax return 2026* – without moving them. Download a collection as ZIP or as one merged PDF for your tax advisor.
 - **Tags, trash, drag and drop.** Drag documents onto folders to move them, onto collections to link them. Deleted documents stay in the trash for 30 days (configurable).
+- **Old files.** Papers you no longer need but want to keep: one by one, a whole folder or “everything older than X years” go to `<area>/Altablage/`. The tree keeps them apart, the search finds them only on request, taking them back restores the old folder.
 - **REST API** for everything the UI does, documented at `/docs`.
 - **Moving from Paperless-ngx** is supported with an import planner.
 
@@ -70,7 +72,16 @@ On **Unraid**, install it from the *Apps* tab (template repository [orohde/unrai
 | `ORDNUNG_OCR_LANG` | `deu+eng` | Tesseract languages |
 | `ORDNUNG_RESCAN_MINUTES` | `10` | full rescan of the archive folders |
 | `ORDNUNG_STARTER` | `1` | ship a household folder template and starter rules on first start |
+| `ORDNUNG_INTERNAL_NETWORKS` | private ranges | comma-separated CIDR ranges that count as the home network (LAN, VPN); everything else is "outside" |
 | `PUID` / `PGID` / `UMASK` | `99` / `100` / `0002` | user, group and umask the app runs as when the container starts as root; fresh empty folders are handed over to that user (ignored with `--user`) |
+
+### Signing in from outside
+
+Behind a reverse proxy that **overwrites** `X-Forwarded-For` (Caddy does by default), Ordnung! knows whether a sign-in comes from the home network or from outside. Under *Settings → Security* you can allow access from outside only for accounts with a second factor (authenticator app, with ten one-time recovery codes), and have every sign-in from outside, locked accounts and changes to the second factor reported via [ntfy](https://ntfy.sh). Sessions are kept on the server: signing out, changing the password or *Sign out all others* under *My account* really ends them. After five failed attempts an account is paused for a minute, doubling up to 15 minutes, counted separately for inside and outside.
+
+### Mail inbox
+
+Create a mailbox of its own (say `inbox@example.org`) and enter IMAP server, user and password under *Settings → Mail inbox*. With each user, list the addresses they send from under *E-mail addresses* (several separated by commas). Ordnung! collects every minute and puts the PDF attachments into the inbox, forwarded mails included. The area is the sender's, adjustable under *Mails belong to*. Mails from unknown addresses, without a PDF or with a forged sender (according to the mail server's `Authentication-Results`) are moved to `Abgelehnt` in the mailbox and deleted after 7 days (configurable, 0 = at once). Taken mails end up in `Abgelegt`.
 
 ## Try the demo
 
