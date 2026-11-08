@@ -389,13 +389,13 @@ class InboxService:
         area = (inbox.area if inbox and inbox.area else "") or (hint[0] if hint else "") or (ai or {}).get("area", "")
         duplicate = None
         with self.index.connect() as con:
-            dup = con.execute("SELECT path, area, folder FROM files WHERE sha256=? LIMIT 1", (row["sha256"],)).fetchone()
+            dup = con.execute("SELECT path, area, folder, sha256 FROM files WHERE sha256=? LIMIT 1", (row["sha256"],)).fetchone()
         if dup:
             duplicate = dict(dup)
         elif row["sha256"] in self._recent:
             path = self._recent[row["sha256"]]
             parts = path.split("/")
-            duplicate = {"path": path, "area": parts[0], "folder": "/".join(parts[1:-1])}
+            duplicate = {"path": path, "area": parts[0], "folder": "/".join(parts[1:-1]), "sha256": row["sha256"]}
         return {
             "area": area if area in ctx["areas"] else "",
             "folder": best["folder"] if best else "",

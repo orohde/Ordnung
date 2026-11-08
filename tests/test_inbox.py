@@ -1,3 +1,4 @@
+import hashlib
 import functools
 import os
 import time
@@ -142,7 +143,11 @@ def test_inbox_folder_hint_duplicates_and_keep(env):
     process(app)
     app.state.index.scan()
     item = c.get("/api/inbox").json()["items"][0]
-    assert item["suggestion"]["duplicate"]["path"].startswith("oliver/Banken/DKB/")
+    dup = item["suggestion"]["duplicate"]
+    assert dup["path"].startswith("oliver/Banken/DKB/")
+    # the inbox links to the filed copy by its checksum
+    filed = c.get(f"/api/documents/{dup['sha256']}/file")
+    assert filed.status_code == 200 and filed.content == again.read_bytes()
     res = c.post(f"/api/inbox/{item['key']}/file", json={"area": "oliver", "folder": "Banken/DKB",
                                                           "title": "x", "date": "2026-03-01"})
     assert res.status_code == 400 and "already" in res.json()["detail"]
@@ -168,6 +173,7 @@ def test_same_file_twice_in_one_batch(env):
     assert len(list((fresh / "oliver/Banken/DKB").iterdir())) == 1
     item = c.get("/api/inbox").json()["items"][0]
     assert item["suggestion"]["duplicate"]["path"].startswith("oliver/Banken/DKB/")
+    assert item["suggestion"]["duplicate"]["sha256"] == hashlib.sha256(src.read_bytes()).hexdigest()
 
 
 def test_filing_needs_writable_archive_and_valid_input(env):

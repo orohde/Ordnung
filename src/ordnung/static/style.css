@@ -520,6 +520,8 @@ table.card { padding: 0; border-collapse: separate; overflow: hidden; width: 100
 .ib-cand-why { margin-top: 0.3rem; display: flex; flex-wrap: wrap; gap: 0.3rem; font-size: 0.78rem; }
 .ib-dup { padding: 0.5rem 0.7rem; border-radius: 0.4rem; font-size: 0.85rem;
   background: var(--sapErrorBackground, #ffeaf4); color: var(--sapNegativeTextColor, #aa0808); }
+.ib-dup-path { color: inherit; text-decoration: underline; word-break: break-all; }
+.ib-dup-actions { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.3rem; }
 .ib-filename { font-size: 0.75rem; word-break: break-all; align-self: center; }
 .switch-card { margin-top: 1.5rem; }
 .ib-form .form-actions { flex-wrap: wrap; }

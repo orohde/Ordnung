@@ -115,7 +115,8 @@ const I18N = {
     'ib.learn': 'Kein passende Regel gefunden – für diesen Ordner Regeln vorschlagen lassen?',
     'ib.learn.link': 'Zu den Regeln',
     'ib.reading': 'Text wird gelesen …', 'ib.nosugg': 'kein Vorschlag', 'ib.dup': 'schon im Archiv',
-    'ib.dup.long': 'Diese Datei liegt schon im Archiv: {path}', 'ib.dup.force': 'Trotzdem ablegen',
+    'ib.dup.long': 'Genau diese Datei (identischer Inhalt) liegt schon im Archiv:', 'ib.dup.force': 'Trotzdem ablegen',
+    'ib.dup.open': 'Abgelegte Fassung öffnen',
     'ib.src.rule': 'Regel', 'ib.src.folder': 'Eingangsordner', 'ib.src.ai': 'KI',
     'ib.why.rule': 'Regel: {conds}', 'ib.why.folder': 'Liegt im Eingang unter „{folder}“.', 'ib.why.ai': 'KI: {reason}',
     'ib.why.none': 'Weder eine Regel noch der Eingangsordner geben einen Hinweis. Ordner selbst wählen oder die KI fragen.',
@@ -359,7 +360,8 @@ const I18N = {
     'ib.dismiss': 'Dismiss', 'ib.undismiss': 'Bring back', 'ib.file': 'File', 'ib.filed': 'Filed as {path}.',
     'ib.learn': 'No matching rule – let Ordnung! suggest rules for this folder?', 'ib.learn.link': 'To the rules',
     'ib.reading': 'Reading text …', 'ib.nosugg': 'no suggestion', 'ib.dup': 'already filed',
-    'ib.dup.long': 'This file is already in the archive: {path}', 'ib.dup.force': 'File anyway',
+    'ib.dup.long': 'Exactly this file (identical content) is already in the archive:', 'ib.dup.force': 'File anyway',
+    'ib.dup.open': 'Open the filed copy',
     'ib.src.rule': 'Rule', 'ib.src.folder': 'Inbox folder', 'ib.src.ai': 'AI',
     'ib.why.rule': 'Rule: {conds}', 'ib.why.folder': 'Sits in the inbox under “{folder}”.', 'ib.why.ai': 'AI: {reason}',
     'ib.why.none': 'Neither a rule nor the inbox folder give a hint. Choose a folder or ask the AI.',
@@ -1880,8 +1882,14 @@ function showItem(it) {
   const dup = $('ib-dup');
   dup.hidden = !s.duplicate;
   if (s.duplicate) {
-    dup.innerHTML = `${esc(t('ib.dup.long', { path: s.duplicate.path }))} <button type="button" class="fd-button fd-button--transparent" id="ib-force">${esc(t('ib.dup.force'))}</button>`;
+    // identical checksum: show where the copy lies, open it, or drop the new one right here
+    const href = `api/documents/${s.duplicate.sha256}/file`;
+    dup.innerHTML = `${esc(t('ib.dup.long'))}<br><a class="ib-dup-path mono" href="${href}" target="_blank" rel="noopener" title="${esc(t('ib.dup.open'))}">${esc(s.duplicate.path)}</a>` +
+      `<span class="ib-dup-actions">` +
+      (it.status === 'new' ? `<button type="button" class="fd-button fd-button--transparent" id="ib-dup-dismiss">${esc(t('ib.dismiss'))}</button>` : '') +
+      `<button type="button" class="fd-button fd-button--transparent" id="ib-force">${esc(t('ib.dup.force'))}</button></span>`;
     $('ib-force').addEventListener('click', () => fileItem(true));
+    $('ib-dup-dismiss')?.addEventListener('click', dismissItem);
   }
 
   const areas = Inb.data.areas;
