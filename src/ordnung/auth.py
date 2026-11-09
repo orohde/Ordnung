@@ -7,7 +7,6 @@ from dataclasses import dataclass
 
 from fastapi import HTTPException, Request
 
-from .config import Settings
 
 COOKIE = "ordnung_session"              # plain http (local testing, own LAN without TLS)
 COOKIE_SECURE = "__Host-ordnung_session"  # https: Secure, whole host only, no Domain
@@ -53,10 +52,10 @@ def needs_mfa_outside(request: Request, account) -> bool:
 
 
 def current_user(request: Request) -> User:
-    settings: Settings = request.app.state.settings
     header = request.headers.get("authorization", "")
-    if settings.api_token and header.startswith("Bearer "):
-        if hmac.compare_digest(header[7:].encode(), settings.api_token.encode()):
+    api_token = request.app.state.security.load().api_token if header.startswith("Bearer ") else ""
+    if api_token:
+        if hmac.compare_digest(header[7:].encode(), api_token.encode()):
             return User(name="api", display_name="API", is_admin=True)
     session = request.app.state.sessions.get(session_token(request), client_ip(request))
     account = request.app.state.users.get(session.user) if session else None

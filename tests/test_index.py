@@ -102,3 +102,23 @@ def test_short_tokens_fall_back_to_like(full_index: Index):
     assert found["total"] == 1
     found = full_index.documents(["oliver"], recursive=True, query="nr")
     assert found["total"] == 0  # path/title only for one- and two-letter words
+
+
+def test_list_sorting(index: Index):
+    areas = ["oliver", "erika", "gemeinsam"]
+
+    def listed(**kw):
+        return index.documents(areas, recursive=True, **kw)["items"]
+
+    newest = listed()
+    dates = [d["date"] for d in newest if d["date"]]
+    assert dates == sorted(dates, reverse=True)
+    assert listed(sort="date") == newest
+    oldest = [d["date"] for d in listed(sort="date", desc=False) if d["date"]]
+    assert oldest == sorted(dates)
+    # undated ones stay at the end either way
+    assert all(d["date"] for d in listed(sort="date", desc=False)[: len(dates)])
+    titles = [d["title"].casefold() for d in listed(sort="title", desc=False)]
+    assert titles == sorted(titles)
+    assert [d["title"].casefold() for d in listed(sort="title")] == sorted(titles, reverse=True)
+    assert [d["area"] for d in listed(sort="area", desc=False)] == sorted(d["area"] for d in newest)

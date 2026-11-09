@@ -1,6 +1,6 @@
-# Example deployment. Adjust the host paths and set a password in .env:
-#   ORDNUNG_ADMIN_USER=admin
-#   ORDNUNG_ADMIN_PASSWORD=change-me
+# Example deployment. Adjust the host paths, start it and open the page:
+# the first visit (from the home network) creates the first administrator.
+# Everything else is set in the app under Settings.
 services:
   ordnung:
     image: ghcr.io/orohde/ordnung:latest
@@ -13,5 +13,4 @@ services:
       - ./data:/data          # index, settings, accounts
       - ./eingang:/eingang    # optional: scanner / inbox folders
     environment:
-      - ORDNUNG_ADMIN_USER=${ORDNUNG_ADMIN_USER:-admin}
-      - ORDNUNG_ADMIN_PASSWORD=${ORDNUNG_ADMIN_PASSWORD:?set ORDNUNG_ADMIN_PASSWORD in .env}
+      - TZ=Europe/Berlin

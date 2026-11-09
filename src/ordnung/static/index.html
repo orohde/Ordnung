@@ -36,6 +36,22 @@
       <p id="login-error" class="login__error" hidden data-i18n="login.error">Anmeldung fehlgeschlagen.</p>
       <button class="fd-button fd-button--emphasized" type="submit" data-i18n="login.submit">Anmelden</button>
     </form>
+    <form id="setup-form" class="login__card" hidden>
+      <img src="icon.svg" alt="" class="login__logo">
+      <h1 class="fd-title fd-title--h3">Ordnung!</h1>
+      <p class="field-hint" data-i18n="setup.intro">Willkommen! Noch gibt es kein Konto. Lege jetzt den ersten Administrator an – weitere Konten folgen später unter Einstellungen → Benutzer.</p>
+      <label class="fd-form-label" for="setup-user" data-i18n="login.user">Benutzer</label>
+      <input class="fd-input" id="setup-user" autocomplete="username" autocapitalize="off" spellcheck="false" required>
+      <label class="fd-form-label" for="setup-name" data-i18n="setup.name">Anzeigename</label>
+      <input class="fd-input" id="setup-name" autocomplete="name">
+      <label class="fd-form-label" for="setup-pass" data-i18n="login.pass">Passwort</label>
+      <input class="fd-input" id="setup-pass" type="password" autocomplete="new-password" minlength="12" required>
+      <label class="fd-form-label" for="setup-pass2" data-i18n="setup.pass2">Passwort wiederholen</label>
+      <input class="fd-input" id="setup-pass2" type="password" autocomplete="new-password" minlength="12" required>
+      <p class="field-hint" data-i18n="setup.hint">Mindestens 12 Zeichen. Den zweiten Faktor richtest du danach unter Mein Konto ein.</p>
+      <p id="setup-error" class="login__error" hidden></p>
+      <button class="fd-button fd-button--emphasized" type="submit" data-i18n="setup.submit">Konto anlegen</button>
+    </form>
   </section>
 
   <!-- ============================== App ============================== -->
@@ -43,8 +59,10 @@
     <header class="fd-shellbar">
       <div class="fd-shellbar__group fd-shellbar__group--product">
         <button id="btn-tree" class="fd-button fd-button--transparent fd-shellbar__button only-mobile" type="button" aria-label="Ordner">&#9776;</button>
-        <img src="icon.svg" alt="" class="shell-logo">
-        <span class="fd-shellbar__title">Ordnung!</span>
+        <a id="home" class="shell-home" href="#/" data-i18n-title="home.tip" title="Zur Startansicht">
+          <img src="icon.svg" alt="" class="shell-logo">
+          <span class="fd-shellbar__title">Ordnung!</span>
+        </a>
       </div>
       <div class="fd-shellbar__group shell-search">
         <input id="search" class="fd-input" type="search" autocomplete="off"
@@ -69,6 +87,10 @@
       <label class="toolbar__check" data-i18n-title="alt.tip">
         <input type="checkbox" id="chk-alt">
         <span data-i18n="alt.search">Altablage mitsuchen</span>
+      </label>
+      <label class="toolbar__check" id="best-wrap" data-i18n-title="sort.best.tip" hidden>
+        <input type="checkbox" id="chk-best">
+        <span data-i18n="sort.best">Beste Treffer zuerst</span>
       </label>
       <span id="status" class="toolbar__status"></span>
     </div>
@@ -124,9 +146,9 @@
           <thead class="fd-table__header">
             <tr class="fd-table__row">
               <th class="fd-table__cell col-check"><input type="checkbox" id="chk-all" data-i18n-title="tags.selall"></th>
-              <th class="fd-table__cell col-date" data-i18n="col.date">Datum</th>
-              <th class="fd-table__cell" data-i18n="col.title">Titel</th>
-              <th class="fd-table__cell col-area" data-i18n="col.area">Bereich</th>
+              <th class="fd-table__cell col-date" data-sort-col="date"><button type="button" class="sort-head" data-sort="date"><span data-i18n="col.date">Datum</span><span class="sort-arrow" aria-hidden="true"></span></button></th>
+              <th class="fd-table__cell" data-sort-col="title"><button type="button" class="sort-head" data-sort="title"><span data-i18n="col.title">Titel</span><span class="sort-arrow" aria-hidden="true"></span></button></th>
+              <th class="fd-table__cell col-area" data-sort-col="area"><button type="button" class="sort-head" data-sort="area"><span data-i18n="col.area">Bereich</span><span class="sort-arrow" aria-hidden="true"></span></button></th>
               <th class="fd-table__cell col-menu"></th>
             </tr>
           </thead>
@@ -386,6 +408,7 @@
         <a class="set-link admin-only" href="#/einstellungen/ki" data-pane="ai" data-i18n="set.ai">KI</a>
         <a class="set-link admin-only" href="#/einstellungen/email" data-pane="mail" data-i18n="set.mail">E-Mail-Eingang</a>
         <a class="set-link admin-only" href="#/einstellungen/sicherheit" data-pane="security" data-i18n="set.security">Sicherheit</a>
+        <a class="set-link admin-only" href="#/einstellungen/api" data-pane="api" data-i18n="set.api">API</a>
         <a class="set-link admin-only" href="#/einstellungen/system" data-pane="system" data-i18n="set.system">System</a>
       </nav>
       <div class="settings-body">
@@ -746,6 +769,12 @@
               <p class="field-hint sec-hint" data-i18n="sec.int.hint">Sonst reicht zu Hause das Passwort. Von außen fragt Ordnung! immer nach dem Code, wenn ein Konto einen zweiten Faktor hat.</p>
             </div>
             <div class="card">
+              <h4 class="fd-title fd-title--h5 card-title" data-i18n="sec.nets">Heimnetz</h4>
+              <p class="field-hint sec-hint" data-i18n="sec.nets.hint">Adressbereiche, die als „zu Hause“ gelten (LAN, VPN). Alles andere ist „von außen“. Leer lassen für die Vorgabe.</p>
+              <textarea class="fd-input sec-nets" id="sec-nets" rows="3" spellcheck="false" autocapitalize="off"></textarea>
+              <p id="sec-nets-here" class="field-hint sec-hint"></p>
+            </div>
+            <div class="card">
               <h4 class="fd-title fd-title--h5 card-title" data-i18n="sec.ntfy">Benachrichtigungen per ntfy</h4>
               <div class="form-grid">
                 <label class="fd-form-label" for="sec-url" data-i18n="sec.url">Topic-Adresse</label>
@@ -771,12 +800,61 @@
           </form>
         </section>
 
+        <section class="set-pane" data-pane="api" hidden>
+          <h3 class="fd-title fd-title--h4" data-i18n="set.api">API</h3>
+          <p class="set-hint" data-i18n="api.intro">Alles, was die Oberfläche kann, geht auch per REST-API unter /api/, für Skripte, Kurzbefehle oder Home Assistant.</p>
+          <div class="card">
+            <h4 class="fd-title fd-title--h5 card-title" data-i18n="api.key">API-Schlüssel</h4>
+            <div class="inline api-key-row">
+              <input class="fd-input api-key" id="api-key" type="text" readonly autocomplete="off" spellcheck="false" data-bwignore="true" data-1p-ignore="true" data-lpignore="true" data-form-type="other">
+              <button id="api-copy" class="fd-button" type="button" data-i18n="api.copy">Kopieren</button>
+              <button id="api-new" class="fd-button" type="button" data-i18n="api.new">Neu erzeugen</button>
+              <button id="api-del" class="fd-button fd-button--transparent" type="button" data-i18n="api.del">Löschen</button>
+            </div>
+            <p id="api-state" class="field-hint"></p>
+            <p class="field-hint" data-i18n="api.hint">Programme schicken den Schlüssel bei jeder Anfrage mit. Er öffnet alles wie ein Administrator, also gehört er nur in vertrauenswürdige Skripte. Neu erzeugen macht den alten sofort ungültig.</p>
+            <pre class="api-example"><code id="api-example"></code></pre>
+          </div>
+          <div class="card">
+            <h4 class="fd-title fd-title--h5 card-title" data-i18n="api.ref">Beschreibung aller Endpunkte</h4>
+            <p class="field-hint" data-i18n="api.ref.hint">Ordnung! beschreibt seine API selbst: jeder Endpunkt mit Parametern und Antwort, direkt im Browser ausprobierbar (mit deiner Anmeldung).</p>
+            <p><a class="fd-link" href="/api/docs" target="_blank" rel="noopener" data-i18n="api.open">API-Beschreibung öffnen</a> · <a class="fd-link" href="/api/openapi.json" target="_blank" rel="noopener">openapi.json</a></p>
+          </div>
+        </section>
+
         <section class="set-pane" data-pane="system" hidden>
           <h3 class="fd-title fd-title--h4" data-i18n="set.system">System</h3>
           <div class="card">
             <dl id="sys-info" class="sys-info"></dl>
             <button id="sys-rescan" class="fd-button" type="button" data-i18n="sys.rescan">Ordner jetzt neu einlesen</button>
           </div>
+          <form id="sys-form" class="card admin-only" autocomplete="off">
+            <h4 class="fd-title fd-title--h5 card-title" data-i18n="sys.work">Hintergrundarbeit</h4>
+            <label class="check"><input type="checkbox" id="sys-ocr"> <span data-i18n="sys.f.ocr">Texterkennung für Scans</span></label>
+            <p class="field-hint sec-hint" data-i18n="sys.f.ocr.hint">Liest Text aus gescannten Seiten, damit die Suche sie findet. Aus: nur Dokumente mit eingebettetem Text werden durchsuchbar.</p>
+            <div class="form-grid">
+              <label class="fd-form-label" for="sys-lang" data-i18n="sys.f.lang">Sprachen</label>
+              <div>
+                <input class="fd-input" id="sys-lang" spellcheck="false" autocapitalize="off" placeholder="deu+eng">
+                <p id="sys-lang-hint" class="field-hint"></p>
+              </div>
+              <label class="fd-form-label" for="sys-pages" data-i18n="sys.f.pages">Höchstens Seiten je Dokument</label>
+              <input class="fd-input sys-num" id="sys-pages" type="number" min="1" max="1000">
+              <label class="fd-form-label" for="sys-rescan-min" data-i18n="sys.f.rescan">Neu einlesen alle (Min.)</label>
+              <input class="fd-input sys-num" id="sys-rescan-min" type="number" min="1" max="1440">
+              <label class="fd-form-label" for="sys-workers" data-i18n="sys.f.workers">Dokumente gleichzeitig lesen</label>
+              <div>
+                <input class="fd-input sys-num" id="sys-workers" type="number" min="1" max="16">
+                <p id="sys-workers-hint" class="field-hint"></p>
+              </div>
+            </div>
+            <p class="field-hint" data-i18n="sys.f.hint">Änderungen gelten sofort, ohne Neustart. Schon gelesene Dokumente werden nicht noch einmal gelesen.</p>
+            <div class="form-actions">
+              <span id="sys-msg" class="form-msg"></span>
+              <button id="sys-defaults" class="fd-button fd-button--transparent" type="button" data-i18n="sys.f.defaults">Standardwerte</button>
+              <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
+            </div>
+          </form>
           <div id="sys-errors" class="card sys-errors" hidden>
             <h4 class="fd-title fd-title--h5 card-title" data-i18n="sys.err.title">Dokumente ohne lesbaren Text</h4>
             <p class="set-hint" data-i18n="sys.err.hint"></p>

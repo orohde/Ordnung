@@ -471,8 +471,12 @@ class Index:
         shas: set[str] | None = None,
         alt: bool = False,
         before: str | None = None,
+        sort: str = "",
+        desc: bool = True,
     ) -> dict:
-        """``shas`` limits the result to these contents (tag filter); empty set = nothing.
+        """``sort`` is ``date``, ``title``, ``area`` or ``relevance`` (best hits first, searches only; empty: relevance for a search, else date).
+
+        ``shas`` limits the result to these contents (tag filter); empty set = nothing.
 
         The Altablage is left out unless ``alt`` is set or ``folder`` lies inside it.
         ``before`` keeps only documents dated before this ISO date (undated ones never match).
@@ -508,6 +512,7 @@ class Index:
             where.append("f.haystack LIKE ? ESCAPE '\\'")
             args.append("%" + _like_escape(token) + "%")
 
+        order = _order(sort, desc) if sort in _SORTS else ""
         with self.connect() as con:
             if long_tokens:
                 match = " AND ".join('"' + t.replace('"', '""') + '"' for t in long_tokens)
@@ -517,7 +522,7 @@ class Index:
                 total = con.execute(f"SELECT COUNT(*) {base}", margs).fetchone()[0]
                 rows = con.execute(
                     f"""SELECT f.*, snippet(fts, 2, '{HL_START}', '{HL_END}', '…', 16) AS snip
-                        {base} ORDER BY bm25(fts, 4.0, 8.0, 1.0), f.doc_date DESC
+                        {base} ORDER BY {order or "bm25(fts, 4.0, 8.0, 1.0), f.doc_date DESC"}
                         LIMIT ? OFFSET ?""",
                     margs + [limit, offset],
                 ).fetchall()
@@ -526,7 +531,7 @@ class Index:
                 total = con.execute(f"SELECT COUNT(*) FROM files f WHERE {sql_where}", args).fetchone()[0]
                 rows = con.execute(
                     f"""SELECT f.*, NULL AS snip FROM files f WHERE {sql_where}
-                        ORDER BY f.doc_date IS NULL, f.doc_date DESC, f.title COLLATE NOCASE
+                        ORDER BY {order or _order("date", True)}
                         LIMIT ? OFFSET ?""",
                     args + [limit, offset],
                 ).fetchall()
@@ -591,6 +596,20 @@ def _set_meta(con: sqlite3.Connection, key: str, value: str) -> None:
         "INSERT INTO meta(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
         (key, value),
     )
+
+
+_SORTS = ("date", "title", "area")
+
+
+def _order(sort: str, desc: bool) -> str:
+    """ORDER BY for the list; undated documents always go last, ties fall back to date and title."""
+    way = "DESC" if desc else "ASC"
+    date = f"f.doc_date IS NULL, f.doc_date {way}"
+    if sort == "title":
+        return f"f.title COLLATE NOCASE {way}, f.doc_date DESC"
+    if sort == "area":
+        return f"f.area COLLATE NOCASE {way}, f.doc_date IS NULL, f.doc_date DESC, f.title COLLATE NOCASE"
+    return f"{date}, f.title COLLATE NOCASE"
 
 
 def _public(row: sqlite3.Row) -> dict:

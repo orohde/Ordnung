@@ -50,6 +50,9 @@ body {
 .fd-shellbar__group--product { order: 0; }
 .shell-search { order: 1; }
 .fd-shellbar__group--actions { order: 2; }
+.shell-home { display: flex; align-items: center; color: inherit; text-decoration: none; border-radius: 0.4rem; }
+.shell-home:hover .fd-shellbar__title { text-decoration: underline; }
+.shell-home:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 .shell-logo { width: 1.75rem; height: 1.75rem; border-radius: 0.4rem; margin-right: 0.5rem; }
 .shell-search { flex: 1; max-width: 32rem; }
 .shell-search .fd-input { width: 100%; }
@@ -114,6 +117,11 @@ body {
 .doc-table .fd-table__row.is-selected { background: var(--sapList_SelectionBackgroundColor, #ebf8ff); }
 .col-date { width: 7rem; white-space: nowrap; }
 .col-area { width: 8rem; }
+.sort-head { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem;
+  font: inherit; color: inherit; white-space: nowrap; padding: 0.15rem 0.25rem; margin: -0.15rem -0.25rem; border-radius: 0.25rem; }
+.sort-head:hover { background: var(--sapList_Hover_Background, #eaecee); }
+.sort-head:focus-visible { outline: 2px solid var(--sapContent_FocusColor, #0070f2); }
+.sort-arrow { font-size: 0.7em; min-width: 0.7em; color: var(--sapContent_IconColor, #0064d9); }
 .doc-title { font-weight: 600; }
 .doc-folder { font-size: 0.75rem; color: var(--sapContent_LabelColor, #556b82); margin-top: 0.1rem; }
 .doc-area { display: inline-flex; align-items: center; gap: 0.35rem; }
@@ -216,7 +224,7 @@ a.fd-button { text-decoration: none; }
 @media (max-width: 900px) {
   .only-mobile { display: inline-flex !important; }
   .fd-shellbar { padding: 0 0.5rem; }
-  .fd-shellbar__title, .shell-logo { display: none; }
+  .shell-home { display: none; }
   #btn-logout { display: none; }
   .toolbar { padding: 0.5rem; gap: 0.5rem; }
   .toolbar__status { width: 100%; margin-left: 0; }
@@ -889,3 +897,11 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   .ml-ev { grid-template-columns: 1fr auto; }
   .ml-ev__subj { grid-column: 1 / -1; }
 }
+
+/* API settings */
+.api-key-row { flex-wrap: wrap; }
+.api-key { flex: 1 1 22rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.api-example { margin: 0.5rem 0 0; padding: 0.6rem 0.75rem; border-radius: 0.4rem; background: var(--sapField_Background, rgba(127,127,127,.12)); overflow-x: auto; font-size: 0.8rem; white-space: pre; }
+
+.sys-num { max-width: 8rem; }
+.sec-nets { width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; resize: vertical; }

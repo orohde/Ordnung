@@ -147,13 +147,15 @@ class UserStore:
 
     def create(self, name: str, password: str, display_name: str = "", is_admin: bool = False,
                areas: dict[str, str] | None = None, emails: list[str] | None = None,
-               mail_area: str = "") -> Account:
+               mail_area: str = "", only_if_empty: bool = False) -> Account:
         name = name.strip().lower()
         if not NAME_RE.match(name):
             raise UserError("invalid user name")
         _check_password(password)
         with self._lock:
             users = self._load()
+            if only_if_empty and users:
+                raise UserError("already set up")
             if name in users:
                 raise UserError("user exists")
             account = Account(name=name, display_name=display_name.strip() or name,

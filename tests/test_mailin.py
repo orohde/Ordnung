@@ -162,7 +162,7 @@ def test_api_and_inbox(client: TestClient, settings):  # noqa: F811
     client.app.state.inbox.scan()
     items = [i for i in client.get("/api/inbox").json()["items"] if i["inbox"] == "mail"]
     assert [i["rel"] for i in items] == ["oliver/Rechnung.pdf"]
-    client.app.state.inbox.extract_pending(client.app.state.extractor)
+    client.app.state.inbox.extract_pending(client.app.state.make_extractor())
     item = next(i for i in client.get("/api/inbox").json()["items"] if i["inbox"] == "mail")
     assert item["suggestion"]["area"] == "oliver"
 

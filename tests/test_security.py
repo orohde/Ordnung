@@ -10,7 +10,8 @@ from ordnung.app import create_app
 from ordnung.config import Settings
 from ordnung.security import Networks, totp_code, totp_match
 
-PUBLIC = {("GET", "/api/version"), ("POST", "/api/login"), ("POST", "/api/logout")}
+PUBLIC = {("GET", "/api/version"), ("POST", "/api/login"), ("POST", "/api/logout"),
+          ("GET", "/api/setup"), ("POST", "/api/setup")}   # setup refuses once an account exists
 HOME = ("10.10.30.5", 50000)
 OUTSIDE = ("203.0.113.7", 50000)
 

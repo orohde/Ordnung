@@ -13,6 +13,7 @@ import ipaddress
 import json
 import logging
 import os
+import re
 import secrets
 import struct
 import threading
@@ -46,11 +47,22 @@ def _write_json(path: Path, data) -> None:
 # ------------------------------------------------------------------ network
 
 
+def normalise_networks(spec: str) -> str:
+    """Check a comma/space/newline separated list of CIDR ranges; raises ValueError on a bad one."""
+    parts = [p for p in re.split(r"[\s,;]+", spec or "") if p]
+    for part in parts:
+        try:
+            ipaddress.ip_network(part, strict=False)
+        except ValueError as exc:
+            raise ValueError(f"not a network: {part}") from exc
+    return ", ".join(parts)
+
+
 class Networks:
     """Which client addresses count as "at home" (LAN, VPN)."""
 
     def __init__(self, spec: str | None = None):
-        parts = [p.strip() for p in (spec or "").split(",") if p.strip()] or list(DEFAULT_INTERNAL)
+        parts = [p for p in re.split(r"[\s,;]+", spec or "") if p] or list(DEFAULT_INTERNAL)
         self.nets = [ipaddress.ip_network(p, strict=False) for p in parts]
 
     def is_internal(self, host: str | None) -> bool:
@@ -295,10 +307,13 @@ class SecurityConfig:
     notify_lockout: bool = True
     notify_2fa_changes: bool = True
     language: str = "de"                 # of the notifications; set from whoever saves
+    api_token: str = ""                  # for scripts: "Authorization: Bearer …", acts as administrator
+    internal_networks: str = ""          # comma-separated CIDR ranges that count as home; empty: the default
 
     def public(self) -> dict:
         data = asdict(self)
         data["has_ntfy_token"] = bool(data.pop("ntfy_token"))
+        data["has_api_token"] = bool(data.pop("api_token"))
         return data
 
 
@@ -323,12 +338,14 @@ class SecurityStore:
             if changes.pop("clear_ntfy_token", False):
                 config.ntfy_token = ""
             for key, value in changes.items():
-                if value is None or key not in SecurityConfig.__dataclass_fields__:
+                if value is None or key == "api_token" or key not in SecurityConfig.__dataclass_fields__:
                     continue
                 if key == "ntfy_url":
                     value = value.strip()
                     if value and not value.startswith(("http://", "https://")):
                         raise ValueError("ntfy address must start with http:// or https://")
+                if key == "internal_networks":
+                    value = normalise_networks(value)
                 if key == "ntfy_token":
                     value = value.strip()
                     if not value:
@@ -336,6 +353,28 @@ class SecurityStore:
                 setattr(config, key, value)
             _write_json(self.path, asdict(config))
             return config
+
+    def set_api_token(self, token: str) -> None:
+        with self._lock:
+            config = self.load()
+            config.api_token = token
+            _write_json(self.path, asdict(config))
+
+    def import_api_token(self, token: str) -> bool:
+        """Take over ORDNUNG_API_TOKEN once; after that the settings page owns the key (also a deleted one)."""
+        with self._lock:
+            raw = {}
+            if self.path.exists():
+                try:
+                    raw = json.loads(self.path.read_text(encoding="utf-8"))
+                except (ValueError, OSError):
+                    return False
+            if not token or "api_token" in raw:
+                return False
+            config = self.load()
+            config.api_token = token
+            _write_json(self.path, asdict(config))
+            return True
 
 
 # ------------------------------------------------------------ notifications

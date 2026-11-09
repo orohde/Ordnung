@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import base64
 import binascii
-import functools
 import re
+import secrets
 import shutil
+import functools
 import logging
 import os
 import sqlite3
@@ -42,11 +43,12 @@ from .mailin import MailError, MailInbox, MailStore
 from .prefs import PrefsStore
 from .rules import RuleError, RuleService, check_conditions
 from .senders import SenderBook, SenderService, describe
+from .system import SystemConfig, SystemStore
 from .tags import TagError, TagStore
 from .tags import clean as clean_tag
 from .storage import StorageError, StorageService, path_status
-from .security import (LoginGuard, Networks, Notifier, SecurityStore, SessionStore, describe_agent,
-                       otpauth_uri, qr_data_uri)
+from .security import (DEFAULT_INTERNAL, LoginGuard, Networks, Notifier, SecurityStore, SessionStore, describe_agent,
+                       normalise_networks, otpauth_uri, qr_data_uri)
 from .users import UserError, UserStore
 
 log = logging.getLogger("ordnung")
@@ -109,6 +111,12 @@ class RestoreIn(BaseModel):
     trash_path: str = Field(max_length=2000)
 
 
+class SetupIn(BaseModel):
+    username: str = Field(max_length=100)
+    password: str = Field(max_length=1000)
+    display_name: str = Field("", max_length=100)
+
+
 class Login(BaseModel):
     username: str = Field(max_length=100)
     password: str = Field(max_length=1000)
@@ -128,7 +136,16 @@ class TotpOff(BaseModel):
     code: str = Field(max_length=20)
 
 
+class SystemChange(BaseModel):
+    ocr: bool | None = None
+    ocr_lang: str | None = Field(None, max_length=200)
+    ocr_max_pages: int | None = None
+    rescan_minutes: int | None = None
+    text_workers: int | None = None
+
+
 class SecurityChange(BaseModel):
+    internal_networks: str | None = Field(None, max_length=2000)
     require_2fa_external: bool | None = None
     require_2fa_internal: bool | None = None
     ntfy_url: str | None = Field(None, max_length=500)
@@ -323,29 +340,29 @@ INBOX_SECONDS = 60
 
 def _worker(app: FastAPI, stop: threading.Event) -> None:
     """Scan archive and learning set, work through the text queue, watch the inboxes."""
-    settings: Settings = app.state.settings
-    extractor = app.state.extractor
     try:
         os.nice(5)  # text recognition must not slow down the UI
     except OSError:
         pass
     last_full = 0.0
     while not stop.is_set():
-        full = app.state.full_scan.is_set() or time.time() - last_full >= max(1, settings.rescan_minutes) * 60
+        config = app.state.system.load()       # changeable under Settings → System while running
+        extractor = app.state.make_extractor()
+        full = app.state.full_scan.is_set() or time.time() - last_full >= max(1, config.rescan_minutes) * 60
         try:
             if full:
                 app.state.full_scan.clear()
                 last_full = time.time()
                 index: Index = app.state.index
                 log.info("scan: %s", index.scan())
-                done = index.extract_pending(extractor, stop=stop, workers=settings.text_workers)
+                done = index.extract_pending(extractor, stop=stop, workers=config.text_workers)
                 if done:
                     log.info("texts extracted: %s, status %s", done, index.text_status())
                 reference: Index | None = app.state.reference
                 # an empty or missing learning-set folder (mount removed) must not wipe its index
                 if reference is not None and reference.archive.is_dir() and any(reference.archive.iterdir()):
                     log.info("learning set: %s", reference.scan())
-                    reference.extract_pending(extractor, stop=stop, workers=settings.text_workers)
+                    reference.extract_pending(extractor, stop=stop, workers=config.text_workers)
             inbox: InboxService = app.state.inbox
             try:
                 fetched = app.state.mail.fetch()
@@ -363,7 +380,7 @@ def _worker(app: FastAPI, stop: threading.Event) -> None:
                 log.info("inbox: asked the AI for %s documents", asked)
         except Exception:  # noqa: BLE001 - keep the loop alive
             log.exception("background work failed")
-        if settings.rescan_minutes <= 0:
+        if config.rescan_minutes <= 0:
             return
         # once a day: empty what has been in the trash longer than the set number of days
         today = time.strftime("%Y-%m-%d")
@@ -401,7 +418,8 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     app = FastAPI(
         title="Ordnung!",
         version=__version__,
-        description="Folder-based document archive",
+        description=("Folder-based document archive. Sign in with the browser, or send the API key from "
+                     "*Settings → API* as `Authorization: Bearer <key>`. Guide: docs/api.md in the repository."),
         lifespan=lifespan,
         docs_url="/api/docs",
         redoc_url=None,
@@ -415,8 +433,14 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     app.state.sessions = SessionStore(settings.data / "sessions.json")
     app.state.security = SecurityStore(settings.data / "security.json")
     app.state.notify = Notifier(app.state.security)
+    # which addresses count as home: Settings → Security, else ORDNUNG_INTERNAL_NETWORKS, else private ranges
+    app.state.networks = Networks(app.state.security.load().internal_networks or settings.internal_networks)
+    if app.state.security.import_api_token(settings.api_token):
+        log.info("API key taken over from ORDNUNG_API_TOKEN; manage it under Settings → API from now on")
     app.state.guard = LoginGuard()
-    app.state.networks = Networks(settings.internal_networks)
+    app.state.system = SystemStore(settings.data / "system.json", SystemConfig(
+        ocr=settings.ocr, ocr_lang=settings.ocr_lang, ocr_max_pages=settings.ocr_max_pages,
+        rescan_minutes=settings.rescan_minutes, text_workers=settings.text_workers))
     app.state.wake = threading.Event()
     app.state.ai = AIService(settings.data / "ai.json")
     app.state.rules = RuleService(settings.data / "rules.json", app.state.index)
@@ -435,8 +459,12 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     app.state.full_scan = threading.Event()
     app.state.full_scan.set()
     app.state.reference = None
-    app.state.extractor = functools.partial(
-        extract, ocr=settings.ocr, lang=settings.ocr_lang, max_ocr_pages=settings.ocr_max_pages)
+    def make_extractor():
+        """The text extractor with the current settings – a partial of a module function, so the
+        process pool can pickle it (a closure cannot be sent to the worker processes)."""
+        config = app.state.system.load()
+        return functools.partial(extract, ocr=config.ocr, lang=config.ocr_lang, max_ocr_pages=config.ocr_max_pages)
+    app.state.make_extractor = make_extractor
     reference_db = settings.data / "reference.db"
 
     def set_reference(path: str | None) -> None:
@@ -543,6 +571,34 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         if external:
             app.state.notify.send("notify_external_login", "external.title", "external.body",
                                   user=name, ip=ip, agent=describe_agent(agent))
+        return account.public()
+
+    @app.get("/api/setup", tags=["auth"])
+    def setup_state(request: Request):
+        """Is this a fresh installation without any account? Then the first administrator is created here."""
+        return {"needed": not app.state.users.all(), "home": not is_external(request)}
+
+    @app.post("/api/setup", tags=["auth"], status_code=201)
+    def setup(body: SetupIn, request: Request, response: Response):
+        """Create the first administrator – only while there is no account, and only from the home network."""
+        if app.state.users.all():
+            raise HTTPException(status_code=409, detail="already set up")
+        if is_external(request):
+            raise HTTPException(status_code=403, detail="first setup only from the home network")
+        try:
+            account = app.state.users.create(body.username, body.password, body.display_name,
+                                             is_admin=True, only_if_empty=True)
+        except UserError as exc:
+            status = 409 if "already" in str(exc) else 400
+            raise HTTPException(status_code=status, detail=str(exc)) from exc
+        log.info("first administrator %r created on the setup page", account.name)
+        ip = client_ip(request)
+        token = app.state.sessions.create(account.name, ip=ip, agent=request.headers.get("user-agent", ""),
+                                          external=False, mfa=False)
+        response.set_cookie(
+            cookie_name(request), token, max_age=SessionStore.max_age(False),
+            httponly=True, samesite="lax", secure=is_https(request), path="/",
+        )
         return account.public()
 
     @app.post("/api/logout", tags=["auth"])
@@ -684,13 +740,15 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         return {"recovery_codes": app.state.users.new_recovery(user.name)}
 
     @app.get("/api/security", tags=["security"])
-    def get_security(user: User = Depends(require_admin)):
+    def get_security(request: Request, user: User = Depends(require_admin)):
         accounts = app.state.users.all()
         return {**app.state.security.load().public(),
-                "without_2fa": [a.name for a in accounts if not a.has_totp]}
+                "without_2fa": [a.name for a in accounts if not a.has_totp],
+                "networks_default": settings.internal_networks or ", ".join(DEFAULT_INTERNAL),
+                "client_ip": client_ip(request)}
 
     @app.put("/api/security", tags=["security"])
-    def put_security(body: SecurityChange, user: User = Depends(require_admin)):
+    def put_security(body: SecurityChange, request: Request, user: User = Depends(require_admin)):
         changes = body.model_dump(exclude_unset=True)
         prefs = app.state.prefs.get(user.name) if user.name != "api" else {}
         if prefs.get("language") in ("de", "en"):
@@ -699,11 +757,38 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
             account = app.state.users.get(user.name)
             if account and not account.has_totp:
                 raise HTTPException(status_code=400, detail="set up your own second factor first")
+        if "internal_networks" in changes and changes["internal_networks"] is not None:
+            try:
+                spec = normalise_networks(changes["internal_networks"])
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+            here = client_ip(request)
+            # whoever saves from home must stay at home, or the next sign-in suddenly asks for a code
+            if app.state.networks.is_internal(here) and not Networks(spec or settings.internal_networks).is_internal(here):
+                raise HTTPException(status_code=400, detail=f"your own address {here} would no longer count as home")
         try:
-            app.state.security.update(changes)
+            config = app.state.security.update(changes)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-        return get_security(user)
+        app.state.networks = Networks(config.internal_networks or settings.internal_networks)
+        return get_security(request, user)
+
+    @app.get("/api/security/api-token", tags=["security"])
+    def get_api_token(user: User = Depends(require_admin)):
+        """The API key for scripts (empty: API only with a signed-in browser)."""
+        return {"api_token": app.state.security.load().api_token}
+
+    @app.post("/api/security/api-token", tags=["security"])
+    def new_api_token(user: User = Depends(require_admin)):
+        """Create a new API key; the old one stops working at once."""
+        token = secrets.token_urlsafe(32)
+        app.state.security.set_api_token(token)
+        return {"api_token": token}
+
+    @app.delete("/api/security/api-token", tags=["security"])
+    def delete_api_token(user: User = Depends(require_admin)):
+        app.state.security.set_api_token("")
+        return {"api_token": ""}
 
     @app.post("/api/security/test", tags=["security"])
     def test_security(user: User = Depends(require_admin)):
@@ -752,7 +837,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     def status(user: User = Depends(current_user)):
         writable = path_status(str(app.state.index.archive))["writable"]
         return {**app.state.index.meta(), "readonly": not writable, "version": __version__,
-                "ocr": settings.ocr and tesseract_available(),
+                "ocr": app.state.system.load().ocr and tesseract_available(),
                 "inbox": app.state.inbox.counts() if user.is_admin else None,
                 "reference": app.state.reference.meta() if app.state.reference is not None and user.is_admin else None}
 
@@ -766,6 +851,20 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         n = app.state.index.retry_text_errors()
         kick()
         return {"retried": n}
+
+    @app.get("/api/system/settings", tags=["system"])
+    def get_system_settings(user: User = Depends(require_admin)):
+        """Text recognition, rescan interval and worker count (defaults from the environment)."""
+        return app.state.system.public()
+
+    @app.put("/api/system/settings", tags=["system"])
+    def put_system_settings(body: SystemChange, user: User = Depends(require_admin)):
+        try:
+            app.state.system.update(body.model_dump(exclude_unset=True))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        kick(full=False)
+        return app.state.system.public()
 
     @app.post("/api/rescan", tags=["system"])
     def rescan(user: User = Depends(require_admin)):
@@ -827,6 +926,9 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         alt: bool = Query(False, description="also search the Altablage"),
         limit: int = Query(500, ge=1, le=5000),
         offset: int = Query(0, ge=0),
+        sort: str = Query("", pattern="^(|date|title|area|relevance)$",
+                          description="relevance: best hits first for a search; else (and by default) date"),
+        desc: bool = Query(True),
         user: User = Depends(current_user),
     ):
         store = app.state.tags
@@ -846,8 +948,8 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         alt = alt or any(w.casefold() in mappen for w in wanted)
         result = app.state.index.documents(
             pick_areas(user, areas), folder="" if wanted and not folder else folder,
-            recursive=recursive or bool(wanted), query=" ".join(words), limit=limit, offset=offset, shas=shas,
-            alt=alt,
+            recursive=recursive or bool(wanted) or bool(words and not folder), query=" ".join(words), limit=limit, offset=offset, shas=shas,
+            alt=alt, sort=sort, desc=desc,
         )
         tagmap = store.mapping()
         hidden = store.hidden_for(user.can_read)

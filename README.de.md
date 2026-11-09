@@ -25,7 +25,7 @@ Die meisten Dokumentenverwaltungen bauen auf Tags und Filter. Das ist mächtig, 
 - **Mappen.** Dokumente aus vielen Ordnern sammeln, etwa *Steuererklärung 2026*, ohne sie zu verschieben. Eine Mappe lässt sich als ZIP oder als eine zusammengefügte PDF für den Steuerberater herunterladen.
 - **Tags, Papierkorb, Ziehen und Ablegen.** Dokumente auf Ordner ziehen verschiebt sie, auf Mappen ziehen verknüpft sie. Gelöschtes bleibt 30 Tage im Papierkorb (einstellbar).
 - **Altablage.** Alte Unterlagen, die man nicht mehr braucht, aber behalten will: einzeln, ordnerweise oder „alles älter als X Jahre“ nach `<bereich>/Altablage/`. Im Baum stehen sie abseits, die Suche findet sie nur auf Wunsch, Zurückholen stellt den alten Ordner wieder her.
-- **REST-API** für alles, was die Oberfläche kann, dokumentiert unter `/docs`.
+- **REST-API** für alles, was die Oberfläche kann: Schlüssel unter *Einstellungen → API*, Anleitung in [docs/api.md](docs/api.md), alle Endpunkte ausprobierbar unter `/api/docs`.
 - **Umzug aus Paperless-ngx** mit einem Import-Planer.
 
 <table>
@@ -47,16 +47,13 @@ services:
       - ./archiv:/archiv        # die Dokumentordner – hier legt Ordnung! neue Dokumente ab
       - ./data:/data            # Index, Einstellungen, Konten
       - ./eingang:/eingang      # optional: Scanner- bzw. Eingangsordner
-    environment:
-      - ORDNUNG_ADMIN_USER=admin
-      - ORDNUNG_ADMIN_PASSWORD=bitte-aendern
 ```
 
 ```bash
 docker compose up -d
 ```
 
-Dann `http://localhost:8440` öffnen, anmelden und unter **Einstellungen → Ablage** Archiv- und Eingangsordner einrichten. Das erste Konto kommt einmalig aus den Umgebungsvariablen, danach werden Konten in der App verwaltet.
+Dann `http://localhost:8440` öffnen. Beim ersten Aufruf legst du dort den ersten Administrator an (nur aus dem Heimnetz möglich), danach richtest du unter **Einstellungen → Ablage** Archiv- und Eingangsordner ein. Alles Weitere – Benutzer, Texterkennung, Heimnetz, API-Schlüssel, E-Mail-Eingang, KI – stellst du in der App ein, nicht in der Compose-Datei.
 
 Das Image gibt es für `linux/amd64` und `linux/arm64` (Raspberry Pi, Apple Silicon).
 
@@ -64,16 +61,22 @@ Unter **Unraid** installierst du es über den Reiter *Apps* (Vorlagen-Repo [oroh
 
 ### Einstellungen
 
+Eingestellt wird in der App. In die Compose-Datei gehören nur Ordner, Port und, falls nötig, Benutzer:
+
 | Variable | Standard | Bedeutung |
 |---|---|---|
-| `ORDNUNG_ADMIN_USER` / `ORDNUNG_ADMIN_PASSWORD` | `admin` / – | erster Administrator (nur solange noch kein Konto existiert) |
-| `ORDNUNG_API_TOKEN` | – | optionales Token für Skripte: `Authorization: Bearer …` |
-| `ORDNUNG_OCR` | `1` | Texterkennung für Scans |
-| `ORDNUNG_OCR_LANG` | `deu+eng` | Sprachen für Tesseract |
-| `ORDNUNG_RESCAN_MINUTES` | `10` | vollständiges Neueinlesen der Archivordner |
-| `ORDNUNG_STARTER` | `1` | beim ersten Start Ordnervorlage „Haushalt“ und Startregeln anlegen |
-| `ORDNUNG_INTERNAL_NETWORKS` | private Bereiche | kommagetrennte CIDR-Bereiche, die als Heimnetz gelten (LAN, VPN); alles andere ist „außen“ |
 | `PUID` / `PGID` / `UMASK` | `99` / `100` / `0002` | Benutzer, Gruppe und umask, als die die App läuft, wenn der Container als root startet; frisch angelegte leere Ordner bekommt dieser Benutzer (bei `--user` ohne Wirkung) |
+| `TZ` | `UTC` | Zeitzone, z. B. `Europe/Berlin` |
+
+Diese älteren Variablen gelten nur noch als Vorgabe für eine frische Installation; sobald in der App etwas gespeichert ist, zählt die App:
+
+| Variable | jetzt in der App unter |
+|---|---|
+| `ORDNUNG_ADMIN_USER` / `ORDNUNG_ADMIN_PASSWORD` | Einrichtungsseite beim ersten Aufruf (die Variablen legen das Konto nur an, solange es keins gibt) |
+| `ORDNUNG_API_TOKEN` | *Einstellungen → API* (wird einmal übernommen) |
+| `ORDNUNG_OCR`, `ORDNUNG_OCR_LANG`, `ORDNUNG_OCR_MAX_PAGES`, `ORDNUNG_RESCAN_MINUTES`, `ORDNUNG_TEXT_WORKERS` | *Einstellungen → System* |
+| `ORDNUNG_INTERNAL_NETWORKS` | *Einstellungen → Sicherheit → Heimnetz* |
+| `ORDNUNG_STARTER` | – (`0` verhindert Ordnervorlage und Startregeln beim allerersten Start) |
 
 ### Anmeldung von außen
 

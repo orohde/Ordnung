@@ -9,7 +9,8 @@ const I18N = {
     'login.error': 'Anmeldung fehlgeschlagen.', 'app.logout': 'Abmelden',
     'search.placeholder': 'Suchen …', 'list.recursive': 'mit Unterordnern',
     'list.empty': 'Keine Dokumente.', 'list.more': 'Mehr laden',
-    'col.date': 'Datum', 'col.title': 'Titel', 'col.area': 'Bereich',
+    'col.date': 'Datum', 'col.title': 'Titel', 'col.area': 'Bereich', 'sort.by': 'Nach {col} sortieren', 'home.tip': 'Zur Startansicht: alle Ordner, ohne Suche und Filter',
+    'sort.best': 'Beste Treffer zuerst', 'sort.best.tip': 'Suchergebnisse nach Übereinstimmung statt nach Datum ordnen – Treffer im Titel stehen oben',
     'pv.open': 'Öffnen', 'pv.download': 'Herunterladen',
     'pv.none': 'Für diesen Dateityp gibt es keine Vorschau.',
     'pv.bottom': 'Lesebereich unten anzeigen', 'pv.right': 'Lesebereich rechts anzeigen',
@@ -280,6 +281,53 @@ const I18N = {
     "usr.signout": "Auf allen Geräten abmelden",
     "usr.resettotp": "Zweiten Faktor zurücksetzen (wenn das Telefon verloren ist)",
     "set.security": "Sicherheit",
+    "setup.intro": "Willkommen! Noch gibt es kein Konto. Lege jetzt den ersten Administrator an – weitere Konten folgen später unter Einstellungen → Benutzer.",
+    "setup.name": "Anzeigename",
+    "setup.pass2": "Passwort wiederholen",
+    "setup.hint": "Mindestens 12 Zeichen. Den zweiten Faktor richtest du danach unter Mein Konto ein.",
+    "setup.submit": "Konto anlegen",
+    "setup.mismatch": "Die beiden Passwörter sind nicht gleich.",
+    "setup.short": "Das Passwort braucht mindestens 12 Zeichen.",
+    "setup.badname": "Benutzername: nur Kleinbuchstaben, Ziffern, Punkt, Binde- und Unterstrich.",
+    "setup.outside": "Die Ersteinrichtung geht nur aus dem Heimnetz. Öffne Ordnung! zu Hause oder über das VPN.",
+    "setup.done": "Es gibt schon ein Konto – bitte anmelden.",
+    "sys.work": "Hintergrundarbeit",
+    "sys.f.ocr": "Texterkennung für Scans",
+    "sys.f.ocr.hint": "Liest Text aus gescannten Seiten, damit die Suche sie findet. Aus: nur Dokumente mit eingebettetem Text werden durchsuchbar.",
+    "sys.f.lang": "Sprachen",
+    "sys.f.pages": "Höchstens Seiten je Dokument",
+    "sys.f.rescan": "Neu einlesen alle (Min.)",
+    "sys.f.workers": "Dokumente gleichzeitig lesen",
+    "sys.f.hint": "Änderungen gelten sofort, ohne Neustart. Schon gelesene Dokumente werden nicht noch einmal gelesen.",
+    "sys.f.defaults": "Standardwerte",
+    "sys.f.langs": "Installiert: {list}. Mehrere mit + verbinden, z. B. deu+eng.",
+    "sys.f.nolangs": "Tesseract ist nicht installiert, Texterkennung ist nicht möglich.",
+    "sys.f.cpus": "Der Rechner hat {n} Kerne. Mehr gleichzeitig ist schneller, belastet den Server aber stärker.",
+    "sec.nets": "Heimnetz",
+    "sec.nets.hint": "Adressbereiche, die als „zu Hause“ gelten (LAN, VPN). Alles andere ist „von außen“. Leer lassen für die Vorgabe.",
+    "sec.nets.here": "Deine Adresse gerade: {ip} ({where}).",
+    "sec.nets.in": "zählt als Heimnetz",
+    "sec.nets.out": "zählt als außen",
+    "err.own address": "Deine eigene Adresse {ip} zählte dann nicht mehr als Heimnetz. Nimm ihren Bereich mit auf.",
+    "err.not a network": "„{net}“ ist kein Adressbereich (Beispiel: 192.168.1.0/24).",
+    "err.range": "Bitte eine Zahl von {low} bis {high}.",
+    "err.languages like deu+eng": "Sprachen bitte wie deu+eng angeben.",
+    "set.api": "API",
+    "api.intro": "Alles, was die Oberfläche kann, geht auch per REST-API unter /api/, für Skripte, Kurzbefehle oder Home Assistant.",
+    "api.key": "API-Schlüssel",
+    "api.copy": "Kopieren",
+    "api.new": "Neu erzeugen",
+    "api.del": "Löschen",
+    "api.none": "Kein Schlüssel: Die API ist nur mit einer Anmeldung im Browser nutzbar.",
+    "api.set": "Schlüssel ist aktiv.",
+    "api.hint": "Programme schicken den Schlüssel bei jeder Anfrage mit. Er öffnet alles wie ein Administrator, also gehört er nur in vertrauenswürdige Skripte. Neu erzeugen macht den alten sofort ungültig.",
+    "api.new.q": "Neuen Schlüssel erzeugen? Der bisherige funktioniert dann sofort nicht mehr – Skripte, die ihn nutzen, brauchen den neuen.",
+    "api.del.q": "Schlüssel löschen? Skripte kommen dann nicht mehr hinein.",
+    "api.copied": "Schlüssel kopiert",
+    "api.made": "Neuer Schlüssel erzeugt",
+    "api.ref": "Beschreibung aller Endpunkte",
+    "api.ref.hint": "Ordnung! beschreibt seine API selbst: jeder Endpunkt mit Parametern und Antwort, direkt im Browser ausprobierbar (mit deiner Anmeldung).",
+    "api.open": "API-Beschreibung öffnen",
     "sec.policy": "Anmeldung",
     "sec.ext": "Von außen nur mit zweitem Faktor",
     "sec.ext.hint": "Konten ohne zweiten Faktor können sich dann nur noch im Heimnetz anmelden. Einschalten lässt sich das erst, wenn dein eigenes Konto einen hat.",
@@ -359,7 +407,8 @@ const I18N = {
     'login.error': 'Sign-in failed.', 'app.logout': 'Sign out',
     'search.placeholder': 'Search …', 'list.recursive': 'include subfolders',
     'list.empty': 'No documents.', 'list.more': 'Load more',
-    'col.date': 'Date', 'col.title': 'Title', 'col.area': 'Area',
+    'col.date': 'Date', 'col.title': 'Title', 'col.area': 'Area', 'sort.by': 'Sort by {col}', 'home.tip': 'Back to the start: all folders, no search or filter',
+    'sort.best': 'Best matches first', 'sort.best.tip': 'Order search results by match instead of date – hits in the title come first',
     'pv.open': 'Open', 'pv.download': 'Download',
     'pv.none': 'No preview for this file type.',
     'pv.bottom': 'Show reading pane below', 'pv.right': 'Show reading pane on the right',
@@ -629,6 +678,53 @@ const I18N = {
     "usr.signout": "Sign out on all devices",
     "usr.resettotp": "Reset second factor (if the phone is lost)",
     "set.security": "Security",
+    "setup.intro": "Welcome! There is no account yet. Create the first administrator now – more accounts follow later under Settings → Users.",
+    "setup.name": "Display name",
+    "setup.pass2": "Repeat password",
+    "setup.hint": "At least 12 characters. Set up the second factor afterwards under My account.",
+    "setup.submit": "Create account",
+    "setup.mismatch": "The two passwords differ.",
+    "setup.short": "The password needs at least 12 characters.",
+    "setup.badname": "User name: lowercase letters, digits, dot, hyphen and underscore only.",
+    "setup.outside": "The first setup only works from the home network. Open Ordnung! at home or through the VPN.",
+    "setup.done": "There is an account already – please sign in.",
+    "sys.work": "Background work",
+    "sys.f.ocr": "Text recognition for scans",
+    "sys.f.ocr.hint": "Reads text from scanned pages so the search finds them. Off: only documents with embedded text become searchable.",
+    "sys.f.lang": "Languages",
+    "sys.f.pages": "At most pages per document",
+    "sys.f.rescan": "Rescan every (min.)",
+    "sys.f.workers": "Documents read at the same time",
+    "sys.f.hint": "Changes apply at once, no restart. Documents already read are not read again.",
+    "sys.f.defaults": "Defaults",
+    "sys.f.langs": "Installed: {list}. Join several with +, e.g. deu+eng.",
+    "sys.f.nolangs": "Tesseract is not installed, text recognition is not possible.",
+    "sys.f.cpus": "The machine has {n} cores. More at once is faster but loads the server more.",
+    "sec.nets": "Home network",
+    "sec.nets.hint": "Address ranges that count as “at home” (LAN, VPN). Everything else is “outside”. Leave empty for the default.",
+    "sec.nets.here": "Your address right now: {ip} ({where}).",
+    "sec.nets.in": "counts as home",
+    "sec.nets.out": "counts as outside",
+    "err.own address": "Your own address {ip} would then no longer count as home. Include its range.",
+    "err.not a network": "“{net}” is not an address range (example: 192.168.1.0/24).",
+    "err.range": "Please a number from {low} to {high}.",
+    "err.languages like deu+eng": "Please give languages like deu+eng.",
+    "set.api": "API",
+    "api.intro": "Everything the interface does is also available through the REST API under /api/, for scripts, shortcuts or Home Assistant.",
+    "api.key": "API key",
+    "api.copy": "Copy",
+    "api.new": "Create new",
+    "api.del": "Delete",
+    "api.none": "No key: the API can only be used signed in from a browser.",
+    "api.set": "Key is active.",
+    "api.hint": "Programs send the key with every request. It opens everything like an administrator, so keep it to trusted scripts. Creating a new one disables the old one at once.",
+    "api.new.q": "Create a new key? The current one stops working at once – scripts using it need the new one.",
+    "api.del.q": "Delete the key? Scripts can no longer get in.",
+    "api.copied": "Key copied",
+    "api.made": "New key created",
+    "api.ref": "All endpoints",
+    "api.ref.hint": "Ordnung! describes its own API: every endpoint with parameters and response, to try out right in the browser (with your sign-in).",
+    "api.open": "Open API reference",
     "sec.policy": "Sign-in",
     "sec.ext": "From outside only with a second factor",
     "sec.ext.hint": "Accounts without a second factor can then sign in only from the home network. This can only be turned on once your own account has one.",
@@ -767,6 +863,9 @@ const State = {
   folder: store.get('folder', ''),
   recursive: store.get('recursive', true),
   withAlt: false,          // search the Altablage too; on purpose not remembered
+  sort: 'date',           // date/title/area; searches too are sorted, newest first by default
+  desc: true,
+  best: false,            // while searching: best hits first instead of the column order
   query: '',
   open: new Set(store.get('open', [])),
   items: [],
@@ -796,6 +895,12 @@ const errText = e => {
   if (m) return t('err.unknown model', { model: m[1] });
   const d = /^already in the archive: (.+)$/.exec(e.message);
   if (d) return t('err.already in the archive', { path: d[1] });
+  const own = /^your own address (.+) would no longer count as home$/.exec(e.message);
+  if (own) return t('err.own address', { ip: own[1] });
+  const net = /^not a network: (.+)$/.exec(e.message);
+  if (net) return t('err.not a network', { net: net[1] });
+  const range = /^(\w+) must be between (\d+) and (\d+)$/.exec(e.message);
+  if (range) return t('err.range', { low: range[2], high: range[3] });
   const em = /^invalid e-mail address: (.+)$/.exec(e.message);
   if (em) return t('err.invalid e-mail address', { address: em[1] });
   const eo = /^e-mail address already belongs to ([^:]+): (.+)$/.exec(e.message);
@@ -826,10 +931,18 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => appl
 
 // ----------------------------------------------------------------- views
 
-function showLogin() {
+async function showLogin() {
   $('view-app').hidden = true;
   $('view-login').hidden = false;
-  $('login-user').focus();
+  let setup = { needed: false, home: true };
+  try { setup = await (await fetch('api/setup')).json(); } catch { /* keep the sign-in */ }
+  $('login-form').hidden = setup.needed;
+  $('setup-form').hidden = !setup.needed;
+  if (setup.needed && !setup.home) {
+    $('setup-error').textContent = t('setup.outside');
+    $('setup-error').hidden = false;
+  }
+  $(setup.needed ? 'setup-user' : 'login-user').focus();
 }
 
 async function showApp() {
@@ -997,6 +1110,15 @@ function setAllOpen(open) {
   renderTree();
 }
 
+// logo and name: back to the archive, all folders, no search, filter or preview
+function goHome() {
+  if (location.hash && location.hash !== '#/') location.hash = '#/';
+  closePreview();
+  State.best = false;
+  $('chk-best').checked = false;
+  selectFolder('');
+}
+
 function selectFolder(path) {
   State.folder = path;
   store.set('folder', path);
@@ -1029,6 +1151,8 @@ async function loadDocs(append = false) {
     'tags=' + encodeURIComponent([...State.tags].join(',')),
     'alt=' + State.withAlt,
     'q=' + encodeURIComponent(State.query),
+    'sort=' + (bestFirst() ? 'relevance' : State.sort),
+    'desc=' + State.desc,
     'limit=' + PAGE,
     'offset=' + offset,
   ].join('&');
@@ -1039,7 +1163,37 @@ async function loadDocs(append = false) {
   renderList();
 }
 
+// clicking a column head sorts by it, clicking again turns the order round
+function bestFirst() { return State.best && State.query.trim().length > 0; }
+
+function setSort(key) {
+  if (bestFirst()) {  // a column click wins over "best hits first"
+    State.best = false;
+    $('chk-best').checked = false;
+    State.desc = key === 'date';
+    State.sort = key;
+    return loadDocs();
+  }
+  if (State.sort === key) State.desc = !State.desc;
+  else State.desc = key === 'date';  // dates newest first, names A–Z
+  State.sort = key;
+  loadDocs();
+}
+
+function renderSortHeads() {
+  const current = bestFirst() ? '' : State.sort;
+  $('best-wrap').hidden = !State.query.trim();
+  document.querySelectorAll('[data-sort-col]').forEach(th => {
+    const on = th.dataset.sortCol === current;
+    th.classList.toggle('is-sorted', on);
+    th.setAttribute('aria-sort', on ? (State.desc ? 'descending' : 'ascending') : 'none');
+    th.querySelector('.sort-arrow').textContent = on ? (State.desc ? '▼' : '▲') : '';
+    th.querySelector('.sort-head').title = t('sort.by', { col: t('col.' + th.dataset.sortCol) });
+  });
+}
+
 function renderList() {
+  renderSortHeads();
   const searching = State.query.trim().length > 0 || State.tags.size > 0;
   const folderName = State.folder === ALT ? t('alt.name') : State.folder ? State.folder.split('/').pop() : t('tree.all');
   $('list-title').textContent = State.query.trim() ? `${t('list.search')}: ${State.query}`
@@ -1296,8 +1450,8 @@ async function loadStatus() {
 
 // -------------------------------------------------------------- settings
 
-const PANES = { konto: 'account', benutzer: 'users', ordner: 'folders', ablage: 'storage', ki: 'ai', email: 'mail', sicherheit: 'security', system: 'system' };
-const ADMIN_PANES = new Set(['users', 'folders', 'storage', 'ai', 'mail', 'security', 'system']);
+const PANES = { konto: 'account', benutzer: 'users', ordner: 'folders', ablage: 'storage', ki: 'ai', email: 'mail', sicherheit: 'security', api: 'api', system: 'system' };
+const ADMIN_PANES = new Set(['users', 'folders', 'storage', 'ai', 'mail', 'security', 'api', 'system']);
 
 function route() {
   if (!State.me) return;
@@ -1334,6 +1488,7 @@ function showPane(pane) {
   if (pane === 'users') loadUsers();
   if (pane === 'account') loadAccountSecurity();
   if (pane === 'security') loadSecurity();
+  if (pane === 'api') loadApiKey();
   if (pane === 'mail') loadMail();
   if (pane === 'ai') loadAI();
   if (pane === 'storage') loadStorage();
@@ -1652,6 +1807,9 @@ let security = null;
 async function loadSecurity() {
   security = await api('security');
   $('sec-where').textContent = t(State.me.external ? 'sec.where.out' : 'sec.where.in');
+  $('sec-nets').value = security.internal_networks;
+  $('sec-nets').placeholder = security.networks_default;
+  $('sec-nets-here').textContent = t('sec.nets.here', { ip: security.client_ip, where: t(State.me.external ? 'sec.nets.out' : 'sec.nets.in') });
   $('sec-ext').checked = security.require_2fa_external;
   $('sec-int').checked = security.require_2fa_internal;
   $('sec-url').value = security.ntfy_url;
@@ -1669,6 +1827,7 @@ async function loadSecurity() {
 
 async function saveSecurity(extra = {}) {
   const body = {
+    internal_networks: $('sec-nets').value.trim(),
     require_2fa_external: $('sec-ext').checked,
     require_2fa_internal: $('sec-int').checked,
     ntfy_url: $('sec-url').value.trim(),
@@ -1700,6 +1859,35 @@ function initSecurity() {
   });
 }
 
+function showApiKey(token) {
+  $('api-key').value = token;
+  $('api-key').placeholder = token ? '' : '–';
+  $('api-copy').hidden = !token;
+  $('api-del').hidden = !token;
+  $('api-state').textContent = t(token ? 'api.set' : 'api.none');
+  $('api-example').textContent = `curl -H "Authorization: Bearer ${token || '…'}" \\\n     "${location.origin}/api/documents?q=versicherung&limit=5"`;
+}
+
+async function loadApiKey() {
+  showApiKey((await api('security/api-token')).api_token);
+}
+
+function initApiKey() {
+  $('api-copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText($('api-key').value); toast(esc(t('api.copied')), null, 2500); }
+    catch { $('api-key').select(); }
+  });
+  $('api-new').addEventListener('click', async () => {
+    if ($('api-key').value && !confirm(t('api.new.q'))) return;
+    showApiKey((await api('security/api-token', { method: 'POST' })).api_token);
+    toast(esc(t('api.made')), null, 2500);
+  });
+  $('api-del').addEventListener('click', async () => {
+    if (!confirm(t('api.del.q'))) return;
+    showApiKey((await api('security/api-token', { method: 'DELETE' })).api_token);
+  });
+}
+
 async function loadSystem() {
   const s = await api('status');
   const time = s.last_scan ? new Date(s.last_scan).toLocaleString(LANG) : '–';
@@ -1715,6 +1903,32 @@ async function loadSystem() {
   ];
   $('sys-info').innerHTML = rows.map(([k, v]) => `<dt>${esc(t(k))}</dt><dd>${esc(v)}</dd>`).join('');
   loadTextErrors();
+  if (State.me.is_admin) showSystemSettings(await api('system/settings'));
+}
+
+function showSystemSettings(c) {
+  $('sys-ocr').checked = c.ocr;
+  $('sys-lang').value = c.ocr_lang;
+  $('sys-pages').value = c.ocr_max_pages;
+  $('sys-rescan-min').value = c.rescan_minutes;
+  $('sys-workers').value = c.text_workers;
+  $('sys-lang-hint').textContent = c.languages.length ? t('sys.f.langs', { list: c.languages.join(', ') }) : t('sys.f.nolangs');
+  $('sys-workers-hint').textContent = t('sys.f.cpus', { n: c.cpus });
+  $('sys-defaults').onclick = () => showSystemSettings({ ...c, ...c.defaults });
+}
+
+async function saveSystemSettings(ev) {
+  ev.preventDefault();
+  try {
+    showSystemSettings(await api('system/settings', { method: 'PUT', body: JSON.stringify({
+      ocr: $('sys-ocr').checked,
+      ocr_lang: $('sys-lang').value.trim(),
+      ocr_max_pages: Number($('sys-pages').value),
+      rescan_minutes: Number($('sys-rescan-min').value),
+      text_workers: Number($('sys-workers').value),
+    }) }));
+    setMsg($('sys-msg'), t('sec.saved'), true);
+  } catch (e) { setMsg($('sys-msg'), errText(e), false); }
 }
 
 async function loadTextErrors() {
@@ -2862,6 +3076,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     showApp();
   });
 
+  $('setup-form').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const error = $('setup-error');
+    error.hidden = true;
+    if ($('setup-pass').value !== $('setup-pass2').value) {
+      error.textContent = t('setup.mismatch');
+      error.hidden = false;
+      return;
+    }
+    const res = await fetch('api/setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: $('setup-user').value.trim(), display_name: $('setup-name').value.trim(),
+                             password: $('setup-pass').value }),
+    });
+    if (!res.ok) {
+      let detail = '';
+      try { detail = (await res.json()).detail || ''; } catch { /* keep */ }
+      error.textContent = detail.startsWith('password too short') ? t('setup.short')
+        : detail === 'invalid user name' ? t('setup.badname')
+        : detail === 'first setup only from the home network' ? t('setup.outside')
+        : detail === 'already set up' ? t('setup.done') : detail || t('login.error');
+      error.hidden = false;
+      if (detail === 'already set up') setTimeout(showLogin, 1500);
+      return;
+    }
+    $('setup-pass').value = $('setup-pass2').value = '';
+    showApp();
+  });
+
   $('acc-logout').addEventListener('click', () => $('btn-logout').click());
   $('btn-logout').addEventListener('click', async () => {
     await fetch('api/logout', { method: 'POST' });
@@ -2974,6 +3218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('usr-cancel').addEventListener('click', () => { $('usr-form').hidden = true; });
   $('usr-form').addEventListener('submit', saveUser);
   $('usr-admin').addEventListener('change', syncAdminAreas);
+  $('sys-form').addEventListener('submit', saveSystemSettings);
   $('sys-rescan').addEventListener('click', async () => {
     await api('rescan', { method: 'POST' });
     $('sys-rescan').textContent = t('sys.rescan.ok');
@@ -3001,6 +3246,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initEditor();
   initAccountSecurity();
   initSecurity();
+  initApiKey();
   initMail();
   initDocOps();
   initMeta();
@@ -3256,6 +3502,7 @@ async function bulkTag(mode) {
 }
 
 function initTags() {
+  document.querySelectorAll('[data-sort]').forEach(b => b.addEventListener('click', () => setSort(b.dataset.sort)));
   $('chk-all').addEventListener('change', ev => {
     State.items.forEach(d => { if (ev.target.checked) State.sel.add(d.id); else State.sel.delete(d.id); });
     renderList();
@@ -3271,6 +3518,8 @@ function initTags() {
     const ids = chosen.filter(d => isAlt(d.folder) === restore).map(d => d.id);
     if (ids.length) altMove({ ids }, restore).then(() => { State.sel.clear(); renderBulk(); });
   });
+  $('home').addEventListener('click', ev => { ev.preventDefault(); goHome(); });
+  $('chk-best').addEventListener('change', ev => { State.best = ev.target.checked; loadDocs(); });
   $('chk-alt').addEventListener('change', ev => { State.withAlt = ev.target.checked; loadDocs(); loadTags(); });
   $('tag-head').addEventListener('click', () => { store.set('tagsShut', !store.get('tagsShut', false)); loadTags(); });
   $('bulk-tag').addEventListener('keydown', ev => {

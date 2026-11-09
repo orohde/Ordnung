@@ -37,11 +37,30 @@ def test_documents_and_file(client: TestClient):
     res = client.get(f"/api/documents/{doc_id}/file")
     assert res.status_code == 200 and res.content.startswith(b"%PDF")
     assert client.get("/api/documents/abcdef/file").status_code == 404
+    assert client.get("/api/documents", params={"q": "rezept"}).json()["total"] == 2   # a search covers everything
+    best = client.get("/api/documents", params={"recursive": True, "q": "rezept", "sort": "relevance"}).json()
+    assert best["total"] == 2
+    assert client.get("/api/documents", params={"sort": "zufall"}).status_code == 422
 
 
 def test_api_token(client: TestClient):
     assert client.get("/api/me", headers={"Authorization": "Bearer tok"}).status_code == 200
     assert client.get("/api/me", headers={"Authorization": "Bearer nope"}).status_code == 401
+
+
+def test_api_token_in_settings(client: TestClient):
+    login(client, "oliver", "geheim123")
+    assert client.get("/api/security/api-token").json() == {"api_token": "tok"}   # taken over from the env
+    new = client.post("/api/security/api-token").json()["api_token"]
+    assert len(new) >= 32
+    client.cookies.clear()
+    assert client.get("/api/me", headers={"Authorization": "Bearer tok"}).status_code == 401
+    assert client.get("/api/me", headers={"Authorization": f"Bearer {new}"}).status_code == 200
+    assert client.get("/api/security", headers={"Authorization": f"Bearer {new}"}).json()["has_api_token"]
+    assert client.delete("/api/security/api-token", headers={"Authorization": f"Bearer {new}"}).status_code == 200
+    assert client.get("/api/me", headers={"Authorization": f"Bearer {new}"}).status_code == 401
+    # a deleted key is not taken over from the environment again
+    assert not client.app.state.security.import_api_token("tok")
 
 
 def test_user_management_and_area_rights(client: TestClient, settings: Settings):

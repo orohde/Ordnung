@@ -25,7 +25,7 @@ Most document managers are built around tags and filters. That is powerful – a
 - **Collections.** Gather documents from many folders – *Tax return 2026* – without moving them. Download a collection as ZIP or as one merged PDF for your tax advisor.
 - **Tags, trash, drag and drop.** Drag documents onto folders to move them, onto collections to link them. Deleted documents stay in the trash for 30 days (configurable).
 - **Old files.** Papers you no longer need but want to keep: one by one, a whole folder or “everything older than X years” go to `<area>/Altablage/`. The tree keeps them apart, the search finds them only on request, taking them back restores the old folder.
-- **REST API** for everything the UI does, documented at `/docs`.
+- **REST API** for everything the UI does: key under *Settings → API*, guide in [docs/api.en.md](docs/api.en.md), every endpoint to try out at `/api/docs`.
 - **Moving from Paperless-ngx** is supported with an import planner.
 
 <table>
@@ -47,16 +47,13 @@ services:
       - ./archiv:/archiv        # your document folders – Ordnung! files new documents here
       - ./data:/data            # index, settings, accounts
       - ./eingang:/eingang      # optional: scanner / inbox folders
-    environment:
-      - ORDNUNG_ADMIN_USER=admin
-      - ORDNUNG_ADMIN_PASSWORD=change-me
 ```
 
 ```bash
 docker compose up -d
 ```
 
-Open `http://localhost:8440`, sign in, and set up your archive and inbox folders under **Settings → Storage**. The first account comes from the environment once; afterwards accounts are managed in the app.
+Open `http://localhost:8440`. On the first visit you create the first administrator there (only from the home network), then set up your archive and inbox folders under **Settings → Storage**. Everything else – users, text recognition, home network, API key, mail inbox, AI – is set in the app, not in the compose file.
 
 The image is built for `linux/amd64` and `linux/arm64` (Raspberry Pi, Apple silicon).
 
@@ -64,16 +61,22 @@ On **Unraid**, install it from the *Apps* tab (template repository [orohde/unrai
 
 ### Settings
 
+Settings live in the app. The compose file only needs folders, port and, if necessary, the user:
+
 | Variable | Default | Meaning |
 |---|---|---|
-| `ORDNUNG_ADMIN_USER` / `ORDNUNG_ADMIN_PASSWORD` | `admin` / – | first administrator (only used while no account exists) |
-| `ORDNUNG_API_TOKEN` | – | optional token for scripts: `Authorization: Bearer …` |
-| `ORDNUNG_OCR` | `1` | text recognition for scans |
-| `ORDNUNG_OCR_LANG` | `deu+eng` | Tesseract languages |
-| `ORDNUNG_RESCAN_MINUTES` | `10` | full rescan of the archive folders |
-| `ORDNUNG_STARTER` | `1` | ship a household folder template and starter rules on first start |
-| `ORDNUNG_INTERNAL_NETWORKS` | private ranges | comma-separated CIDR ranges that count as the home network (LAN, VPN); everything else is "outside" |
 | `PUID` / `PGID` / `UMASK` | `99` / `100` / `0002` | user, group and umask the app runs as when the container starts as root; fresh empty folders are handed over to that user (ignored with `--user`) |
+| `TZ` | `UTC` | time zone, e.g. `Europe/Berlin` |
+
+These older variables now only give the defaults for a fresh installation; once something is saved in the app, the app wins:
+
+| Variable | now in the app under |
+|---|---|
+| `ORDNUNG_ADMIN_USER` / `ORDNUNG_ADMIN_PASSWORD` | setup page on the first visit (the variables only create the account while there is none) |
+| `ORDNUNG_API_TOKEN` | *Settings → API* (taken over once) |
+| `ORDNUNG_OCR`, `ORDNUNG_OCR_LANG`, `ORDNUNG_OCR_MAX_PAGES`, `ORDNUNG_RESCAN_MINUTES`, `ORDNUNG_TEXT_WORKERS` | *Settings → System* |
+| `ORDNUNG_INTERNAL_NETWORKS` | *Settings → Security → Home network* |
+| `ORDNUNG_STARTER` | – (`0` skips the folder template and starter rules on the very first start) |
 
 ### Signing in from outside
 
