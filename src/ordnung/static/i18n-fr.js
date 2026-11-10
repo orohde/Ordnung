@@ -288,6 +288,7 @@ I18N.fr = {
   "api.ref": "Tous les points d’accès",
   "api.ref.hint": "Ordnung! décrit sa propre API : chaque point d’accès avec paramètres et réponse, à essayer directement dans le navigateur (avec ta connexion).",
   "api.open": "Ouvrir la description de l’API",
+  "api.guide": "Guide avec exemples (anglais)",
   "sec.policy": "Connexion",
   "sec.ext": "Depuis l’extérieur seulement avec second facteur",
   "sec.ext.hint": "Les comptes sans second facteur ne pourront se connecter que depuis le réseau local. Activable seulement si votre propre compte en a un.",

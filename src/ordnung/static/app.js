@@ -328,6 +328,7 @@ const I18N = {
     "api.ref": "Beschreibung aller Endpunkte",
     "api.ref.hint": "Ordnung! beschreibt seine API selbst: jeder Endpunkt mit Parametern und Antwort, direkt im Browser ausprobierbar (mit deiner Anmeldung).",
     "api.open": "API-Beschreibung öffnen",
+    "api.guide": "Anleitung mit Beispielen",
     "sec.policy": "Anmeldung",
     "sec.ext": "Von außen nur mit zweitem Faktor",
     "sec.ext.hint": "Konten ohne zweiten Faktor können sich dann nur noch im Heimnetz anmelden. Einschalten lässt sich das erst, wenn dein eigenes Konto einen hat.",
@@ -725,6 +726,7 @@ const I18N = {
     "api.ref": "All endpoints",
     "api.ref.hint": "Ordnung! describes its own API: every endpoint with parameters and response, to try out right in the browser (with your sign-in).",
     "api.open": "Open API reference",
+    "api.guide": "Guide with examples",
     "sec.policy": "Sign-in",
     "sec.ext": "From outside only with a second factor",
     "sec.ext.hint": "Accounts without a second factor can then sign in only from the home network. This can only be turned on once your own account has one.",
@@ -1869,6 +1871,7 @@ function showApiKey(token) {
 }
 
 async function loadApiKey() {
+  $('api-guide').href = LANG === 'de' ? 'https://worldgate.de/ordnung/api/' : 'https://worldgate.de/en/ordnung-en/api/';
   showApiKey((await api('security/api-token')).api_token);
 }
 

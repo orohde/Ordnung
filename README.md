@@ -5,7 +5,7 @@
 <p align="center"><b>A document archive for families and small households – folders you already understand, a search that actually finds things.</b><br>
 Self-hosted · open source (AGPL-3.0) · German, English, French, Italian</p>
 
-<p align="center"><i>Deutsch: <a href="README.de.md">README.de.md</a></i></p>
+<p align="center"><a href="https://worldgate.de/en/ordnung-en/"><b>Website</b></a> · <a href="https://worldgate.de/en/ordnung-en/manual/">Manual</a> · <a href="https://worldgate.de/en/ordnung-en/api/">REST API</a> · <i>Deutsch: <a href="README.de.md">README.de.md</a></i></p>
 
 ![Archive with folder tree, list and preview](docs/screenshots/en/01-archiv.jpg)
 

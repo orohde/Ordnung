@@ -288,6 +288,7 @@ I18N.it = {
   "api.ref": "Tutti gli endpoint",
   "api.ref.hint": "Ordnung! descrive la propria API: ogni endpoint con parametri e risposta, da provare direttamente nel browser (con il tuo accesso).",
   "api.open": "Apri la descrizione dell’API",
+  "api.guide": "Guida con esempi (inglese)",
   "sec.policy": "Accesso",
   "sec.ext": "Dall’esterno solo con secondo fattore",
   "sec.ext.hint": "Gli account senza secondo fattore potranno accedere solo dalla rete di casa. Attivabile solo se il tuo account ne ha uno.",

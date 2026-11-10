@@ -5,7 +5,7 @@
 <p align="center"><b>Ein Dokumentenarchiv für Familien und kleine Haushalte: Ordner, die man versteht, und eine Suche, die wirklich findet.</b><br>
 Selbst gehostet · Open Source (AGPL-3.0) · Deutsch, Englisch, Französisch, Italienisch</p>
 
-<p align="center"><i>English: <a href="README.md">README.md</a></i></p>
+<p align="center"><a href="https://worldgate.de/ordnung/"><b>Website</b></a> · <a href="https://worldgate.de/ordnung/handbuch/">Handbuch</a> · <a href="https://worldgate.de/ordnung/api/">REST-API</a> · <i>English: <a href="README.md">README.md</a></i></p>
 
 ![Archiv mit Ordnerbaum, Liste und Vorschau](docs/screenshots/de/01-archiv.jpg)
 
