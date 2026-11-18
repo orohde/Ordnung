@@ -2,9 +2,9 @@
 
 A thin layer over the REST API, spoken as JSON-RPC over HTTP (the "streamable HTTP"
 transport of the Model Context Protocol, answered with plain JSON). The API key from
-*Settings → API* goes along as ``Authorization: Bearer <key>``, exactly as for the
+*Settings → Connections* goes along as ``Authorization: Bearer <key>``, exactly as for the
 REST API; what a key may not do there it may not do here either. The endpoint is
-off until an administrator switches it on (Settings → AI).
+off until an administrator switches it on (Settings → Connections).
 
 Every tool calls the same functions the REST routes use, so rights, the trash and
 the file names behave the same. Nothing here deletes for good, and the configuration
@@ -386,11 +386,11 @@ def mount_mcp(app: FastAPI, ops: SimpleNamespace) -> None:
     async def mcp(request: Request, user: User = Depends(current_user)):
         """Model Context Protocol over HTTP: JSON-RPC in, JSON out. Connect an assistant to this address.
 
-        Off in a fresh installation; an administrator turns it on under Settings → AI.
+        Off in a fresh installation; an administrator turns it on under Settings → Connections.
         """
         if not app.state.system.load().mcp:
             return JSONResponse({"jsonrpc": "2.0", "id": None, "error": {
-                "code": -32000, "message": "MCP is switched off in this installation (Settings → AI)"}}, status_code=403)
+                "code": -32000, "message": "MCP is switched off in this installation (Settings → Connections)"}}, status_code=403)
         try:
             body = json.loads(await request.body())
         except ValueError:

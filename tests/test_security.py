@@ -232,3 +232,29 @@ def test_networks():
     assert nets.is_internal("::ffff:192.168.1.4")
     assert not nets.is_internal("203.0.113.7") and not nets.is_internal("testclient")
     assert Networks("192.168.5.0/24").is_internal("192.168.5.9") and not Networks("192.168.5.0/24").is_internal("10.0.0.1")
+
+
+PROXY = ("10.10.20.50", 50000)
+
+
+def home_says(app, where, forwarded=None) -> bool:
+    headers = {"X-Forwarded-For": forwarded} if forwarded else {}
+    return client_at(app, where).get("/api/setup", headers=headers).json()["home"]
+
+
+def test_forwarded_address_only_from_a_trusted_proxy(app):
+    """Somebody on the internet must not become "at home" by sending X-Forwarded-For himself."""
+    assert home_says(app, OUTSIDE) is False
+    assert home_says(app, OUTSIDE, "10.10.30.5") is False          # straight from outside: header ignored
+    assert home_says(app, PROXY, "203.0.113.7") is False           # proxy reports a visitor from outside
+    assert home_says(app, PROXY, "10.10.30.5") is True             # proxy reports a visitor at home
+    # a proxy that appends: the visitor's own claim stands left of the real address
+    assert home_says(app, PROXY, "10.10.30.5, 203.0.113.7") is False
+
+
+def test_trusted_proxies_can_be_narrowed(settings):
+    from dataclasses import replace
+    app = create_app(replace(settings, trusted_proxies="10.10.20.50"), background=False)
+    assert home_says(app, PROXY, "203.0.113.7") is False
+    # another machine at home is no proxy any more: its header no longer counts
+    assert home_says(app, ("10.10.30.6", 50000), "203.0.113.7") is True

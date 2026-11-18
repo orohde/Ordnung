@@ -14,8 +14,7 @@ def main() -> None:
         create_app(),
         host=os.environ.get("ORDNUNG_HOST", "0.0.0.0"),
         port=int(os.environ.get("ORDNUNG_PORT", "8000")),
-        proxy_headers=True,
-        forwarded_allow_ips="*",
+        proxy_headers=False,      # done in the app itself, only for trusted proxies (see create_app)
     )
 
 

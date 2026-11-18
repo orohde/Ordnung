@@ -403,106 +403,301 @@
       <nav class="settings-nav" aria-label="Einstellungen">
         <a href="#/" class="settings-back" data-i18n="set.back">← Zurück zum Archiv</a>
         <h2 class="fd-title fd-title--h4" data-i18n="set.title">Einstellungen</h2>
+        <a class="set-link" href="#/einstellungen/allgemein" data-pane="general" data-i18n="set.general">Allgemein</a>
         <a class="set-link" href="#/einstellungen/konto" data-pane="account" data-i18n="set.account">Mein Konto</a>
-        <a class="set-link admin-only" href="#/einstellungen/benutzer" data-pane="users" data-i18n="set.users">Benutzer</a>
         <a class="set-link admin-only" href="#/einstellungen/ablage" data-pane="storage" data-i18n="set.storage">Ablage</a>
-        <a class="set-link admin-only" href="#/einstellungen/ki" data-pane="ai" data-i18n="set.ai">KI</a>
         <a class="set-link admin-only" href="#/einstellungen/email" data-pane="mail" data-i18n="set.mail">E-Mail-Eingang</a>
+        <a class="set-link admin-only" href="#/einstellungen/benutzer" data-pane="users" data-i18n="set.users">Benutzer</a>
+        <a class="set-link admin-only" href="#/einstellungen/ki" data-pane="ai" data-i18n="set.ai">KI</a>
+        <a class="set-link admin-only" href="#/einstellungen/verbindungen" data-pane="connections" data-i18n="set.connections">Verbindungen</a>
         <a class="set-link admin-only" href="#/einstellungen/sicherheit" data-pane="security" data-i18n="set.security">Sicherheit</a>
-        <a class="set-link admin-only" href="#/einstellungen/api" data-pane="api" data-i18n="set.api">API</a>
         <a class="set-link admin-only" href="#/einstellungen/system" data-pane="system" data-i18n="set.system">System</a>
+        <a class="set-link" href="#/einstellungen/ueber" data-pane="about" data-i18n="set.about">Über</a>
       </nav>
       <div class="settings-body">
 
-        <section class="set-pane" data-pane="account">
-          <h3 class="fd-title fd-title--h4" data-i18n="set.account">Mein Konto</h3>
-          <p id="acc-who" class="set-hint"></p>
-          <p class="only-mobile-block"><button id="acc-logout" class="fd-button" type="button" data-i18n="app.logout">Abmelden</button></p>
-          <div class="form-grid card acc-lang">
-            <label class="fd-form-label" for="acc-lang" data-i18n="acc.lang">Sprache</label>
-            <div>
-              <select id="acc-lang" class="fd-input">
-                <option value="de">Deutsch</option>
-                <option value="en">English</option>
-                <option value="fr">Français</option>
-                <option value="it">Italiano</option>
-              </select>
-              <div class="field-hint" data-i18n="acc.lang.hint">Gilt für dieses Konto auf allen Geräten.</div>
-            </div>
-          </div>
-          <form id="pw-form" class="form-grid card">
-            <label class="fd-form-label" for="pw-old" data-i18n="acc.old">Aktuelles Passwort</label>
-            <input class="fd-input" id="pw-old" type="password" autocomplete="current-password" required>
-            <label class="fd-form-label" for="pw-new" data-i18n="acc.new">Neues Passwort</label>
-            <input class="fd-input" id="pw-new" type="password" autocomplete="new-password" minlength="12" required>
-            <span></span>
-            <div><button class="fd-button fd-button--emphasized" type="submit" data-i18n="acc.change">Passwort ändern</button>
-            <span id="pw-msg" class="form-msg"></span></div>
-          </form>
-          <div id="mfa-card" class="card mfa-card">
-            <h4 class="fd-title fd-title--h5 card-title" data-i18n="mfa.title">Zweiter Faktor</h4>
-            <p id="mfa-state" class="set-hint"></p>
-            <form id="mfa-start" class="form-grid" hidden>
-              <label class="fd-form-label" for="mfa-pass" data-i18n="acc.old">Aktuelles Passwort</label>
-              <input class="fd-input" id="mfa-pass" type="password" autocomplete="current-password" required>
-              <span></span>
-              <div><button class="fd-button fd-button--emphasized" type="submit" data-i18n="mfa.setup">Einrichten</button>
-              <span id="mfa-msg-start" class="form-msg"></span></div>
-            </form>
-            <div id="mfa-setup" hidden>
-              <p class="set-hint" data-i18n="mfa.scan">Scanne den Code mit einer Authenticator-App (zum Beispiel Bitwarden, 2FAS, Aegis oder Google Authenticator) und gib dann die sechs Ziffern ein, die sie anzeigt.</p>
-              <div class="mfa-qr"><img id="mfa-qr" alt="QR-Code"></div>
-              <p class="field-hint"><span data-i18n="mfa.manual">Oder von Hand eingeben:</span> <code id="mfa-secret" class="mfa-secret"></code></p>
-              <form id="mfa-confirm" class="form-grid">
-                <label class="fd-form-label" for="mfa-code" data-i18n="login.code">Code aus der App</label>
-                <input class="fd-input" id="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required>
-                <span></span>
-                <div><button class="fd-button fd-button--emphasized" type="submit" data-i18n="mfa.confirm">Einschalten</button>
-                <button id="mfa-abort" class="fd-button fd-button--transparent" type="button" data-i18n="btn.cancel">Abbrechen</button>
-                <span id="mfa-msg-confirm" class="form-msg"></span></div>
-              </form>
-            </div>
-            <div id="mfa-codes" hidden>
-              <p class="set-hint" data-i18n="mfa.codes.hint">Deine Wiederherstellungscodes. Mit jedem kommst du einmal hinein, falls das Telefon weg ist. Lege sie jetzt sicher ab, zum Beispiel im Passwortmanager. Ordnung! zeigt sie nicht noch einmal.</p>
-              <pre id="mfa-code-list" class="mfa-code-list"></pre>
-              <div class="form-actions">
-                <button id="mfa-copy" class="fd-button" type="button" data-i18n="mfa.copy">Kopieren</button>
-                <button id="mfa-done" class="fd-button fd-button--emphasized" type="button" data-i18n="mfa.done">Ich habe sie gesichert</button>
-              </div>
-            </div>
-            <div id="mfa-on" hidden>
-              <form id="mfa-renew" class="form-grid">
-                <label class="fd-form-label" for="mfa-renew-code" data-i18n="login.code">Code aus der App</label>
-                <input class="fd-input" id="mfa-renew-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required>
-                <span></span>
-                <div><button class="fd-button" type="submit" data-i18n="mfa.renew">Neue Wiederherstellungscodes</button>
-                <span id="mfa-msg-renew" class="form-msg"></span></div>
-              </form>
-              <details class="mfa-disable">
-                <summary data-i18n="mfa.off">Zweiten Faktor ausschalten</summary>
-                <form id="mfa-off-form" class="form-grid">
-                  <label class="fd-form-label" for="mfa-off-pass" data-i18n="acc.old">Aktuelles Passwort</label>
-                  <input class="fd-input" id="mfa-off-pass" type="password" autocomplete="current-password" required>
-                  <label class="fd-form-label" for="mfa-off-code" data-i18n="mfa.code.or">Code oder Wiederherstellungscode</label>
-                  <input class="fd-input" id="mfa-off-code" autocomplete="one-time-code" maxlength="20" required>
-                  <span></span>
-                  <div><button class="fd-button fd-button--negative" type="submit" data-i18n="mfa.off.btn">Ausschalten</button>
-                  <span id="mfa-msg-off" class="form-msg"></span></div>
-                </form>
-              </details>
-            </div>
-          </div>
+        <!-- ---------------------------------------------------------------- Allgemein -->
+        <section class="set-pane" data-pane="general">
+          <h3 class="fd-title fd-title--h4" data-i18n="set.general">Allgemein</h3>
           <div class="card">
-            <div class="pane-head">
-              <h4 class="fd-title fd-title--h5 card-title" data-i18n="ses.title">Angemeldete Geräte</h4>
-              <button id="ses-others" class="fd-button" type="button" data-i18n="ses.others">Alle anderen abmelden</button>
+            <div class="set-row">
+              <label class="fd-form-label" for="acc-lang" data-i18n="acc.lang">Sprache</label>
+              <div class="set-field">
+                <select id="acc-lang" class="fd-input set-select">
+                  <option value="de">Deutsch</option>
+                  <option value="en">English</option>
+                  <option value="fr">Français</option>
+                  <option value="it">Italiano</option>
+                </select>
+              </div>
+              <p class="set-hint" data-i18n="acc.lang.hint">Gilt für dieses Konto auf allen Geräten.</p>
             </div>
-            <table class="fd-table ses-table">
-              <tbody id="ses-rows" class="fd-table__body"></tbody>
-            </table>
+            <div class="set-row">
+              <label class="fd-form-label" for="set-theme" data-i18n="gen.theme">Farbschema</label>
+              <div class="set-field">
+                <select id="set-theme" class="fd-input set-select">
+                  <option value="system" data-i18n="gen.theme.system">Auto (wie das System)</option>
+                  <option value="light" data-i18n="gen.theme.light">Hell</option>
+                  <option value="dark" data-i18n="gen.theme.dark">Dunkel</option>
+                </select>
+              </div>
+              <p class="set-hint" data-i18n="gen.theme.hint">Gilt für diesen Browser. Der Knopf oben in der Leiste schaltet ebenfalls um.</p>
+            </div>
           </div>
         </section>
 
+        <!-- ---------------------------------------------------------------- Mein Konto -->
+        <section class="set-pane" data-pane="account" hidden>
+          <h3 class="fd-title fd-title--h4" data-i18n="set.account">Mein Konto</h3>
+          <p id="acc-who" class="set-intro"></p>
+          <p class="only-mobile-block"><button id="acc-logout" class="fd-button" type="button" data-i18n="app.logout">Abmelden</button></p>
+          <div class="card">
+            <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="acc.pw">Passwort</h4>
+            <form id="pw-form">
+              <div class="set-row">
+                <label class="fd-form-label" for="pw-old" data-i18n="acc.old">Aktuelles Passwort</label>
+                <div class="set-field"><input class="fd-input set-wide" id="pw-old" type="password" autocomplete="current-password" required></div>
+              </div>
+              <div class="set-row">
+                <label class="fd-form-label" for="pw-new" data-i18n="acc.new">Neues Passwort</label>
+                <div class="set-field"><input class="fd-input set-wide" id="pw-new" type="password" autocomplete="new-password" minlength="12" required></div>
+                <p class="set-hint" data-i18n="acc.new.hint">Mindestens zwölf Zeichen. Andere Geräte werden danach abgemeldet.</p>
+              </div>
+              <div class="set-actions">
+                <button class="fd-button fd-button--emphasized" type="submit" data-i18n="acc.change">Passwort ändern</button>
+                <span id="pw-msg" class="form-msg"></span>
+              </div>
+            </form>
+
+            <div id="mfa-card" class="set-sub mfa-card">
+              <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="mfa.title">Zweiter Faktor</h4>
+              <p id="mfa-state" class="set-intro"></p>
+              <form id="mfa-start" hidden>
+                <div class="set-row">
+                  <label class="fd-form-label" for="mfa-pass" data-i18n="acc.old">Aktuelles Passwort</label>
+                  <div class="set-field"><input class="fd-input set-wide" id="mfa-pass" type="password" autocomplete="current-password" required></div>
+                </div>
+                <div class="set-actions">
+                  <button class="fd-button fd-button--emphasized" type="submit" data-i18n="mfa.setup">Einrichten</button>
+                  <span id="mfa-msg-start" class="form-msg"></span>
+                </div>
+              </form>
+              <div id="mfa-setup" hidden>
+                <p class="set-intro" data-i18n="mfa.scan">Scanne den Code mit einer Authenticator-App (zum Beispiel Bitwarden, 2FAS, Aegis oder Google Authenticator) und gib dann die sechs Ziffern ein, die sie anzeigt.</p>
+                <div class="mfa-qr"><img id="mfa-qr" alt="QR-Code"></div>
+                <p class="field-hint"><span data-i18n="mfa.manual">Oder von Hand eingeben:</span> <code id="mfa-secret" class="mfa-secret"></code></p>
+                <form id="mfa-confirm">
+                  <div class="set-row">
+                    <label class="fd-form-label" for="mfa-code" data-i18n="login.code">Code aus der App</label>
+                    <div class="set-field"><input class="fd-input set-num" id="mfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required></div>
+                  </div>
+                  <div class="set-actions">
+                    <button class="fd-button fd-button--emphasized" type="submit" data-i18n="mfa.confirm">Einschalten</button>
+                    <button id="mfa-abort" class="fd-button fd-button--transparent" type="button" data-i18n="btn.cancel">Abbrechen</button>
+                    <span id="mfa-msg-confirm" class="form-msg"></span>
+                  </div>
+                </form>
+              </div>
+              <div id="mfa-codes" hidden>
+                <p class="set-intro" data-i18n="mfa.codes.hint">Deine Wiederherstellungscodes. Mit jedem kommst du einmal hinein, falls das Telefon weg ist. Lege sie jetzt sicher ab, zum Beispiel im Passwortmanager. Ordnung! zeigt sie nicht noch einmal.</p>
+                <pre id="mfa-code-list" class="mfa-code-list"></pre>
+                <div class="set-actions">
+                  <button id="mfa-copy" class="fd-button" type="button" data-i18n="mfa.copy">Kopieren</button>
+                  <button id="mfa-done" class="fd-button fd-button--emphasized" type="button" data-i18n="mfa.done">Ich habe sie gesichert</button>
+                </div>
+              </div>
+              <div id="mfa-on" hidden>
+                <form id="mfa-renew">
+                  <div class="set-row">
+                    <label class="fd-form-label" for="mfa-renew-code" data-i18n="login.code">Code aus der App</label>
+                    <div class="set-field"><input class="fd-input set-num" id="mfa-renew-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required></div>
+                  </div>
+                  <div class="set-actions">
+                    <button class="fd-button" type="submit" data-i18n="mfa.renew">Neue Wiederherstellungscodes</button>
+                    <span id="mfa-msg-renew" class="form-msg"></span>
+                  </div>
+                </form>
+                <details class="mfa-disable">
+                  <summary data-i18n="mfa.off">Zweiten Faktor ausschalten</summary>
+                  <form id="mfa-off-form">
+                    <div class="set-row">
+                      <label class="fd-form-label" for="mfa-off-pass" data-i18n="acc.old">Aktuelles Passwort</label>
+                      <div class="set-field"><input class="fd-input set-wide" id="mfa-off-pass" type="password" autocomplete="current-password" required></div>
+                    </div>
+                    <div class="set-row">
+                      <label class="fd-form-label" for="mfa-off-code" data-i18n="mfa.code.or">Code oder Wiederherstellungscode</label>
+                      <div class="set-field"><input class="fd-input set-wide" id="mfa-off-code" autocomplete="one-time-code" maxlength="20" required></div>
+                    </div>
+                    <div class="set-actions">
+                      <button class="fd-button fd-button--negative" type="submit" data-i18n="mfa.off.btn">Ausschalten</button>
+                      <span id="mfa-msg-off" class="form-msg"></span>
+                    </div>
+                  </form>
+                </details>
+              </div>
+            </div>
+
+            <div class="set-sub">
+              <div class="pane-head">
+                <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="ses.title">Angemeldete Geräte</h4>
+                <button id="ses-others" class="fd-button" type="button" data-i18n="ses.others">Alle anderen abmelden</button>
+              </div>
+              <table class="fd-table ses-table">
+                <tbody id="ses-rows" class="fd-table__body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------------------------------------------------------------- Ablage -->
+        <section class="set-pane" data-pane="storage" hidden>
+          <h3 class="fd-title fd-title--h4" data-i18n="set.storage">Ablage</h3>
+          <p class="set-intro" data-i18n="st.intro">Wo das Archiv liegt und aus welchen Ordnern neue Dokumente kommen. Zur Auswahl stehen die Ordner, die dem Container zur Verfügung stehen.</p>
+          <form id="st-form" class="card" autocomplete="off" data-autosave>
+            <div class="set-row">
+              <label class="fd-form-label" for="st-archive" data-i18n="st.archive">Archivordner</label>
+              <div class="set-field">
+                <div class="inline">
+                  <input class="fd-input set-wide" id="st-archive" autocomplete="off" data-confirm="st.archive.q">
+                  <button class="fd-button" type="button" data-pick="st-archive" data-i18n="st.browse">Durchsuchen</button>
+                </div>
+              </div>
+              <p id="st-archive-status" class="set-hint"></p>
+              <div class="picker set-full" data-for="st-archive" hidden></div>
+            </div>
+            <div class="set-row">
+              <label class="fd-form-label" for="st-reference" data-i18n="st.ref">Lernbestand</label>
+              <div class="set-field">
+                <div class="inline">
+                  <input class="fd-input set-wide" id="st-reference" autocomplete="off" data-i18n-placeholder="st.ref.none" data-confirm="st.ref.q">
+                  <button class="fd-button" type="button" data-pick="st-reference" data-i18n="st.browse">Durchsuchen</button>
+                </div>
+              </div>
+              <p class="set-hint"><span data-i18n="st.ref.hint">Bereits sortierte Dokumente, an denen die Regeln gemessen und gelernt werden – zum Beispiel die alten Paperless-Originale. Wird nur gelesen und erscheint nicht im Archiv.</span> <span id="st-reference-status"></span></p>
+              <div class="picker set-full" data-for="st-reference" hidden></div>
+            </div>
+            <div class="set-row">
+              <label class="fd-form-label" for="st-trash-days" data-i18n="st.trash">Papierkorb</label>
+              <div class="set-field inline"><span data-i18n="st.trash.days">Endgültig löschen nach</span> <input class="fd-input set-num" id="st-trash-days" type="number" min="0" max="3650" step="1"> <span data-i18n="st.trash.unit">Tagen</span></div>
+              <p class="set-hint" data-i18n="st.trash.hint">Gelöschte Dokumente liegen im Papierkorb (.papierkorb im Archiv). Nach dieser Frist löscht Ordnung! sie einmal am Tag endgültig. 0 heißt: nie.</p>
+            </div>
+
+            <div class="set-sub">
+              <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="st.areas">Bereiche</h4>
+              <p class="set-intro" data-i18n="st.areas.hint">Anzeigename je Bereich.</p>
+              <div id="st-areas" class="form-grid"></div>
+              <h5 class="fd-title fd-title--h6 st-newarea-title" data-i18n="st.area.new">Neuer Bereich</h5>
+              <p class="set-intro" data-i18n="st.area.hint2"></p>
+              <div class="inline st-newarea">
+                <input id="st-area-name" class="fd-input" maxlength="40" autocomplete="off" data-nosave data-i18n-placeholder="st.area.name.ph">
+                <input id="st-area-label" class="fd-input" maxlength="40" autocomplete="off" data-nosave data-i18n-placeholder="st.area.label.ph">
+                <button id="st-area-add" class="fd-button" type="button" data-i18n="st.area.add">Bereich anlegen</button>
+              </div>
+            </div>
+
+            <div class="set-sub">
+              <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="st.template">Ordnervorlage</h4>
+              <div class="set-row">
+                <span class="fd-form-label" data-i18n="fo.starter">Startvorlage „Haushalt“</span>
+                <div class="set-field inline">
+                  <button id="fo-starter" class="fd-button" type="button" data-i18n="st.template.add">Ordner anlegen …</button>
+                  <span id="fo-msg" class="form-msg" role="status"></span>
+                </div>
+                <p class="set-hint" data-i18n="st.template.hint">Legt rund 40 übliche Haushaltsordner an (Banken, Versicherungen, Gesundheit …). Vorhandene bleiben, wie sie sind. Einzelne Ordner legst du im Ordnerbaum des Archivs über ⋯ an, benennst sie um oder löschst sie.</p>
+              </div>
+            </div>
+
+            <div class="set-sub">
+              <div class="pane-head">
+                <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="st.inboxes">Eingangsordner</h4>
+                <button id="st-add" class="fd-button" type="button" data-i18n="st.add">Eingangsordner hinzufügen</button>
+              </div>
+              <p class="set-intro" data-i18n="st.inbox.note">Aktive Eingangsordner werden jede Minute gelesen (auch Unterordner). Neue Dokumente erscheinen im Posteingang und werden erst nach deiner Bestätigung abgelegt.</p>
+              <div id="st-inboxes" class="inbox-list"></div>
+            </div>
+            <div class="set-status"><span id="st-msg" class="form-msg" role="status"></span></div>
+          </form>
+
+          <div class="card switch-card">
+            <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="st.switch">Mit frischem Archiv neu anfangen</h4>
+            <p class="set-intro" data-i18n="st.switch.hint">Das jetzige Archiv wird zum Lernbestand, der gewählte Ordner zum neuen, beschreibbaren Archiv. Regeln und Ordnerbeschreibungen ziehen auf die Ordnernamen aus dem Import-Plan um, die Zielordner des Plans werden als Ordnervorlage angelegt. Auf der Platte wird nichts kopiert, verschoben oder gelöscht.</p>
+            <div class="set-row">
+              <label class="fd-form-label" for="st-switch" data-i18n="st.switch.path">Neues Archiv</label>
+              <div class="set-field">
+                <div class="inline">
+                  <input class="fd-input set-wide" id="st-switch" autocomplete="off">
+                  <button class="fd-button" type="button" data-pick="st-switch" data-i18n="st.browse">Durchsuchen</button>
+                </div>
+              </div>
+              <div class="picker set-full" data-for="st-switch" hidden></div>
+            </div>
+            <div class="set-actions">
+              <button id="st-switch-go" class="fd-button" type="button" data-i18n="st.switch.go">Archiv umstellen …</button>
+              <span id="st-switch-msg" class="form-msg"></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------------------------------------------------------------- E-Mail-Eingang -->
+        <section class="set-pane" data-pane="mail" hidden>
+          <h3 class="fd-title fd-title--h4" data-i18n="set.mail">E-Mail-Eingang</h3>
+          <p class="set-intro" data-i18n="ml.intro">PDFs per Mail an eine eigene Adresse schicken oder weiterleiten, etwa vom iPhone. Ordnung! holt die Mails jede Minute ab und legt die PDF-Anhänge in den Posteingang. Angenommen werden nur Mails von Adressen, die bei einem Benutzer hinterlegt sind; der Benutzer bestimmt den Bereich. Alles andere bleibt im Postfach, verschoben nach „Abgelehnt“ und nach der eingestellten Frist gelöscht.</p>
+          <div class="card">
+            <form id="ml-form" autocomplete="off" data-bwignore="true" data-autosave>
+              <div class="set-row set-row--check">
+                <label class="fd-form-label" for="ml-enabled" data-i18n="ml.enabled">Mails abholen</label>
+                <div class="set-field"><input type="checkbox" id="ml-enabled"></div>
+              </div>
+              <div class="set-row" data-needs="ml-enabled">
+                <label class="fd-form-label" for="ml-host" data-i18n="ml.host">IMAP-Server</label>
+                <div class="set-field inline">
+                  <input class="fd-input set-wide" id="ml-host" placeholder="mail.infomaniak.com" autocomplete="off" spellcheck="false">
+                  <input class="fd-input ml-port" id="ml-port" type="number" min="1" max="65535" step="1" title="Port">
+                </div>
+              </div>
+              <div class="set-row" data-needs="ml-enabled">
+                <label class="fd-form-label" for="ml-user" data-i18n="ml.user">Benutzer</label>
+                <div class="set-field"><input class="fd-input set-wide" id="ml-user" placeholder="eingang@example.org" autocomplete="off" autocapitalize="off" spellcheck="false" data-bwignore="true" data-1p-ignore="true" data-lpignore="true" data-form-type="other"></div>
+              </div>
+              <div class="set-row" data-needs="ml-enabled">
+                <label class="fd-form-label" for="ml-pass" data-i18n="ml.pass">Passwort</label>
+                <div class="set-field inline">
+                  <input class="fd-input masked set-wide" id="ml-pass" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-bwignore="true" data-1p-ignore="true" data-lpignore="true" data-form-type="other">
+                  <button id="ml-clear-pass" class="fd-button fd-button--transparent" type="button" data-i18n="ai.clearkey">Entfernen</button>
+                </div>
+              </div>
+              <div class="set-row" data-needs="ml-enabled">
+                <label class="fd-form-label" for="ml-folder" data-i18n="ml.folder">Ordner im Postfach</label>
+                <div class="set-field"><input class="fd-input set-select" id="ml-folder" placeholder="INBOX" autocomplete="off" spellcheck="false"></div>
+              </div>
+              <div class="set-row set-row--check" data-needs="ml-enabled">
+                <label class="fd-form-label" for="ml-auth" data-i18n="ml.auth.label">Gefälschte Absender ablehnen</label>
+                <div class="set-field"><input type="checkbox" id="ml-auth"></div>
+                <p class="set-hint" data-i18n="ml.auth.hint">Verlässt sich auf die Prüfung des Mailservers (SPF, DKIM, DMARC).</p>
+              </div>
+              <div class="set-row" data-needs="ml-enabled">
+                <label class="fd-form-label" for="ml-days" data-i18n="ml.days">Abgelehnte Mails löschen nach</label>
+                <div class="set-field inline"><input class="fd-input set-num" id="ml-days" type="number" min="0" max="3650" step="1"> <span data-i18n="ml.days.unit">Tagen (0 = sofort)</span></div>
+              </div>
+              <div class="set-actions">
+                <button id="ml-test" class="fd-button" type="button" data-i18n="ml.test">Verbindung testen</button>
+                <button id="ml-fetch" class="fd-button" type="button" data-i18n="ml.fetch">Jetzt abholen</button>
+                <span id="ml-msg" class="form-msg" role="status"></span>
+              </div>
+            </form>
+            <div class="set-sub">
+              <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="ml.senders">Bekannte Absender</h4>
+              <div id="ml-senders" class="ml-senders"></div>
+              <p class="field-hint"><a href="#/einstellungen/benutzer" data-i18n="ml.senders.edit">Adressen bei den Benutzern eintragen</a></p>
+            </div>
+            <div class="set-sub">
+              <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="ml.log">Zuletzt eingegangen</h4>
+              <div id="ml-log" class="ml-log"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------------------------------------------------------------- Benutzer -->
         <section class="set-pane" data-pane="users" hidden>
           <div class="pane-head">
             <h3 class="fd-title fd-title--h4" data-i18n="set.users">Benutzer</h3>
@@ -519,29 +714,44 @@
             <tbody id="usr-rows" class="fd-table__body"></tbody>
           </table>
           <form id="usr-form" class="card usr-form" hidden>
-            <h4 id="usr-form-title" class="fd-title fd-title--h5"></h4>
-            <div class="form-grid">
+            <h4 id="usr-form-title" class="fd-title fd-title--h5 set-subtitle"></h4>
+            <div class="set-row">
               <label class="fd-form-label" for="usr-name" data-i18n="usr.name">Benutzer</label>
-              <input class="fd-input" id="usr-name" autocomplete="off" pattern="[a-z0-9][a-z0-9._-]{0,31}" required>
+              <div class="set-field"><input class="fd-input set-wide" id="usr-name" autocomplete="off" pattern="[a-z0-9][a-z0-9._-]{0,31}" required></div>
+            </div>
+            <div class="set-row">
               <label class="fd-form-label" for="usr-display" data-i18n="usr.display">Anzeigename</label>
-              <input class="fd-input" id="usr-display" autocomplete="off">
+              <div class="set-field"><input class="fd-input set-wide" id="usr-display" autocomplete="off"></div>
+            </div>
+            <div class="set-row">
               <label class="fd-form-label" for="usr-pass" data-i18n="usr.pass">Passwort</label>
-              <input class="fd-input" id="usr-pass" type="password" autocomplete="new-password" minlength="12">
-              <span></span>
-              <label class="check"><input type="checkbox" id="usr-admin"> <span data-i18n="usr.admin">Administrator</span></label>
+              <div class="set-field"><input class="fd-input set-wide" id="usr-pass" type="password" autocomplete="new-password" minlength="12"></div>
+            </div>
+            <div class="set-row set-row--check">
+              <label class="fd-form-label" for="usr-admin" data-i18n="usr.admin">Administrator</label>
+              <div class="set-field"><input type="checkbox" id="usr-admin"></div>
+            </div>
+            <div class="set-row">
               <span class="fd-form-label" data-i18n="usr.areas">Bereiche</span>
-              <div id="usr-areas" class="area-perms"></div>
+              <div id="usr-areas" class="set-field area-perms"></div>
+            </div>
+            <div class="set-row">
               <label class="fd-form-label" for="usr-emails" data-i18n="usr.emails">E-Mail-Adressen</label>
-              <div>
-                <input class="fd-input" id="usr-emails" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="erste@example.org, zweite@example.org">
-                <div class="field-hint" data-i18n="usr.emails.hint">Von diesen Adressen nimmt der E-Mail-Eingang PDFs an. Mehrere mit Komma trennen.</div>
-              </div>
+              <div class="set-field"><input class="fd-input set-wide" id="usr-emails" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="erste@example.org, zweite@example.org"></div>
+              <p class="set-hint" data-i18n="usr.emails.hint">Von diesen Adressen nimmt der E-Mail-Eingang PDFs an. Mehrere mit Komma trennen.</p>
+            </div>
+            <div class="set-row">
               <label class="fd-form-label" for="usr-mail-area" data-i18n="usr.mailarea">Mails gehören zu</label>
-              <select class="fd-select" id="usr-mail-area"></select>
-              <span class="usr-existing"></span>
-              <label class="check usr-existing"><input type="checkbox" id="usr-signout"> <span data-i18n="usr.signout">Auf allen Geräten abmelden</span></label>
-              <span class="usr-mfa-reset"></span>
-              <label class="check usr-mfa-reset"><input type="checkbox" id="usr-reset-totp"> <span data-i18n="usr.resettotp">Zweiten Faktor zurücksetzen (wenn das Telefon verloren ist)</span></label>
+              <div class="set-field"><select class="fd-select fd-input set-select" id="usr-mail-area"></select></div>
+            </div>
+            <div class="set-row set-row--check usr-existing">
+              <label class="fd-form-label" for="usr-signout" data-i18n="usr.signout">Auf allen Geräten abmelden</label>
+              <div class="set-field"><input type="checkbox" id="usr-signout"></div>
+            </div>
+            <div class="set-row set-row--check usr-mfa-reset">
+              <label class="fd-form-label" for="usr-reset-totp" data-i18n="usr.resettotp.label">Zweiten Faktor zurücksetzen</label>
+              <div class="set-field"><input type="checkbox" id="usr-reset-totp"></div>
+              <p class="set-hint" data-i18n="usr.resettotp.hint">Wenn das Telefon verloren ist. Das Konto richtet ihn danach neu ein.</p>
             </div>
             <div class="form-actions">
               <span id="usr-msg" class="form-msg"></span>
@@ -551,273 +761,82 @@
           </form>
         </section>
 
-        <section class="set-pane" data-pane="folders" hidden>
-          <h3 class="fd-title fd-title--h4" data-i18n="set.folders">Ordner</h3>
-          <p class="set-hint" data-i18n="fo.intro">Die Ordnerstruktur gilt für alle Bereiche. Ein Ordner entsteht in einem Bereich erst, wenn dort das erste Dokument hineinkommt – leere Ordner siehst du nur hier, bei den Regeln und beim Import.</p>
-          <div class="card">
-            <div class="inline fo-add">
-              <input id="fo-new" class="fd-input" autocomplete="off" data-i18n-placeholder="fo.new.ph" placeholder="Neuer Ordner, z. B. Auto/T-Roc/Versicherung">
-              <button id="fo-add" class="fd-button fd-button--emphasized" type="button" data-i18n="fo.add">Anlegen</button>
-              <button id="fo-starter" class="fd-button" type="button" data-i18n="fo.starter">Startvorlage „Haushalt“</button>
-            </div>
-            <p id="fo-msg" class="form-msg"></p>
-            <p id="fo-ro" class="set-hint" hidden data-i18n="fo.readonly">Das Archiv ist nur lesend eingehängt: Ordner mit Dokumenten lassen sich erst nach dem Import umbenennen oder verschieben. Leere Ordner gehen immer.</p>
-            <div id="fo-tree" class="fo-tree"></div>
-          </div>
-        </section>
-
-        <section class="set-pane" data-pane="storage" hidden>
-          <h3 class="fd-title fd-title--h4" data-i18n="set.storage">Ablage</h3>
-          <p class="set-hint" data-i18n="st.intro">Wo das Archiv liegt und aus welchen Ordnern neue Dokumente kommen. Zur Auswahl stehen die Ordner, die dem Container zur Verfügung stehen.</p>
-          <form id="st-form" autocomplete="off">
-            <div class="card">
-              <h4 class="fd-title fd-title--h5 card-title" data-i18n="st.archive">Archivordner</h4>
-              <div class="form-grid">
-                <label class="fd-form-label" for="st-archive" data-i18n="st.path">Pfad</label>
-                <div>
-                  <div class="inline">
-                    <input class="fd-input" id="st-archive" autocomplete="off">
-                    <button class="fd-button" type="button" data-pick="st-archive" data-i18n="st.browse">Durchsuchen</button>
-                  </div>
-                  <div id="st-archive-status" class="field-hint"></div>
-                </div>
-              </div>
-              <div class="picker" data-for="st-archive" hidden></div>
-            </div>
-
-            <div class="card">
-              <h4 class="fd-title fd-title--h5 card-title" data-i18n="st.ref">Lernbestand</h4>
-              <p class="set-hint" data-i18n="st.ref.hint">Bereits sortierte Dokumente, an denen die Regeln gemessen und gelernt werden – zum Beispiel die alten Paperless-Originale. Wird nur gelesen und erscheint nicht im Archiv.</p>
-              <div class="form-grid">
-                <label class="fd-form-label" for="st-reference" data-i18n="st.path">Pfad</label>
-                <div>
-                  <div class="inline">
-                    <input class="fd-input" id="st-reference" autocomplete="off" data-i18n-placeholder="st.ref.none">
-                    <button class="fd-button" type="button" data-pick="st-reference" data-i18n="st.browse">Durchsuchen</button>
-                  </div>
-                  <div id="st-reference-status" class="field-hint"></div>
-                </div>
-              </div>
-              <div class="picker" data-for="st-reference" hidden></div>
-            </div>
-
-            <div class="card">
-              <h4 class="fd-title fd-title--h5 card-title" data-i18n="st.trash">Papierkorb</h4>
-              <p class="set-hint" data-i18n="st.trash.hint">Gelöschte Dokumente liegen im Papierkorb (.papierkorb im Archiv). Nach dieser Frist löscht Ordnung! sie einmal am Tag endgültig. 0 heißt: nie.</p>
-              <div class="form-grid">
-                <label class="fd-form-label" for="st-trash-days" data-i18n="st.trash.days">Endgültig löschen nach</label>
-                <div class="inline"><input class="fd-input st-trash-days" id="st-trash-days" type="number" min="0" max="3650" step="1"> <span data-i18n="st.trash.unit">Tagen</span></div>
-              </div>
-            </div>
-
-            <div class="card">
-              <h4 class="fd-title fd-title--h5 card-title" data-i18n="st.areas">Bereiche</h4>
-              <p class="set-hint" data-i18n="st.areas.hint">Anzeigename je Bereich.</p>
-              <div id="st-areas" class="form-grid"></div>
-              <h5 class="fd-title fd-title--h6 st-newarea-title" data-i18n="st.area.new">Neuer Bereich</h5>
-              <p class="set-hint" data-i18n="st.area.hint2"></p>
-              <div class="inline st-newarea">
-                <input id="st-area-name" class="fd-input" maxlength="40" autocomplete="off" data-i18n-placeholder="st.area.name.ph">
-                <input id="st-area-label" class="fd-input" maxlength="40" autocomplete="off" data-i18n-placeholder="st.area.label.ph">
-                <button id="st-area-add" class="fd-button" type="button" data-i18n="st.area.add">Bereich anlegen</button>
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="pane-head">
-                <h4 class="fd-title fd-title--h5 card-title" data-i18n="st.inboxes">Eingangsordner</h4>
-                <button id="st-add" class="fd-button" type="button" data-i18n="st.add">Eingangsordner hinzufügen</button>
-              </div>
-              <p class="set-hint" data-i18n="st.inbox.note">Aktive Eingangsordner werden jede Minute gelesen (auch Unterordner). Neue Dokumente erscheinen im Posteingang und werden erst nach deiner Bestätigung abgelegt.</p>
-              <div id="st-inboxes" class="inbox-list"></div>
-            </div>
-
-            <div class="form-actions">
-              <span id="st-msg" class="form-msg"></span>
-              <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
-            </div>
-          </form>
-
-          <div class="card switch-card">
-            <h4 class="fd-title fd-title--h5 card-title" data-i18n="st.switch">Mit frischem Archiv neu anfangen</h4>
-            <p class="set-hint" data-i18n="st.switch.hint">Das jetzige Archiv wird zum Lernbestand, der gewählte Ordner zum neuen, beschreibbaren Archiv. Regeln und Ordnerbeschreibungen ziehen auf die Ordnernamen aus dem Import-Plan um, die Zielordner des Plans werden als Ordnervorlage angelegt. Auf der Platte wird nichts kopiert, verschoben oder gelöscht.</p>
-            <div class="form-grid">
-              <label class="fd-form-label" for="st-switch" data-i18n="st.switch.path">Neues Archiv</label>
-              <div>
-                <div class="inline">
-                  <input class="fd-input" id="st-switch" autocomplete="off">
-                  <button class="fd-button" type="button" data-pick="st-switch" data-i18n="st.browse">Durchsuchen</button>
-                </div>
-              </div>
-            </div>
-            <div class="picker" data-for="st-switch" hidden></div>
-            <div class="form-actions">
-              <span id="st-switch-msg" class="form-msg"></span>
-              <button id="st-switch-go" class="fd-button" type="button" data-i18n="st.switch.go">Archiv umstellen …</button>
-            </div>
-          </div>
-        </section>
-
+        <!-- ---------------------------------------------------------------- KI -->
         <section class="set-pane" data-pane="ai" hidden>
           <h3 class="fd-title fd-title--h4" data-i18n="set.ai">KI</h3>
-          <p class="set-hint" data-i18n="ai.intro">Die KI macht nur Vorschläge. Einsortiert wird nach geprüften Regeln oder nach deiner Bestätigung.</p>
-          <div class="card mcp-card">
-            <h4 class="fd-title fd-title--h5" data-i18n="mcp.title">Zugang für KI-Assistenten (MCP)</h4>
-            <p class="set-hint" data-i18n="mcp.hint"></p>
-            <label class="check"><input type="checkbox" id="mcp-on"> <span data-i18n="mcp.on">MCP-Zugang einschalten</span></label>
-            <div class="form-grid mcp-grid">
-              <span class="fd-form-label" data-i18n="mcp.url">Adresse</span>
-              <code id="mcp-url" class="mcp-url"></code>
+          <p class="set-intro"><span data-i18n="ai.intro">Die KI macht nur Vorschläge. Einsortiert wird nach geprüften Regeln oder nach deiner Bestätigung.</span>
+            <span data-i18n="ai.mcp.moved">Den Zugang für KI-Assistenten (MCP) findest du unter</span> <a class="fd-link" href="#/einstellungen/verbindungen" data-i18n="set.connections">Verbindungen</a>.</p>
+          <form id="ai-form" class="card" autocomplete="off" data-bwignore="true" data-autosave>
+            <div class="set-row set-row--check">
+              <label class="fd-form-label" for="ai-enabled" data-i18n="ai.enabled">KI-Vorschläge verwenden</label>
+              <div class="set-field"><input type="checkbox" id="ai-enabled"></div>
             </div>
-            <p class="set-hint mcp-keys"><span data-i18n="mcp.keys"></span> <a class="fd-link" href="#/einstellungen/api" data-i18n="mcp.keys.link">Zu den API-Schlüsseln</a></p>
-            <span id="mcp-msg" class="form-msg" role="status"></span>
-          </div>
-          <form id="ai-form" class="card" autocomplete="off" data-bwignore="true">
-            <div class="form-grid">
-              <span></span>
-              <label class="check"><input type="checkbox" id="ai-enabled"> <span data-i18n="ai.enabled">KI-Vorschläge verwenden</span></label>
+            <div class="set-row" data-needs="ai-enabled">
               <label class="fd-form-label" for="ai-provider" data-i18n="ai.provider">Anbieter</label>
-              <select class="fd-input" id="ai-provider">
-                <option value="anthropic">Claude (Anthropic)</option>
-                <option value="ollama" data-i18n="ai.ollama">Ollama (eigener Server)</option>
-                <option value="openai" data-i18n="ai.openai">Anderer OpenAI-kompatibler Server</option>
-              </select>
-              <label class="fd-form-label ai-openai-only" for="ai-baseurl" data-i18n="ai.baseurl">Server-Adresse</label>
-              <input class="fd-input ai-openai-only" id="ai-baseurl" placeholder="http://ollama-server:11434" autocomplete="off">
-              <label class="fd-form-label" for="ai-model" data-i18n="ai.model">Modell</label>
-              <div>
+              <div class="set-field">
+                <select class="fd-input set-select" id="ai-provider">
+                  <option value="anthropic">Claude (Anthropic)</option>
+                  <option value="ollama" data-i18n="ai.ollama">Ollama (eigener Server)</option>
+                  <option value="openai" data-i18n="ai.openai">Anderer OpenAI-kompatibler Server</option>
+                </select>
+              </div>
+            </div>
+            <div class="set-row ai-openai-only" data-needs="ai-enabled">
+              <label class="fd-form-label" for="ai-baseurl" data-i18n="ai.baseurl">Server-Adresse</label>
+              <div class="set-field"><input class="fd-input set-wide" id="ai-baseurl" placeholder="http://ollama-server:11434" autocomplete="off"></div>
+            </div>
+            <div class="set-row" data-needs="ai-enabled">
+              <label class="fd-form-label" for="ai-model-select" data-i18n="ai.model">Modell</label>
+              <div class="set-field">
                 <div class="inline">
-                  <select class="fd-input" id="ai-model-select"></select>
+                  <select class="fd-input set-wide" id="ai-model-select"></select>
                   <button id="ai-reload-models" class="fd-button fd-button--transparent" type="button" data-i18n-title="ai.reload" aria-label="Liste neu laden">&#8635;</button>
                 </div>
-                <input class="fd-input" id="ai-model" autocomplete="off" placeholder="z. B. qwen3:14b" hidden>
-                <div id="ai-models-note" class="field-hint"></div>
-                <div id="ai-price" class="field-hint"></div>
+                <input class="fd-input set-wide" id="ai-model" autocomplete="off" placeholder="z. B. qwen3:14b" hidden>
               </div>
+              <p class="set-hint"><span id="ai-models-note"></span> <span id="ai-price"></span></p>
+            </div>
+            <div class="set-row" data-needs="ai-enabled">
               <label class="fd-form-label" for="ai-key" data-i18n="ai.key">API-Schlüssel</label>
-              <div class="inline">
-                <input class="fd-input masked" id="ai-key" name="ai-credential" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-bwignore="true" data-1p-ignore="true" data-lpignore="true" data-form-type="other">
+              <div class="set-field inline">
+                <input class="fd-input masked set-wide" id="ai-key" name="ai-credential" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-bwignore="true" data-1p-ignore="true" data-lpignore="true" data-form-type="other">
                 <button id="ai-clear-key" class="fd-button fd-button--transparent" type="button" data-i18n="ai.clearkey">Entfernen</button>
               </div>
-              <label class="fd-form-label" for="ai-limit" data-i18n="ai.limit">Monatslimit (USD)</label>
-              <div>
-                <input class="fd-input ai-limit" id="ai-limit" type="number" min="0" step="1">
-                <div id="ai-usage" class="field-hint"></div>
-              </div>
-              <span class="fd-form-label" data-i18n="ai.exclude">Nie an die KI senden</span>
-              <div id="ai-exclude" class="area-checks"></div>
-              <span></span>
-              <label class="check"><input type="checkbox" id="ai-inbox-auto"> <span data-i18n="ai.inboxauto">Posteingang: KI automatisch fragen, wenn weder Regel noch Eingangsordner weiterhelfen</span></label>
             </div>
-            <div class="ai-prompts">
-              <h4 class="fd-title fd-title--h5" data-i18n="ai.prompts">Anweisungen für „KI fragen“</h4>
-              <p class="set-hint" data-i18n="ai.prompts.hint">Im Posteingang wählst du eine davon aus, die Standard-Anweisung ist vorausgewählt. Dateiname, Ordnerliste, Dokumenttext und Antwortformat hängt Ordnung! selbst an.</p>
+            <div class="set-row" data-needs="ai-enabled">
+              <label class="fd-form-label" for="ai-limit" data-i18n="ai.limit">Monatslimit (USD)</label>
+              <div class="set-field"><input class="fd-input set-num" id="ai-limit" type="number" min="0" step="1"></div>
+              <p id="ai-usage" class="set-hint"></p>
+            </div>
+            <div class="set-row" data-needs="ai-enabled">
+              <span class="fd-form-label" data-i18n="ai.exclude">Nie an die KI senden</span>
+              <div id="ai-exclude" class="set-field area-checks"></div>
+            </div>
+            <div class="set-row set-row--check" data-needs="ai-enabled">
+              <label class="fd-form-label" for="ai-inbox-auto" data-i18n="ai.inboxauto.label">Posteingang automatisch fragen</label>
+              <div class="set-field"><input type="checkbox" id="ai-inbox-auto"></div>
+              <p class="set-hint" data-i18n="ai.inboxauto.hint">Fragt die KI von selbst, wenn weder eine Regel noch ein Eingangsordner weiterhilft.</p>
+            </div>
+            <div class="set-sub ai-prompts">
+              <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="ai.prompts">Anweisungen für „KI fragen“</h4>
+              <p class="set-intro" data-i18n="ai.prompts.hint">Im Posteingang wählst du eine davon aus, die Standard-Anweisung ist vorausgewählt. Dateiname, Ordnerliste, Dokumenttext und Antwortformat hängt Ordnung! selbst an.</p>
               <div id="ai-prompts"></div>
               <button id="ai-prompt-add" class="fd-button" type="button" data-i18n="ai.prompts.add">Neue Anweisung</button>
             </div>
-            <div class="form-actions">
-              <span id="ai-msg" class="form-msg"></span>
+            <div class="set-actions">
               <button id="ai-test" class="fd-button" type="button" data-i18n="ai.test">Verbindung testen</button>
-              <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
+              <span id="ai-msg" class="form-msg" role="status"></span>
             </div>
           </form>
         </section>
 
-        <section class="set-pane" data-pane="mail" hidden>
-          <h3 class="fd-title fd-title--h4" data-i18n="set.mail">E-Mail-Eingang</h3>
-          <p class="set-hint" data-i18n="ml.intro">PDFs per Mail an eine eigene Adresse schicken oder weiterleiten, etwa vom iPhone. Ordnung! holt die Mails jede Minute ab und legt die PDF-Anhänge in den Posteingang. Angenommen werden nur Mails von Adressen, die bei einem Benutzer hinterlegt sind; der Benutzer bestimmt den Bereich. Alles andere bleibt im Postfach, verschoben nach „Abgelehnt“ und nach der eingestellten Frist gelöscht.</p>
-          <form id="ml-form" autocomplete="off" data-bwignore="true">
-            <div class="card">
-              <label class="check"><input type="checkbox" id="ml-enabled"> <span data-i18n="ml.enabled">Mails abholen</span></label>
-              <div class="form-grid">
-                <label class="fd-form-label" for="ml-host" data-i18n="ml.host">IMAP-Server</label>
-                <div class="inline">
-                  <input class="fd-input" id="ml-host" placeholder="mail.infomaniak.com" autocomplete="off" spellcheck="false">
-                  <input class="fd-input ml-port" id="ml-port" type="number" min="1" max="65535" step="1" title="Port">
-                </div>
-                <label class="fd-form-label" for="ml-user" data-i18n="ml.user">Benutzer</label>
-                <input class="fd-input" id="ml-user" placeholder="eingang@example.org" autocomplete="off" autocapitalize="off" spellcheck="false" data-bwignore="true" data-1p-ignore="true" data-lpignore="true" data-form-type="other">
-                <label class="fd-form-label" for="ml-pass" data-i18n="ml.pass">Passwort</label>
-                <div class="inline">
-                  <input class="fd-input masked" id="ml-pass" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-bwignore="true" data-1p-ignore="true" data-lpignore="true" data-form-type="other">
-                  <button id="ml-clear-pass" class="fd-button fd-button--transparent" type="button" data-i18n="ai.clearkey">Entfernen</button>
-                </div>
-                <label class="fd-form-label" for="ml-folder" data-i18n="ml.folder">Ordner im Postfach</label>
-                <input class="fd-input" id="ml-folder" placeholder="INBOX" autocomplete="off" spellcheck="false">
-                <span></span>
-                <label class="check"><input type="checkbox" id="ml-auth"> <span data-i18n="ml.auth">Gefälschte Absender ablehnen (SPF/DKIM/DMARC des Mailservers)</span></label>
-                <label class="fd-form-label" for="ml-days" data-i18n="ml.days">Abgelehnte Mails löschen nach</label>
-                <div class="inline"><input class="fd-input st-trash-days" id="ml-days" type="number" min="0" max="3650" step="1"> <span data-i18n="ml.days.unit">Tagen (0 = sofort)</span></div>
-              </div>
-            </div>
-            <div class="card">
-              <h4 class="fd-title fd-title--h5 card-title" data-i18n="ml.senders">Bekannte Absender</h4>
-              <div id="ml-senders" class="ml-senders"></div>
-              <p class="field-hint"><a href="#/einstellungen/benutzer" data-i18n="ml.senders.edit">Adressen bei den Benutzern eintragen</a></p>
-            </div>
-            <div class="form-actions">
-              <span id="ml-msg" class="form-msg"></span>
-              <button id="ml-test" class="fd-button" type="button" data-i18n="ml.test">Verbindung testen</button>
-              <button id="ml-fetch" class="fd-button" type="button" data-i18n="ml.fetch">Jetzt abholen</button>
-              <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
-            </div>
-          </form>
+        <!-- ---------------------------------------------------------------- Verbindungen -->
+        <section class="set-pane" data-pane="connections" hidden>
+          <h3 class="fd-title fd-title--h4" data-i18n="set.connections">Verbindungen</h3>
+          <p class="set-intro" data-i18n="api.intro">Alles, was die Oberfläche kann, geht auch per REST-API unter /api/, für Skripte, Kurzbefehle oder Home Assistant.</p>
           <div class="card">
-            <h4 class="fd-title fd-title--h5 card-title" data-i18n="ml.log">Zuletzt eingegangen</h4>
-            <div id="ml-log" class="ml-log"></div>
-          </div>
-        </section>
-
-        <section class="set-pane" data-pane="security" hidden>
-          <h3 class="fd-title fd-title--h4" data-i18n="set.security">Sicherheit</h3>
-          <p id="sec-where" class="set-hint"></p>
-          <form id="sec-form" autocomplete="off" data-bwignore="true">
-            <div class="card">
-              <h4 class="fd-title fd-title--h5 card-title" data-i18n="sec.policy">Anmeldung</h4>
-              <label class="check"><input type="checkbox" id="sec-ext"> <span data-i18n="sec.ext">Von außen nur mit zweitem Faktor</span></label>
-              <p class="field-hint sec-hint" data-i18n="sec.ext.hint">Konten ohne zweiten Faktor können sich dann nur noch im Heimnetz anmelden. Einschalten lässt sich das erst, wenn dein eigenes Konto einen hat.</p>
-              <p id="sec-without" class="field-hint sec-hint is-warn" hidden></p>
-              <label class="check"><input type="checkbox" id="sec-int"> <span data-i18n="sec.int">Zweiten Faktor auch im Heimnetz verlangen</span></label>
-              <p class="field-hint sec-hint" data-i18n="sec.int.hint">Sonst reicht zu Hause das Passwort. Von außen fragt Ordnung! immer nach dem Code, wenn ein Konto einen zweiten Faktor hat.</p>
-            </div>
-            <div class="card">
-              <h4 class="fd-title fd-title--h5 card-title" data-i18n="sec.nets">Heimnetz</h4>
-              <p class="field-hint sec-hint" data-i18n="sec.nets.hint">Adressbereiche, die als „zu Hause“ gelten (LAN, VPN). Alles andere ist „von außen“. Leer lassen für die Vorgabe.</p>
-              <textarea class="fd-input sec-nets" id="sec-nets" rows="3" spellcheck="false" autocapitalize="off"></textarea>
-              <p id="sec-nets-here" class="field-hint sec-hint"></p>
-            </div>
-            <div class="card">
-              <h4 class="fd-title fd-title--h5 card-title" data-i18n="sec.ntfy">Benachrichtigungen per ntfy</h4>
-              <div class="form-grid">
-                <label class="fd-form-label" for="sec-url" data-i18n="sec.url">Topic-Adresse</label>
-                <input class="fd-input" id="sec-url" placeholder="https://ntfy.example.org/ordnung" autocomplete="off" spellcheck="false">
-                <label class="fd-form-label" for="sec-token" data-i18n="sec.token">Zugangs-Token</label>
-                <div class="inline">
-                  <input class="fd-input masked" id="sec-token" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-bwignore="true" data-1p-ignore="true" data-lpignore="true" data-form-type="other">
-                  <button id="sec-clear-token" class="fd-button fd-button--transparent" type="button" data-i18n="ai.clearkey">Entfernen</button>
-                </div>
-                <span class="fd-form-label" data-i18n="sec.when">Melden bei</span>
-                <div class="sec-checks">
-                  <label class="check"><input type="checkbox" id="sec-n-ext"> <span data-i18n="sec.n.ext">jeder Anmeldung von außen</span></label>
-                  <label class="check"><input type="checkbox" id="sec-n-lock"> <span data-i18n="sec.n.lock">gesperrtem Konto nach Fehlversuchen</span></label>
-                  <label class="check"><input type="checkbox" id="sec-n-2fa"> <span data-i18n="sec.n.2fa">Änderungen am zweiten Faktor und benutzten Wiederherstellungscodes</span></label>
-                </div>
-              </div>
-            </div>
-            <div class="form-actions">
-              <span id="sec-msg" class="form-msg"></span>
-              <button id="sec-test" class="fd-button" type="button" data-i18n="sec.test">Testnachricht</button>
-              <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
-            </div>
-          </form>
-        </section>
-
-        <section class="set-pane" data-pane="api" hidden>
-          <h3 class="fd-title fd-title--h4" data-i18n="set.api">API</h3>
-          <p class="set-hint" data-i18n="api.intro">Alles, was die Oberfläche kann, geht auch per REST-API unter /api/, für Skripte, Kurzbefehle oder Home Assistant.</p>
-          <div class="card">
-            <h4 class="fd-title fd-title--h5 card-title" data-i18n="api.keys">API-Schlüssel</h4>
-            <p class="field-hint" data-i18n="api.keys.hint">Jedes Programm bekommt seinen eigenen Schlüssel, dann lässt sich einer allein widerrufen. „Lesen und schreiben“ öffnet alles wie ein Administrator, „Nur lesen“ zeigt alle Bereiche, ändert aber nichts.</p>
+            <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="api.keys">API-Schlüssel</h4>
+            <p class="set-intro" data-i18n="api.keys.hint">Jedes Programm bekommt seinen eigenen Schlüssel, dann lässt sich einer allein widerrufen. „Lesen und schreiben“ öffnet alles wie ein Administrator, „Nur lesen“ zeigt alle Bereiche, ändert aber nichts.</p>
             <table class="fd-table api-keys">
               <thead class="fd-table__header"><tr class="fd-table__row">
                 <th class="fd-table__cell" data-i18n="api.col.name">Name</th>
@@ -846,62 +865,165 @@
               <pre class="api-example"><code id="api-example"></code></pre>
             </div>
             <p id="api-msg" class="form-msg"></p>
-          </div>
-          <div class="card">
-            <h4 class="fd-title fd-title--h5 card-title" data-i18n="api.ref">Beschreibung aller Endpunkte</h4>
-            <p class="field-hint" data-i18n="api.ref.hint">Ordnung! beschreibt seine API selbst: jeder Endpunkt mit Parametern und Antwort, direkt im Browser ausprobierbar (mit deiner Anmeldung).</p>
-            <p><a class="fd-link" href="/api/docs" target="_blank" rel="noopener" data-i18n="api.open">API-Beschreibung öffnen</a> · <a class="fd-link" href="/api/openapi.json" target="_blank" rel="noopener">openapi.json</a> · <a class="fd-link" id="api-guide" href="https://worldgate.de/ordnung/api/" target="_blank" rel="noopener" data-i18n="api.guide">Anleitung mit Beispielen</a></p>
+
+            <div class="set-sub mcp-card">
+              <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="mcp.title">Zugang für KI-Assistenten (MCP)</h4>
+              <p class="set-intro" data-i18n="mcp.hint"></p>
+              <div class="set-row set-row--check">
+                <label class="fd-form-label" for="mcp-on" data-i18n="mcp.on">MCP-Zugang einschalten</label>
+                <div class="set-field"><input type="checkbox" id="mcp-on"> <span id="mcp-msg" class="form-msg" role="status"></span></div>
+              </div>
+              <div class="set-row">
+                <span class="fd-form-label" data-i18n="mcp.url">Adresse</span>
+                <div class="set-field"><code id="mcp-url" class="mcp-url"></code></div>
+                <p class="set-hint" data-i18n="mcp.keys"></p>
+              </div>
+            </div>
+
+            <div class="set-sub">
+              <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="api.ref">Beschreibung aller Endpunkte</h4>
+              <p class="set-intro" data-i18n="api.ref.hint">Ordnung! beschreibt seine API selbst: jeder Endpunkt mit Parametern und Antwort, direkt im Browser ausprobierbar (mit deiner Anmeldung).</p>
+              <p><a class="fd-link" href="/api/docs" target="_blank" rel="noopener" data-i18n="api.open">API-Beschreibung öffnen</a> · <a class="fd-link" href="/api/openapi.json" target="_blank" rel="noopener">openapi.json</a> · <a class="fd-link" id="api-guide" href="https://worldgate.de/ordnung/api/" target="_blank" rel="noopener" data-i18n="api.guide">Anleitung mit Beispielen</a></p>
+            </div>
           </div>
         </section>
 
+        <!-- ---------------------------------------------------------------- Sicherheit -->
+        <section class="set-pane" data-pane="security" hidden>
+          <h3 class="fd-title fd-title--h4" data-i18n="set.security">Sicherheit</h3>
+          <p id="sec-where" class="set-intro"></p>
+          <form id="sec-form" class="card" autocomplete="off" data-bwignore="true" data-autosave>
+            <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="sec.policy">Anmeldung</h4>
+            <div class="set-row set-row--check">
+              <label class="fd-form-label" for="sec-ext" data-i18n="sec.ext">Von außen nur mit zweitem Faktor</label>
+              <div class="set-field"><input type="checkbox" id="sec-ext"></div>
+              <p class="set-hint"><span data-i18n="sec.ext.hint">Konten ohne zweiten Faktor können sich dann nur noch im Heimnetz anmelden. Einschalten lässt sich das erst, wenn dein eigenes Konto einen hat.</span>
+                <span id="sec-without" class="is-warn" hidden></span></p>
+            </div>
+            <div class="set-row set-row--check">
+              <label class="fd-form-label" for="sec-int" data-i18n="sec.int">Zweiten Faktor auch im Heimnetz verlangen</label>
+              <div class="set-field"><input type="checkbox" id="sec-int"></div>
+              <p class="set-hint" data-i18n="sec.int.hint">Sonst reicht zu Hause das Passwort. Von außen fragt Ordnung! immer nach dem Code, wenn ein Konto einen zweiten Faktor hat.</p>
+            </div>
+
+            <div class="set-sub">
+              <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="sec.nets">Heimnetz</h4>
+              <div class="set-row">
+                <label class="fd-form-label" for="sec-nets" data-i18n="sec.nets.label">Adressbereiche</label>
+                <div class="set-field"><textarea class="fd-input sec-nets set-wide" id="sec-nets" rows="3" spellcheck="false" autocapitalize="off"></textarea></div>
+                <p class="set-hint"><span data-i18n="sec.nets.hint">Adressbereiche, die als „zu Hause“ gelten (LAN, VPN). Alles andere ist „von außen“. Leer lassen für die Vorgabe.</span>
+                  <span id="sec-nets-here"></span></p>
+              </div>
+            </div>
+
+            <div class="set-sub">
+              <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="sec.ntfy">Benachrichtigungen per ntfy</h4>
+              <div class="set-row">
+                <label class="fd-form-label" for="sec-url" data-i18n="sec.url">Topic-Adresse</label>
+                <div class="set-field"><input class="fd-input set-wide" id="sec-url" placeholder="https://ntfy.example.org/ordnung" autocomplete="off" spellcheck="false"></div>
+              </div>
+              <div class="set-row">
+                <label class="fd-form-label" for="sec-token" data-i18n="sec.token">Zugangs-Token</label>
+                <div class="set-field inline">
+                  <input class="fd-input masked set-wide" id="sec-token" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" data-bwignore="true" data-1p-ignore="true" data-lpignore="true" data-form-type="other">
+                  <button id="sec-clear-token" class="fd-button fd-button--transparent" type="button" data-i18n="ai.clearkey">Entfernen</button>
+                </div>
+              </div>
+              <div class="set-row">
+                <span class="fd-form-label" data-i18n="sec.when">Melden bei</span>
+                <div class="set-field sec-checks">
+                  <label class="check"><input type="checkbox" id="sec-n-ext"> <span data-i18n="sec.n.ext">jeder Anmeldung von außen</span></label>
+                  <label class="check"><input type="checkbox" id="sec-n-lock"> <span data-i18n="sec.n.lock">gesperrtem Konto nach Fehlversuchen</span></label>
+                  <label class="check"><input type="checkbox" id="sec-n-2fa"> <span data-i18n="sec.n.2fa">Änderungen am zweiten Faktor und benutzten Wiederherstellungscodes</span></label>
+                </div>
+              </div>
+            </div>
+            <div class="set-actions">
+              <button id="sec-test" class="fd-button" type="button" data-i18n="sec.test">Testnachricht</button>
+              <span id="sec-msg" class="form-msg" role="status"></span>
+            </div>
+          </form>
+        </section>
+
+        <!-- ---------------------------------------------------------------- System -->
         <section class="set-pane" data-pane="system" hidden>
           <h3 class="fd-title fd-title--h4" data-i18n="set.system">System</h3>
           <div class="card">
             <dl id="sys-info" class="sys-info"></dl>
             <button id="sys-rescan" class="fd-button" type="button" data-i18n="sys.rescan">Ordner jetzt neu einlesen</button>
-          </div>
-          <form id="sys-form" class="card admin-only" autocomplete="off">
-            <h4 class="fd-title fd-title--h5 card-title" data-i18n="sys.work">Hintergrundarbeit</h4>
-            <label class="check"><input type="checkbox" id="sys-ocr"> <span data-i18n="sys.f.ocr">Texterkennung für Scans</span></label>
-            <p class="field-hint sec-hint" data-i18n="sys.f.ocr.hint">Liest Text aus gescannten Seiten, damit die Suche sie findet. Aus: nur Dokumente mit eingebettetem Text werden durchsuchbar.</p>
-            <div class="form-grid">
-              <label class="fd-form-label" for="sys-lang" data-i18n="sys.f.lang">Sprachen</label>
-              <div>
-                <input class="fd-input" id="sys-lang" spellcheck="false" autocapitalize="off" placeholder="deu+eng">
-                <p id="sys-lang-hint" class="field-hint"></p>
+
+            <form id="sys-form" class="set-sub admin-only" autocomplete="off" data-autosave>
+              <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="sys.work">Hintergrundarbeit</h4>
+              <div class="set-row set-row--check">
+                <label class="fd-form-label" for="sys-ocr" data-i18n="sys.f.ocr">Texterkennung für Scans</label>
+                <div class="set-field"><input type="checkbox" id="sys-ocr"></div>
+                <p class="set-hint" data-i18n="sys.f.ocr.hint">Liest Text aus gescannten Seiten, damit die Suche sie findet. Aus: nur Dokumente mit eingebettetem Text werden durchsuchbar.</p>
               </div>
-              <label class="fd-form-label" for="sys-pages" data-i18n="sys.f.pages">Höchstens Seiten je Dokument</label>
-              <input class="fd-input sys-num" id="sys-pages" type="number" min="1" max="1000">
-              <label class="fd-form-label" for="sys-rescan-min" data-i18n="sys.f.rescan">Neu einlesen alle (Min.)</label>
-              <input class="fd-input sys-num" id="sys-rescan-min" type="number" min="1" max="1440">
-              <label class="fd-form-label" for="sys-workers" data-i18n="sys.f.workers">Dokumente gleichzeitig lesen</label>
-              <div>
-                <input class="fd-input sys-num" id="sys-workers" type="number" min="1" max="16">
-                <p id="sys-workers-hint" class="field-hint"></p>
+              <div class="set-row" data-needs="sys-ocr">
+                <label class="fd-form-label" for="sys-lang" data-i18n="sys.f.lang">Sprachen</label>
+                <div class="set-field"><input class="fd-input set-select" id="sys-lang" spellcheck="false" autocapitalize="off" placeholder="deu+eng"></div>
+                <p id="sys-lang-hint" class="set-hint"></p>
               </div>
-            </div>
-            <p class="field-hint" data-i18n="sys.f.hint">Änderungen gelten sofort, ohne Neustart. Schon gelesene Dokumente werden nicht noch einmal gelesen.</p>
-            <div class="form-actions">
-              <span id="sys-msg" class="form-msg"></span>
-              <button id="sys-defaults" class="fd-button fd-button--transparent" type="button" data-i18n="sys.f.defaults">Standardwerte</button>
-              <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
-            </div>
-          </form>
-          <div id="upd-card" class="card admin-only">
-            <h4 class="fd-title fd-title--h5 card-title" data-i18n="upd.card">Neue Versionen</h4>
-            <label class="check"><input type="checkbox" id="upd-on"> <span data-i18n="upd.f.on">Einmal am Tag nach neuen Versionen sehen</span></label>
-            <p class="field-hint sec-hint" data-i18n="upd.f.hint"></p>
-            <p id="upd-state" class="set-hint"></p>
-            <div class="form-actions">
-              <span id="upd-msg" class="form-msg"></span>
-              <button id="upd-check" class="fd-button" type="button" data-i18n="upd.check">Jetzt prüfen</button>
+              <div class="set-row" data-needs="sys-ocr">
+                <label class="fd-form-label" for="sys-pages" data-i18n="sys.f.pages">Höchstens Seiten je Dokument</label>
+                <div class="set-field"><input class="fd-input set-num" id="sys-pages" type="number" min="1" max="1000"></div>
+              </div>
+              <div class="set-row">
+                <label class="fd-form-label" for="sys-rescan-min" data-i18n="sys.f.rescan">Neu einlesen alle (Min.)</label>
+                <div class="set-field"><input class="fd-input set-num" id="sys-rescan-min" type="number" min="1" max="1440"></div>
+              </div>
+              <div class="set-row">
+                <label class="fd-form-label" for="sys-workers" data-i18n="sys.f.workers">Dokumente gleichzeitig lesen</label>
+                <div class="set-field"><input class="fd-input set-num" id="sys-workers" type="number" min="1" max="16"></div>
+                <p id="sys-workers-hint" class="set-hint"></p>
+              </div>
+              <p class="set-intro" data-i18n="sys.f.hint">Änderungen gelten sofort, ohne Neustart. Schon gelesene Dokumente werden nicht noch einmal gelesen.</p>
+              <div class="set-actions">
+                <button id="sys-defaults" class="fd-button" type="button" data-i18n="sys.f.defaults">Standardwerte</button>
+                <span id="sys-msg" class="form-msg" role="status"></span>
+              </div>
+            </form>
+
+            <div id="sys-errors" class="set-sub sys-errors" hidden>
+              <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="sys.err.title">Dokumente ohne lesbaren Text</h4>
+              <p class="set-intro" data-i18n="sys.err.hint"></p>
+              <ul id="sys-err-list" class="sys-err-list"></ul>
+              <button id="sys-err-retry" class="fd-button" type="button" data-i18n="sys.err.retry">Erneut lesen</button>
             </div>
           </div>
-          <div id="sys-errors" class="card sys-errors" hidden>
-            <h4 class="fd-title fd-title--h5 card-title" data-i18n="sys.err.title">Dokumente ohne lesbaren Text</h4>
-            <p class="set-hint" data-i18n="sys.err.hint"></p>
-            <ul id="sys-err-list" class="sys-err-list"></ul>
-            <button id="sys-err-retry" class="fd-button" type="button" data-i18n="sys.err.retry">Erneut lesen</button>
+        </section>
+
+        <!-- ---------------------------------------------------------------- Über -->
+        <section class="set-pane" data-pane="about" hidden>
+          <h3 class="fd-title fd-title--h4" data-i18n="set.about">Über</h3>
+          <div class="card">
+            <div class="set-row">
+              <span class="fd-form-label" data-i18n="sys.version">Version</span>
+              <div class="set-field"><b id="about-version"></b></div>
+            </div>
+            <div class="set-row">
+              <span class="fd-form-label" data-i18n="about.license">Lizenz</span>
+              <div class="set-field"><a class="fd-link" href="https://github.com/orohde/Ordnung/blob/main/LICENSE" target="_blank" rel="noopener">GNU AGPL 3.0</a></div>
+              <p class="set-hint" data-i18n="about.license.hint">Freie Software: Du darfst Ordnung! nutzen, ändern und weitergeben. Wer eine geänderte Fassung für andere betreibt, muss deren Quelltext offenlegen.</p>
+            </div>
+            <div class="set-row">
+              <span class="fd-form-label" data-i18n="about.links">Mehr dazu</span>
+              <div class="set-field"><a class="fd-link" id="about-manual" href="https://worldgate.de/ordnung/handbuch/" target="_blank" rel="noopener" data-i18n="about.manual">Anleitung</a> · <a class="fd-link" href="https://github.com/orohde/Ordnung" target="_blank" rel="noopener" data-i18n="about.source">Quelltext</a></div>
+            </div>
+
+            <div id="upd-card" class="set-sub admin-only">
+              <h4 class="fd-title fd-title--h5 set-subtitle" data-i18n="upd.card">Neue Versionen</h4>
+              <div class="set-row set-row--check">
+                <label class="fd-form-label" for="upd-on" data-i18n="upd.f.on">Einmal am Tag nach neuen Versionen sehen</label>
+                <div class="set-field"><input type="checkbox" id="upd-on"></div>
+                <p class="set-hint" data-i18n="upd.f.hint"></p>
+              </div>
+              <p id="upd-state" class="set-intro"></p>
+              <div class="set-actions">
+                <button id="upd-check" class="fd-button" type="button" data-i18n="upd.check">Jetzt prüfen</button>
+                <span id="upd-msg" class="form-msg" role="status"></span>
+              </div>
+            </div>
           </div>
         </section>
 

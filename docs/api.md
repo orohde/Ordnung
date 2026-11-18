@@ -4,11 +4,11 @@
 
 Alles, was die Oberfläche kann, geht auch per REST-API unter `/api/`. Die Oberfläche selbst nutzt nichts anderes. Anfragen und Antworten sind JSON.
 
-**Vollständige Beschreibung:** Ordnung! liefert unter **`/api/docs`** eine ausprobierbare Übersicht aller Endpunkte mit Parametern und Antworten, maschinenlesbar unter `/api/openapi.json`. Wer im Browser angemeldet ist, kann dort direkt Anfragen abschicken. Die Seite ist auch unter *Einstellungen → API* verlinkt.
+**Vollständige Beschreibung:** Ordnung! liefert unter **`/api/docs`** eine ausprobierbare Übersicht aller Endpunkte mit Parametern und Antworten, maschinenlesbar unter `/api/openapi.json`. Wer im Browser angemeldet ist, kann dort direkt Anfragen abschicken. Die Seite ist auch unter *Einstellungen → Verbindungen* verlinkt.
 
 ## Anmelden mit API-Schlüssel
 
-Unter **Einstellungen → API** (nur für Administratoren) legst du benannte Schlüssel an – am besten einen je Programm – und kopierst ihn. Programme schicken ihn bei jeder Anfrage als Bearer-Token mit:
+Unter **Einstellungen → Verbindungen** (nur für Administratoren) legst du benannte Schlüssel an – am besten einen je Programm – und kopierst ihn. Programme schicken ihn bei jeder Anfrage als Bearer-Token mit:
 
 ```bash
 curl -H "Authorization: Bearer DEIN_SCHLÜSSEL" https://ordnung.example.org/api/documents?q=versicherung
@@ -21,7 +21,7 @@ curl -H "Authorization: Bearer DEIN_SCHLÜSSEL" https://ordnung.example.org/api/
 
 ## Für KI-Assistenten (MCP)
 
-Der MCP-Zugang ist bei einer frischen Installation aus; ein Administrator schaltet ihn unter *Einstellungen → KI* ein. Der Endpunkt `/api/mcp` spricht das Model Context Protocol (Streamable HTTP) und nimmt denselben Schlüssel als `Authorization: Bearer <Schlüssel>`.
+Der MCP-Zugang ist bei einer frischen Installation aus; ein Administrator schaltet ihn unter *Einstellungen → Verbindungen* ein. Der Endpunkt `/api/mcp` spricht das Model Context Protocol (Streamable HTTP) und nimmt denselben Schlüssel als `Authorization: Bearer <Schlüssel>`.
 
 Werkzeuge: Bereiche, Ordner, Tags, Mappen und Papierkorb auflisten, suchen (mit Bereich, Ordner, Tags, Zeitraum), Dokument mit erkanntem Text lesen, Tags setzen oder ändern, Titel und Datum ändern, verschieben, Mappe anlegen, in den Papierkorb legen und zurückholen. Mit einem Administrator-Schlüssel zusätzlich: Posteingang ansehen, einsortieren oder beiseitelegen, Absender auflisten. Ein Schlüssel mit Leserecht bekommt keine schreibenden Werkzeuge angeboten. Endgültig gelöscht wird über MCP nichts, und Einstellungen (Benutzer, Sicherheit, Ablage, Regeln) bleiben der Oberfläche vorbehalten.
 

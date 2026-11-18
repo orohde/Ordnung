@@ -4,11 +4,11 @@
 
 Everything the interface does is also available through the REST API under `/api/`. The interface itself uses nothing else. Requests and responses are JSON.
 
-**Full reference:** Ordnung! serves an interactive overview of every endpoint with parameters and responses at **`/api/docs`**, machine-readable at `/api/openapi.json`. When you are signed in in the browser, you can send requests right there. The page is also linked under *Settings → API*.
+**Full reference:** Ordnung! serves an interactive overview of every endpoint with parameters and responses at **`/api/docs`**, machine-readable at `/api/openapi.json`. When you are signed in in the browser, you can send requests right there. The page is also linked under *Settings → Connections*.
 
 ## Signing in with an API key
 
-Under **Settings → API** (administrators only) you create named keys – best one per program – and copy it. Programs send it with every request as a bearer token:
+Under **Settings → Connections** (administrators only) you create named keys – best one per program – and copy it. Programs send it with every request as a bearer token:
 
 ```bash
 curl -H "Authorization: Bearer YOUR_KEY" https://ordnung.example.org/api/documents?q=insurance
@@ -21,7 +21,7 @@ curl -H "Authorization: Bearer YOUR_KEY" https://ordnung.example.org/api/documen
 
 ## For AI assistants (MCP)
 
-MCP access is off in a fresh installation; an administrator switches it on under *Settings → AI*. The endpoint `/api/mcp` speaks the Model Context Protocol (streamable HTTP) and takes the same key as `Authorization: Bearer <key>`.
+MCP access is off in a fresh installation; an administrator switches it on under *Settings → Connections*. The endpoint `/api/mcp` speaks the Model Context Protocol (streamable HTTP) and takes the same key as `Authorization: Bearer <key>`.
 
 Tools: list areas, folders, tags, Mappen and the trash, search (by area, folder, tags, date range), read a document with its recognised text, set or change tags, change title and date, move, create a Mappe, put into the trash and restore. With an administrator key also: view the inbox, file or set aside items, list senders. A read-only key is offered no writing tool. Nothing is deleted for good through MCP, and settings (users, security, storage, rules) are left to the interface.
 

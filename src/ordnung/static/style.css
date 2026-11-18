@@ -920,9 +920,97 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .api-actions { white-space: nowrap; text-align: right; }
 .api-new { margin: 0.5rem 0; flex-wrap: wrap; gap: 0.5rem; }
 .api-new #api-name { flex: 1; min-width: 14rem; }
+.api-new #api-right { flex: none; width: auto; }
 .api-fresh { margin-top: 0.75rem; padding: 0.75rem; border-radius: 0.375rem; background: rgba(24, 137, 24, 0.1); border: 1px solid rgba(24, 137, 24, 0.4); }
 .mcp-card { margin-bottom: 1rem; }
 .mcp-card h4 { margin: 0 0 0.5rem; }
 .mcp-grid { margin-top: 0.9rem; align-items: center; }
 .mcp-url { font: 0.85rem ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; user-select: all; }
 .mcp-keys { margin: 0.9rem 0 0; }
+
+/* ------------------------------------------------- settings, laid out like CutStock (all four apps alike):
+   groups on a card to the left, one card per group to the right, rows of label | field with the
+   explanation below over the full width, a thin line between rows, changes saved at once */
+.settings { background: var(--sapBackgroundColor, #f5f6f7); gap: 1.25rem; padding: 1.25rem 1.5rem 0; }
+.settings-nav {
+  align-self: flex-start;
+  max-height: calc(100% - 1.25rem);
+  width: 15rem;
+  padding: 0.5rem;
+  gap: 2px;
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--sapTile_Background, #fff);
+  box-shadow: var(--sapContent_Shadow0, 0 0 0.125rem 0 rgba(34,54,73,0.16), 0 0.125rem 0.25rem 0 rgba(34,54,73,0.16));
+}
+.settings-nav h2 { margin: 0.5rem 0.75rem 0.5rem; }
+.settings-back { margin: 0.25rem 0.25rem 0; }
+.set-link { border-radius: 0.375rem; padding: 0.55rem 0.75rem; }
+.set-link.is-active {
+  color: var(--sapTextColor, #1d2d3e);
+  box-shadow: inset 3px 0 0 var(--sapList_SelectionBorderColor, #0064d9);
+}
+.settings-body { padding: 0 0 3rem; }
+.set-pane { max-width: 52rem; }
+.set-pane > h3 { margin: 0.25rem 0 0.75rem; }
+.set-pane > .card, .set-pane > form.card, .set-pane > table.card {
+  border: 0;
+  border-radius: 0.75rem;
+  background: var(--sapTile_Background, #fff);
+  box-shadow: var(--sapContent_Shadow0, 0 0 0.125rem 0 rgba(34,54,73,0.16), 0 0.125rem 0.25rem 0 rgba(34,54,73,0.16));
+  padding: 0.75rem 1.25rem 1.25rem;
+}
+.set-pane > .card + .card, .set-pane > form.card + .card { margin-top: 1.25rem; }
+.set-intro { margin: 0 0 1rem; color: var(--sapContent_LabelColor, #556b82); font-size: 0.875rem; line-height: 1.45; }
+.set-subtitle { margin: 0.5rem 0 0.25rem; }
+.set-sub { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--sapList_BorderColor, #e5e5e5); }
+.set-sub > .pane-head { margin-bottom: 0.5rem; }
+.set-sub > .pane-head .set-subtitle { margin: 0; }
+
+.set-row {
+  display: grid;
+  grid-template-columns: minmax(12rem, 18rem) minmax(0, 1fr);
+  column-gap: 1rem;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--sapList_BorderColor, #e5e5e5);
+}
+.set-subtitle + .set-row, .set-intro + .set-row, form > .set-row:first-child, .card > .set-row:first-child,
+.set-subtitle + form > .set-row:first-child { border-top: 0; }
+.set-row > .fd-form-label { margin: 0; color: var(--sapContent_LabelColor, #556b82); font-size: 0.9375rem;
+  white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.35; }
+.set-row .set-hint, .set-row > .set-full {
+  grid-column: 1 / -1;
+  margin: 0.35rem 0 0;
+  color: var(--sapContent_LabelColor, #556b82);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+.set-row .set-hint:empty { display: none; }
+.set-row .set-hint .is-warn { display: block; margin-top: 0.3rem; color: var(--sapCriticalTextColor, #b44f00); }
+.set-row.is-disabled > .fd-form-label, .set-row.is-disabled .set-field { opacity: 0.45; }
+.set-row[hidden] { display: none; }
+.set-field { min-width: 0; }
+.set-field.inline { flex-wrap: wrap; }
+.set-field .set-select { max-width: 20rem; width: 100%; }
+.set-field .set-wide { max-width: 32rem; width: 100%; }
+.set-field .inline .set-wide { flex: 1; }
+.set-field .set-num { width: 7rem; }
+.set-field input[type=checkbox] { width: 1.1rem; height: 1.1rem; margin: 0; accent-color: var(--sapButton_Emphasized_Background, #0070f2); }
+.set-row--check .set-field { display: flex; align-items: center; gap: 0.75rem; }
+.set-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; padding-top: 0.75rem;
+  border-top: 1px solid var(--sapList_BorderColor, #e5e5e5); }
+.set-actions .form-msg, .set-status .form-msg { margin-left: 0.25rem; }
+.set-status { padding-top: 0.5rem; min-height: 1.25rem; }
+.set-pane .sys-info { margin-top: 0.5rem; }
+.set-pane .mcp-card, .set-pane .switch-card { margin-bottom: 0; }
+.set-pane .picker { margin-top: 0.5rem; }
+
+@media (max-width: 900px) {
+  .settings { padding: 0.75rem 0.75rem 0; gap: 0.75rem; }
+  .settings-nav { width: auto; align-self: stretch; max-height: none; }
+  .settings-body { padding: 0 0 2rem; }
+  .set-row { grid-template-columns: 1fr; row-gap: 0.4rem; }
+  .set-row--check { grid-template-columns: 1fr auto; }
+  .set-row--check .set-hint { grid-column: 1 / -1; }
+}

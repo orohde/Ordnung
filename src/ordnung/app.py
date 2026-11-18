@@ -19,6 +19,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from . import __version__
 from .ai import AIError, AIService
@@ -445,7 +446,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         title="Ordnung!",
         version=__version__,
         description=("Folder-based document archive. Sign in with the browser, or send the API key from "
-                     "*Settings → API* as `Authorization: Bearer <key>`. Guide: docs/api.md in the repository."),
+                     "*Settings → Connections* as `Authorization: Bearer <key>`. Guide: docs/api.md in the repository."),
         lifespan=lifespan,
         docs_url="/api/docs",
         redoc_url=None,
@@ -463,13 +464,13 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     app.state.networks = Networks(app.state.security.load().internal_networks or settings.internal_networks)
     app.state.apikeys = ApiKeyStore(settings.data / "apikeys.json")
     if app.state.security.import_api_token(settings.api_token):
-        log.info("API key taken over from ORDNUNG_API_TOKEN; manage it under Settings → API from now on")
+        log.info("API key taken over from ORDNUNG_API_TOKEN; manage it under Settings → Connections from now on")
     # the single key from before becomes a named one with the write right (same secret, so
     # scripts keep working); the settings file forgets the plain text once the hash is stored
     old = app.state.security.load().api_token
     if old and app.state.apikeys.take_over(old, "API"):
         app.state.security.set_api_token("")
-        log.info("API key from before is now the named key \"API\" (Settings → API)")
+        log.info("API key from before is now the named key \"API\" (Settings → Connections)")
     app.state.guard = LoginGuard()
     app.state.system = SystemStore(settings.data / "system.json", SystemConfig(
         ocr=settings.ocr, ocr_lang=settings.ocr_lang, ocr_max_pages=settings.ocr_max_pages,
@@ -1926,5 +1927,10 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
             response.headers["Cache-Control"] = "no-cache"
         return response
 
+    # Outermost layer: the client address and scheme come from X-Forwarded-For/-Proto only when the
+    # connection itself comes from a trusted proxy, and then from the rightmost entry that is not one
+    # of them. Trusting everybody would let anyone on the internet claim a home address.
+    app.add_middleware(ProxyHeadersMiddleware,
+                       trusted_hosts=settings.trusted_proxies or ", ".join(DEFAULT_INTERNAL))
     app.mount("/", StaticFiles(directory=STATIC, html=True), name="ui")
     return app

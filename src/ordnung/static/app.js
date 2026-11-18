@@ -31,6 +31,34 @@ const I18N = {
     'tr.link': '🗑 Papierkorb', 'tr.title': 'Papierkorb', 'tr.deleted': 'Gelöscht', 'tr.from': 'Lag in',
     'tr.intro': 'Gelöschte Dokumente. „Wiederherstellen“ legt ein Dokument an seinen alten Platz zurück.',
     'acc.lang': 'Sprache', 'acc.lang.hint': 'Gilt für dieses Konto auf allen Geräten.',
+    "st.template": "Ordnervorlage",
+    "st.template.add": "Ordner anlegen …",
+    "st.template.hint": "Legt rund 40 übliche Haushaltsordner an (Banken, Versicherungen, Gesundheit …). Vorhandene bleiben, wie sie sind. Einzelne Ordner legst du im Ordnerbaum des Archivs über ⋯ an, benennst sie um oder löschst sie.",
+    "set.general": "Allgemein",
+    "set.connections": "Verbindungen",
+    "set.about": "Über",
+    "gen.theme": "Farbschema",
+    "gen.theme.system": "Auto (wie das System)",
+    "gen.theme.light": "Hell",
+    "gen.theme.dark": "Dunkel",
+    "gen.theme.hint": "Gilt für diesen Browser. Der Knopf oben in der Leiste schaltet ebenfalls um.",
+    "acc.pw": "Passwort",
+    "acc.new.hint": "Mindestens zwölf Zeichen. Andere Geräte werden danach abgemeldet.",
+    "st.archive.q": "Archivordner auf {path} umstellen? Ordnung! liest danach diesen Ordner ein.",
+    "st.ref.q": "Lernbestand auf {path} umstellen?",
+    "ml.auth.label": "Gefälschte Absender ablehnen",
+    "ml.auth.hint": "Verlässt sich auf die Prüfung des Mailservers (SPF, DKIM, DMARC).",
+    "usr.resettotp.label": "Zweiten Faktor zurücksetzen",
+    "usr.resettotp.hint": "Wenn das Telefon verloren ist. Das Konto richtet ihn danach neu ein.",
+    "ai.mcp.moved": "Den Zugang für KI-Assistenten (MCP) findest du unter",
+    "ai.inboxauto.label": "Posteingang automatisch fragen",
+    "ai.inboxauto.hint": "Fragt die KI von selbst, wenn weder eine Regel noch ein Eingangsordner weiterhilft.",
+    "sec.nets.label": "Adressbereiche",
+    "about.license": "Lizenz",
+    "about.license.hint": "Freie Software: Du darfst Ordnung! nutzen, ändern und weitergeben. Wer eine geänderte Fassung für andere betreibt, muss deren Quelltext offenlegen.",
+    "about.links": "Mehr dazu",
+    "about.manual": "Anleitung",
+    "about.source": "Quelltext",
     'tr.empty': 'Der Papierkorb ist leer.', 'tr.view': 'Ansehen', 'tr.restore': 'Wiederherstellen',
     'tr.restored': '„{title}“ liegt wieder in {folder}.',
     'fo.menu': 'Ordner bearbeiten', 'fo.new': 'Neuer Unterordner …', 'fo.newtop': 'Neuer Ordner …', 'fo.rename': 'Umbenennen oder verschieben …',
@@ -349,7 +377,7 @@ const I18N = {
     "mcp.hint": "Über diesen Zugang kann ein KI-Assistent wie Claude in Ordnung! suchen und Dokumente lesen und – mit einem Schlüssel, der schreiben darf – Tags setzen, umbenennen, verschieben, in den Papierkorb legen und den Posteingang einsortieren. Rechte und Papierkorb gelten dabei wie in der Oberfläche; endgültig gelöscht wird nichts.",
     "mcp.on": "MCP-Zugang einschalten",
     "mcp.url": "Adresse",
-    "mcp.keys": "Der Assistent meldet sich mit einem API-Schlüssel an. Schlüssel legst du unter Einstellungen → API an, nur lesend oder lesend und schreibend.",
+    "mcp.keys": "Der Assistent meldet sich mit einem API-Schlüssel an. Schlüssel legst du oben unter „API-Schlüssel“ an, nur lesend oder lesend und schreibend.",
     "mcp.keys.link": "Zu den API-Schlüsseln",
     "mcp.saved.on": "Der MCP-Zugang ist eingeschaltet.",
     "mcp.saved.off": "Der MCP-Zugang ist ausgeschaltet.",
@@ -461,6 +489,34 @@ const I18N = {
     'tr.link': '🗑 Trash', 'tr.title': 'Trash', 'tr.deleted': 'Deleted', 'tr.from': 'Was in',
     'tr.intro': 'Deleted documents. “Restore” puts a document back where it was.',
     'acc.lang': 'Language', 'acc.lang.hint': 'For this account, on all devices.',
+    "st.template": "Folder template",
+    "st.template.add": "Create folders …",
+    "st.template.hint": "Creates about 40 common household folders (banks, insurance, health …). Existing ones stay as they are. Single folders are created, renamed or deleted in the archive’s folder tree via ⋯.",
+    "set.general": "General",
+    "set.connections": "Connections",
+    "set.about": "About",
+    "gen.theme": "Colour scheme",
+    "gen.theme.system": "Auto (like the system)",
+    "gen.theme.light": "Light",
+    "gen.theme.dark": "Dark",
+    "gen.theme.hint": "For this browser. The button in the top bar switches it too.",
+    "acc.pw": "Password",
+    "acc.new.hint": "At least twelve characters. Other devices are signed out afterwards.",
+    "st.archive.q": "Switch the archive folder to {path}? Ordnung! then reads that folder.",
+    "st.ref.q": "Switch the learning set to {path}?",
+    "ml.auth.label": "Refuse forged senders",
+    "ml.auth.hint": "Relies on the mail server’s checks (SPF, DKIM, DMARC).",
+    "usr.resettotp.label": "Reset second factor",
+    "usr.resettotp.hint": "When the phone is lost. The account sets it up again afterwards.",
+    "ai.mcp.moved": "Access for AI assistants (MCP) is under",
+    "ai.inboxauto.label": "Ask automatically in the inbox",
+    "ai.inboxauto.hint": "Asks the AI by itself when neither a rule nor an inbox folder helps.",
+    "sec.nets.label": "Address ranges",
+    "about.license": "Licence",
+    "about.license.hint": "Free software: you may use, change and pass on Ordnung!. Whoever runs a changed version for others must publish its source code.",
+    "about.links": "More",
+    "about.manual": "Manual",
+    "about.source": "Source code",
     'tr.empty': 'The trash is empty.', 'tr.view': 'View', 'tr.restore': 'Restore',
     'tr.restored': '“{title}” is back in {folder}.',
     'fo.menu': 'Edit folder', 'fo.new': 'New subfolder …', 'fo.newtop': 'New folder …', 'fo.rename': 'Rename or move …',
@@ -778,7 +834,7 @@ const I18N = {
     "mcp.hint": "Through this access an AI assistant such as Claude can search Ordnung! and read documents and – with a key that may write – set tags, rename, move, put into the trash and file the inbox. Rights and the trash apply as in the interface; nothing is deleted for good.",
     "mcp.on": "Switch MCP access on",
     "mcp.url": "Address",
-    "mcp.keys": "The assistant signs in with an API key. Keys are made under Settings → API, read-only or read and write.",
+    "mcp.keys": "The assistant signs in with an API key. Create keys above under “API keys”, read-only or read and write.",
     "mcp.keys.link": "To the API keys",
     "mcp.saved.on": "MCP access is on.",
     "mcp.saved.off": "MCP access is off.",
@@ -1515,8 +1571,9 @@ async function loadStatus() {
 
 // -------------------------------------------------------------- settings
 
-const PANES = { konto: 'account', benutzer: 'users', ordner: 'folders', ablage: 'storage', ki: 'ai', email: 'mail', sicherheit: 'security', api: 'api', system: 'system' };
-const ADMIN_PANES = new Set(['users', 'folders', 'storage', 'ai', 'mail', 'security', 'api', 'system']);
+const PANES = { allgemein: 'general', konto: 'account', benutzer: 'users', ordner: 'storage', ablage: 'storage', ki: 'ai', email: 'mail',
+  sicherheit: 'security', verbindungen: 'connections', api: 'connections', system: 'system', ueber: 'about' };
+const ADMIN_PANES = new Set(['users', 'storage', 'ai', 'mail', 'security', 'connections', 'system']);
 
 function route() {
   if (!State.me) return;
@@ -1540,8 +1597,8 @@ function route() {
   if (r) { openRules(r[1] ? decodeURIComponent(r[1]) : ''); return; }
   if (imp) { loadImport(); return; }
   if (!inSettings) return;
-  let pane = PANES[m && m[1]] || 'account';
-  if (ADMIN_PANES.has(pane) && !State.me.is_admin) pane = 'account';
+  let pane = PANES[m && m[1]] || 'general';
+  if (ADMIN_PANES.has(pane) && !State.me.is_admin) pane = 'general';
   $('acc-who').textContent = t('acc.who', { name: State.me.display_name || State.me.name });
   showPane(pane);
 }
@@ -1553,12 +1610,54 @@ function showPane(pane) {
   if (pane === 'users') loadUsers();
   if (pane === 'account') loadAccountSecurity();
   if (pane === 'security') loadSecurity();
-  if (pane === 'api') loadApiKey();
+  if (pane === 'general') $('set-theme').value = theme;
+  if (pane === 'connections') { loadApiKey(); loadMcp(); }
   if (pane === 'mail') loadMail();
-  if (pane === 'ai') { loadMcp(); loadAI(); }
+  if (pane === 'ai') loadAI();
+  if (pane === 'about') loadAbout();
   if (pane === 'storage') loadStorage();
-  if (pane === 'folders') loadFolders();
   if (pane === 'system') loadSystem();
+  syncNeeds();
+}
+
+// ---- settings that save themselves (like CutStock): a change saves the whole form; text fields
+// fire "change" only when they are left, so nothing half-typed goes out. Buttons stay for actions.
+function initAutosave() {
+  document.querySelectorAll('form[data-autosave]').forEach(form => {
+    // several changes in quick succession (a picked folder, a ticked box) go out as one save
+    const run = debounce(() => form.requestSubmit(), 250);
+    form.addEventListener('change', ev => {
+      const el = ev.target;
+      if (el.closest('[data-nosave]') || el.hasAttribute('data-nosave')) return;
+      syncNeeds();
+      const q = el.dataset.confirm;
+      if (q && el.value.trim() !== (el.dataset.saved ?? el.defaultValue) && !confirm(t(q, { path: el.value.trim() || '–' }))) {
+        el.value = el.dataset.saved ?? el.defaultValue;
+        return;
+      }
+      if (q) el.dataset.saved = el.value.trim();
+      run();
+    });
+    // Enter in a text field saves as well, but must not submit twice
+    form.addEventListener('keydown', ev => {
+      if (ev.key === 'Enter' && ev.target.matches('input:not([type=checkbox])')) { ev.preventDefault(); ev.target.blur(); }
+    });
+  });
+}
+
+// rows that depend on a switch are greyed out while it is off
+function syncNeeds() {
+  document.querySelectorAll('#settings [data-needs]').forEach(row => {
+    const sw = $(row.dataset.needs);
+    row.classList.toggle('is-disabled', !!sw && !sw.checked);
+  });
+}
+
+async function loadAbout() {
+  const s = await api('status');
+  $('about-version').textContent = s.version;
+  $('about-manual').href = LANG === 'de' ? 'https://worldgate.de/ordnung/handbuch/' : 'https://worldgate.de/en/ordnung-en/manual/';
+  if (State.me.is_admin) showUpdateCard(await loadUpdate());
 }
 
 function setMsg(el, text, ok) {
@@ -1998,7 +2097,7 @@ function initApiKey() {
   $('mcp-on').addEventListener('change', saveMcp);
 }
 
-// the switch for the MCP endpoint (Settings → AI); the assistant signs in with a key from above
+// the switch for the MCP endpoint (Settings → Connections); the assistant signs in with a key from above
 async function loadMcp() {
   $('mcp-msg').textContent = '';
   $('mcp-url').textContent = new URL('api/mcp', location.href.split('#')[0]).href;
@@ -2033,7 +2132,6 @@ async function loadSystem() {
   $('sys-info').innerHTML = rows.map(([k, v]) => `<dt>${esc(t(k))}</dt><dd>${esc(v)}</dd>`).join('');
   loadTextErrors();
   if (State.me.is_admin) showSystemSettings(await api('system/settings'));
-  if (State.me.is_admin) showUpdateCard(await loadUpdate());
 }
 
 // --------------------------------------------------------------- update check (version.worldgate.de)
@@ -2105,7 +2203,7 @@ function showSystemSettings(c) {
   $('sys-workers').value = c.text_workers;
   $('sys-lang-hint').textContent = c.languages.length ? t('sys.f.langs', { list: c.languages.join(', ') }) : t('sys.f.nolangs');
   $('sys-workers-hint').textContent = t('sys.f.cpus', { n: c.cpus });
-  $('sys-defaults').onclick = () => showSystemSettings({ ...c, ...c.defaults });
+  $('sys-defaults').onclick = () => { showSystemSettings({ ...c, ...c.defaults }); $('sys-form').requestSubmit(); };
 }
 
 async function saveSystemSettings(ev) {
@@ -2151,9 +2249,9 @@ function statusHtml(s, files) {
 
 async function loadStorage() {
   storage = await api('storage');
-  $('st-archive').value = storage.archive_path;
+  $('st-archive').value = $('st-archive').dataset.saved = storage.archive_path;
   $('st-archive-status').innerHTML = statusHtml(storage.archive);
-  $('st-reference').value = storage.reference_path || '';
+  $('st-reference').value = $('st-reference').dataset.saved = storage.reference_path || '';
   $('st-trash-days').value = storage.trash_days ?? 30;
   $('st-reference-status').innerHTML = storage.reference ? statusHtml(storage.reference) : '';
   $('st-msg').textContent = '';
@@ -2238,7 +2336,11 @@ function inboxCard(ib, i) {
       </div>
     </div>
     <div class="picker" data-for="st-inbox-${i}" hidden></div>`;
-  el.querySelector('[data-act="remove"]').addEventListener('click', () => el.remove());
+  el.querySelector('[data-act="remove"]').addEventListener('click', () => {
+    const form = el.closest('form');
+    el.remove();
+    form?.requestSubmit();
+  });
   const after = el.querySelector('[data-f="after_import"]');
   const showDays = () => el.querySelectorAll('[data-del]').forEach(x => { x.hidden = after.value !== 'delete'; });
   after.addEventListener('change', showDays);
@@ -2329,6 +2431,7 @@ async function showPicker(inputId) {
     picker.querySelector('[data-choose]')?.addEventListener('click', ev => {
       input.value = ev.currentTarget.dataset.choose;
       picker.hidden = true;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
     });
   };
   render(input.value.trim());
@@ -2965,85 +3068,6 @@ async function deleteItem() {
   }
 }
 
-// --------------------------------------------------------------- folders
-
-let Fo = null;
-
-async function loadFolders() {
-  Fo = await api('folders');
-  $('fo-ro').hidden = Fo.writable;
-  renderFolders();
-}
-
-function renderFolders() {
-  const box = $('fo-tree');
-  box.innerHTML = '';
-  // docs below a folder (own + subfolders) to decide whether it may be deleted
-  const below = {};
-  for (const f of Fo.folders) {
-    const parts = f.path.split('/');
-    for (let i = 1; i <= parts.length; i++) {
-      const p = parts.slice(0, i).join('/');
-      below[p] = (below[p] || 0) + f.docs;
-    }
-  }
-  for (const f of Fo.folders) {
-    const depth = f.path.split('/').length - 1;
-    const name = f.path.split('/').pop();
-    const row = document.createElement('div');
-    row.className = 'fo-row' + (below[f.path] ? '' : ' is-empty');
-    row.style.setProperty('--depth', depth);
-    row.innerHTML = `<span class="fo-name">${esc(name)}</span>` +
-      `<span class="fo-count">${below[f.path] ? esc(t('fo.docs', { n: below[f.path] })) : esc(t('fo.empty'))}</span>` +
-      `<span class="fo-actions">` +
-      `<button class="fd-button fd-button--transparent" data-act="sub" title="${esc(t('fo.sub'))}">＋</button>` +
-      `<button class="fd-button fd-button--transparent" data-act="ren" title="${esc(t('fo.rename'))}">✎</button>` +
-      (below[f.path] ? '' : `<button class="fd-button fd-button--transparent fd-button--negative" data-act="del" title="${esc(t('fo.delete'))}">✕</button>`) +
-      `</span>`;
-    row.querySelector('[data-act="sub"]').addEventListener('click', () => inlineEdit(row, '', t('fo.sub.ph'), async v => {
-      await api('folders', { method: 'POST', body: JSON.stringify({ path: f.path + '/' + v }) });
-      return t('fo.added');
-    }));
-    row.querySelector('[data-act="ren"]').addEventListener('click', () => inlineEdit(row, f.path, '', async v => {
-      const r = await api('folders', { method: 'PATCH', body: JSON.stringify({ old: f.path, new: v }) });
-      return t('fo.renamed', { rules: r.rules });
-    }));
-    row.querySelector('[data-act="del"]')?.addEventListener('click', async () => {
-      if (!confirm(t('fo.delete.q', { name: f.path }))) return;
-      try { await api('folders?path=' + encodeURIComponent(f.path), { method: 'DELETE' }); await afterFolderChange(); }
-      catch (e) { setMsg($('fo-msg'), errText(e), false); }
-    });
-    box.appendChild(row);
-  }
-}
-
-function inlineEdit(row, value, placeholder, action) {
-  if (row.querySelector('.fo-edit')) return;
-  const input = document.createElement('input');
-  input.className = 'fd-input fo-edit';
-  input.value = value;
-  input.placeholder = placeholder;
-  row.querySelector('.fo-name').after(input);
-  input.focus();
-  input.addEventListener('keydown', async ev => {
-    if (ev.key === 'Escape') { input.remove(); return; }
-    if (ev.key !== 'Enter') return;
-    try {
-      const msg = await action(input.value.trim());
-      setMsg($('fo-msg'), msg, true);
-      await afterFolderChange();
-    } catch (e) {
-      setMsg($('fo-msg'), errText(e), false);
-    }
-  });
-  input.addEventListener('blur', () => setTimeout(() => input.remove(), 200));
-}
-
-async function afterFolderChange() {
-  Rules.tree = null;            // rules page rebuilds its tree
-  await loadFolders();
-}
-
 // -------------------------------------------------------------------- AI
 
 let aiConfig = null;
@@ -3100,6 +3124,7 @@ function addPrompt(p, isDefault) {
     if (ta.value.trim() && !confirm(t('ai.prompts.tpl.ask'))) return;
     ta.value = aiConfig.inbox_prompt_default;
     ta.focus();
+    ta.dispatchEvent(new Event('change', { bubbles: true }));
   };
   row.querySelector('.ai-p-del').onclick = () => {
     const box = $('ai-prompts');
@@ -3107,6 +3132,7 @@ function addPrompt(p, isDefault) {
     const wasDefault = row.querySelector('input[type=radio]').checked;
     row.remove();
     if (wasDefault) box.querySelector('input[type=radio]').checked = true;
+    $('ai-form').requestSubmit();
   };
   $('ai-prompts').appendChild(row);
   return row;
@@ -3189,7 +3215,8 @@ async function saveAI(ev) {
   if (ev) ev.preventDefault();
   try {
     aiConfig = await api('ai', { method: 'PUT', body: JSON.stringify(aiPayload()) });
-    renderPrompts(aiConfig.inbox_prompts, aiConfig.inbox_default);
+    // saving happens on leaving a field: do not pull the next prompt away from under the cursor
+    if (!$('ai-prompts').contains(document.activeElement)) renderPrompts(aiConfig.inbox_prompts, aiConfig.inbox_default);
     const keyChanged = !!$('ai-key').value.trim();
     $('ai-key').value = '';
     syncAIForm();
@@ -3227,9 +3254,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   applyTheme(theme);
   initLayout();
 
+  $('set-theme').addEventListener('change', () => {
+    theme = $('set-theme').value;
+    store.set('theme', theme);
+    applyTheme(theme);
+  });
   $('btn-theme').addEventListener('click', () => {
     theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
     store.set('theme', theme);
+    $('set-theme').value = theme;
     applyTheme(theme);
   });
 
@@ -3316,20 +3349,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   $('btn-more').addEventListener('click', () => loadDocs(true));
   window.addEventListener('hashchange', route);
-  $('fo-add').addEventListener('click', async () => {
-    try {
-      await api('folders', { method: 'POST', body: JSON.stringify({ path: $('fo-new').value }) });
-      $('fo-new').value = '';
-      setMsg($('fo-msg'), t('fo.added'), true);
-      await afterFolderChange();
-    } catch (e) { setMsg($('fo-msg'), errText(e), false); }
-  });
-  $('fo-new').addEventListener('keydown', ev => { if (ev.key === 'Enter') $('fo-add').click(); });
   $('fo-starter').addEventListener('click', async () => {
     if (!confirm(t('fo.starter.q'))) return;
     const r = await api('folders/starter', { method: 'POST' });
     setMsg($('fo-msg'), t('fo.starter.ok', { n: r.added }), true);
-    await afterFolderChange();
+    Rules.tree = null;            // rules page rebuilds its tree
+    await loadTree();
   });
   $('imp-filter').addEventListener('change', renderImportRows);
   $('imp-search').addEventListener('input', debounce(renderImportRows, 200));
@@ -3438,6 +3463,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initEditor();
   initAccountSecurity();
   initSecurity();
+  initAutosave();
   initApiKey();
   initMail();
   initDocOps();

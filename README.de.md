@@ -25,8 +25,8 @@ Die meisten Dokumentenverwaltungen bauen auf Tags und Filter. Das ist mächtig, 
 - **Mappen.** Dokumente aus vielen Ordnern sammeln, etwa *Steuererklärung 2026*, ohne sie zu verschieben. Eine Mappe lässt sich als ZIP oder als eine zusammengefügte PDF für den Steuerberater herunterladen.
 - **Tags, Papierkorb, Ziehen und Ablegen.** Dokumente auf Ordner ziehen verschiebt sie, auf Mappen ziehen verknüpft sie. Gelöschtes bleibt 30 Tage im Papierkorb (einstellbar).
 - **Altablage.** Alte Unterlagen, die man nicht mehr braucht, aber behalten will: einzeln, ordnerweise oder „alles älter als X Jahre“ nach `<bereich>/Altablage/`. Im Baum stehen sie abseits, die Suche findet sie nur auf Wunsch, Zurückholen stellt den alten Ordner wieder her.
-- **REST-API** für alles, was die Oberfläche kann: benannte Schlüssel (lesen oder lesen und schreiben) unter *Einstellungen → API*, Anleitung in [docs/api.md](docs/api.md), alle Endpunkte ausprobierbar unter `/api/docs`.
-- **Für KI-Assistenten (MCP):** Unter `/api/mcp` kann ein Assistent wie Claude suchen, Dokumente lesen und – mit Schreibrecht – Tags setzen, umbenennen, verschieben und den Posteingang einsortieren. Einschalten unter *Einstellungen → KI*, bei frischer Installation aus.
+- **REST-API** für alles, was die Oberfläche kann: benannte Schlüssel (lesen oder lesen und schreiben) unter *Einstellungen → Verbindungen*, Anleitung in [docs/api.md](docs/api.md), alle Endpunkte ausprobierbar unter `/api/docs`.
+- **Für KI-Assistenten (MCP):** Unter `/api/mcp` kann ein Assistent wie Claude suchen, Dokumente lesen und – mit Schreibrecht – Tags setzen, umbenennen, verschieben und den Posteingang einsortieren. Einschalten unter *Einstellungen → Verbindungen*, bei frischer Installation aus.
 - **Umzug aus Paperless-ngx** mit einem Import-Planer.
 
 <table>
@@ -69,24 +69,25 @@ Eingestellt wird in der App. In die Compose-Datei gehören nur Ordner, Port und,
 | `PUID` / `PGID` / `UMASK` | `99` / `100` / `0002` | Benutzer, Gruppe und umask, als die die App läuft, wenn der Container als root startet; frisch angelegte leere Ordner bekommt dieser Benutzer (bei `--user` ohne Wirkung) |
 | `TZ` | `UTC` | Zeitzone, z. B. `Europe/Berlin` |
 | `VERSIONSPRUEFUNG` | an | `0` schaltet die tägliche Frage nach neuen Versionen dauerhaft ab (siehe unten) |
+| `ORDNUNG_TRUSTED_PROXIES` | private Netze | Von welchen Adressen `X-Forwarded-For` geglaubt wird, durch Komma getrennt (IP oder Netz, z. B. `10.10.20.50`). Am besten die Adresse des Reverse Proxys eintragen (siehe unten) |
 
 Diese älteren Variablen gelten nur noch als Vorgabe für eine frische Installation; sobald in der App etwas gespeichert ist, zählt die App:
 
 | Variable | jetzt in der App unter |
 |---|---|
 | `ORDNUNG_ADMIN_USER` / `ORDNUNG_ADMIN_PASSWORD` | Einrichtungsseite beim ersten Aufruf (die Variablen legen das Konto nur an, solange es keins gibt) |
-| `ORDNUNG_API_TOKEN` | *Einstellungen → API* (wird einmal übernommen) |
+| `ORDNUNG_API_TOKEN` | *Einstellungen → Verbindungen* (wird einmal übernommen) |
 | `ORDNUNG_OCR`, `ORDNUNG_OCR_LANG`, `ORDNUNG_OCR_MAX_PAGES`, `ORDNUNG_RESCAN_MINUTES`, `ORDNUNG_TEXT_WORKERS` | *Einstellungen → System* |
 | `ORDNUNG_INTERNAL_NETWORKS` | *Einstellungen → Sicherheit → Heimnetz* |
 | `ORDNUNG_STARTER` | – (`0` verhindert Ordnervorlage und Startregeln beim allerersten Start) |
 
 ### Neue Versionen
 
-Einmal am Tag fragt Ordnung! bei `version.worldgate.de`, ob es eine neue Version gibt. Gibt es eine, sehen Admins oben einen Knopf mit Anleitung zum Aktualisieren. Übertragen werden dabei nur der Name der App, die installierte Version und die Installationsart (z. B. Docker), keine Kennung, keine Dokumente und keine Namen. Gespeichert werden dort nur Tagessummen, keine IP-Adressen. Daraus sehen wir, wie viele Installationen ungefähr laufen. Abschalten lässt sich das unter *Einstellungen → System* oder dauerhaft mit `VERSIONSPRUEFUNG=0`.
+Einmal am Tag fragt Ordnung! bei `version.worldgate.de`, ob es eine neue Version gibt. Gibt es eine, sehen Admins oben einen Knopf mit Anleitung zum Aktualisieren. Übertragen werden dabei nur der Name der App, die installierte Version und die Installationsart (z. B. Docker), keine Kennung, keine Dokumente und keine Namen. Gespeichert werden dort nur Tagessummen, keine IP-Adressen. Daraus sehen wir, wie viele Installationen ungefähr laufen. Abschalten lässt sich das unter *Einstellungen → Über* oder dauerhaft mit `VERSIONSPRUEFUNG=0`.
 
 ### Anmeldung von außen
 
-Hinter einem Reverse Proxy, der `X-Forwarded-For` **überschreibt** (Caddy tut das von sich aus), erkennt Ordnung!, ob eine Anmeldung aus dem Heimnetz oder von außen kommt. Unter *Einstellungen → Sicherheit* lässt sich der Zugang von außen auf Konten mit zweitem Faktor beschränken (Authenticator-App, dazu zehn einmalige Wiederherstellungscodes). Jede Anmeldung von außen, gesperrte Konten und Änderungen am zweiten Faktor meldet Ordnung! auf Wunsch per [ntfy](https://ntfy.sh). Sitzungen liegen auf dem Server: Abmelden, Passwort ändern oder *Alle anderen abmelden* unter *Mein Konto* beenden sie wirklich. Nach fünf Fehlversuchen pausiert ein Konto eine Minute, danach doppelt so lange bis höchstens 15 Minuten, getrennt gezählt für innen und außen.
+Ordnung! erkennt, ob eine Anmeldung aus dem Heimnetz oder von außen kommt, auch hinter einem Reverse Proxy. `X-Forwarded-For` zählt dabei nur, wenn die Verbindung von einem vertrauenswürdigen Proxy kommt (`ORDNUNG_TRUSTED_PROXIES`, sonst jede Adresse aus einem privaten Netz), und dann der rechte Eintrag, den nicht der Besucher selbst geschrieben hat. Unter *Einstellungen → Sicherheit* lässt sich der Zugang von außen auf Konten mit zweitem Faktor beschränken (Authenticator-App, dazu zehn einmalige Wiederherstellungscodes). Jede Anmeldung von außen, gesperrte Konten und Änderungen am zweiten Faktor meldet Ordnung! auf Wunsch per [ntfy](https://ntfy.sh). Sitzungen liegen auf dem Server: Abmelden, Passwort ändern oder *Alle anderen abmelden* unter *Mein Konto* beenden sie wirklich. Nach fünf Fehlversuchen pausiert ein Konto eine Minute, danach doppelt so lange bis höchstens 15 Minuten, getrennt gezählt für innen und außen.
 
 ### E-Mail-Eingang
 

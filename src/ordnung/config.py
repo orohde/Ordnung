@@ -31,6 +31,7 @@ class Settings:
     text_workers: int = 1
     starter: bool = True      # a fresh installation starts with the shipped rules and folders
     internal_networks: str = ""   # comma-separated CIDR ranges that count as "at home"; empty = private ranges
+    trusted_proxies: str = ""     # who may tell the client address (X-Forwarded-For); empty = private ranges
 
     @property
     def db_path(self) -> Path:
@@ -73,5 +74,6 @@ def load_settings() -> Settings:
         ocr_max_pages=int(os.environ.get("ORDNUNG_OCR_MAX_PAGES", "30")),
         starter=_flag("ORDNUNG_STARTER", True),
         internal_networks=os.environ.get("ORDNUNG_INTERNAL_NETWORKS", ""),
+        trusted_proxies=os.environ.get("ORDNUNG_TRUSTED_PROXIES", ""),
         text_workers=int(os.environ.get("ORDNUNG_TEXT_WORKERS", str(max(1, min(4, (os.cpu_count() or 2) // 3))))),
     )
