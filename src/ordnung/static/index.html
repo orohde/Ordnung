@@ -70,6 +70,7 @@
       </div>
       <div class="fd-shellbar__group fd-shellbar__group--actions">
         <button id="btn-theme" class="fd-button fd-shellbar__button" type="button" aria-label="Theme">&#9680;</button>
+        <button id="btn-update" class="fd-button fd-shellbar__button upd-btn" type="button" hidden></button>
         <a id="btn-inbox" class="fd-button fd-shellbar__button admin-only" href="#/eingang"><span data-i18n="ib.short">Eingang</span><span id="ib-badge" class="ib-badge" hidden></span></a>
         <a id="btn-import" class="fd-button fd-shellbar__button admin-only" href="#/import" data-i18n="imp.title">Import</a>
         <a id="btn-rules" class="fd-button fd-shellbar__button admin-only" href="#/regeln" data-i18n="rules.title">Regeln</a>
@@ -660,6 +661,17 @@
         <section class="set-pane" data-pane="ai" hidden>
           <h3 class="fd-title fd-title--h4" data-i18n="set.ai">KI</h3>
           <p class="set-hint" data-i18n="ai.intro">Die KI macht nur Vorschläge. Einsortiert wird nach geprüften Regeln oder nach deiner Bestätigung.</p>
+          <div class="card mcp-card">
+            <h4 class="fd-title fd-title--h5" data-i18n="mcp.title">Zugang für KI-Assistenten (MCP)</h4>
+            <p class="set-hint" data-i18n="mcp.hint"></p>
+            <label class="check"><input type="checkbox" id="mcp-on"> <span data-i18n="mcp.on">MCP-Zugang einschalten</span></label>
+            <div class="form-grid mcp-grid">
+              <span class="fd-form-label" data-i18n="mcp.url">Adresse</span>
+              <code id="mcp-url" class="mcp-url"></code>
+            </div>
+            <p class="set-hint mcp-keys"><span data-i18n="mcp.keys"></span> <a class="fd-link" href="#/einstellungen/api" data-i18n="mcp.keys.link">Zu den API-Schlüsseln</a></p>
+            <span id="mcp-msg" class="form-msg" role="status"></span>
+          </div>
           <form id="ai-form" class="card" autocomplete="off" data-bwignore="true">
             <div class="form-grid">
               <span></span>
@@ -804,16 +816,36 @@
           <h3 class="fd-title fd-title--h4" data-i18n="set.api">API</h3>
           <p class="set-hint" data-i18n="api.intro">Alles, was die Oberfläche kann, geht auch per REST-API unter /api/, für Skripte, Kurzbefehle oder Home Assistant.</p>
           <div class="card">
-            <h4 class="fd-title fd-title--h5 card-title" data-i18n="api.key">API-Schlüssel</h4>
-            <div class="inline api-key-row">
-              <input class="fd-input api-key" id="api-key" type="text" readonly autocomplete="off" spellcheck="false" data-bwignore="true" data-1p-ignore="true" data-lpignore="true" data-form-type="other">
-              <button id="api-copy" class="fd-button" type="button" data-i18n="api.copy">Kopieren</button>
-              <button id="api-new" class="fd-button" type="button" data-i18n="api.new">Neu erzeugen</button>
-              <button id="api-del" class="fd-button fd-button--transparent" type="button" data-i18n="api.del">Löschen</button>
+            <h4 class="fd-title fd-title--h5 card-title" data-i18n="api.keys">API-Schlüssel</h4>
+            <p class="field-hint" data-i18n="api.keys.hint">Jedes Programm bekommt seinen eigenen Schlüssel, dann lässt sich einer allein widerrufen. „Lesen und schreiben“ öffnet alles wie ein Administrator, „Nur lesen“ zeigt alle Bereiche, ändert aber nichts.</p>
+            <table class="fd-table api-keys">
+              <thead class="fd-table__header"><tr class="fd-table__row">
+                <th class="fd-table__cell" data-i18n="api.col.name">Name</th>
+                <th class="fd-table__cell" data-i18n="api.col.right">Recht</th>
+                <th class="fd-table__cell" data-i18n="api.col.made">Angelegt</th>
+                <th class="fd-table__cell" data-i18n="api.col.last">Zuletzt benutzt</th>
+                <th class="fd-table__cell"></th>
+              </tr></thead>
+              <tbody id="api-rows" class="fd-table__body"></tbody>
+            </table>
+            <p id="api-none" class="field-hint" hidden data-i18n="api.none2">Noch kein Schlüssel. Die API geht dann nur mit angemeldetem Browser.</p>
+            <div class="inline api-new">
+              <input id="api-name" class="fd-input" maxlength="60" autocomplete="off" data-i18n-placeholder="api.name.ph" placeholder="Name, z. B. Claude oder Mail-Sortierer">
+              <select id="api-right" class="fd-input">
+                <option value="write" data-i18n="api.right.write">Lesen und schreiben</option>
+                <option value="read" data-i18n="api.right.read">Nur lesen</option>
+              </select>
+              <button id="api-add" class="fd-button fd-button--emphasized" type="button" data-i18n="api.add">Schlüssel anlegen</button>
             </div>
-            <p id="api-state" class="field-hint"></p>
-            <p class="field-hint" data-i18n="api.hint">Programme schicken den Schlüssel bei jeder Anfrage mit. Er öffnet alles wie ein Administrator, also gehört er nur in vertrauenswürdige Skripte. Neu erzeugen macht den alten sofort ungültig.</p>
-            <pre class="api-example"><code id="api-example"></code></pre>
+            <div id="api-fresh" class="api-fresh" hidden>
+              <p class="field-hint" data-i18n="api.fresh">Das ist der neue Schlüssel. Jetzt kopieren – er wird nur einmal gezeigt.</p>
+              <div class="inline api-key-row">
+                <input class="fd-input api-key" id="api-key" type="text" readonly autocomplete="off" spellcheck="false" data-bwignore="true" data-1p-ignore="true" data-lpignore="true" data-form-type="other">
+                <button id="api-copy" class="fd-button" type="button" data-i18n="api.copy">Kopieren</button>
+              </div>
+              <pre class="api-example"><code id="api-example"></code></pre>
+            </div>
+            <p id="api-msg" class="form-msg"></p>
           </div>
           <div class="card">
             <h4 class="fd-title fd-title--h5 card-title" data-i18n="api.ref">Beschreibung aller Endpunkte</h4>
@@ -855,6 +887,16 @@
               <button class="fd-button fd-button--emphasized" type="submit" data-i18n="btn.save">Speichern</button>
             </div>
           </form>
+          <div id="upd-card" class="card admin-only">
+            <h4 class="fd-title fd-title--h5 card-title" data-i18n="upd.card">Neue Versionen</h4>
+            <label class="check"><input type="checkbox" id="upd-on"> <span data-i18n="upd.f.on">Einmal am Tag nach neuen Versionen sehen</span></label>
+            <p class="field-hint sec-hint" data-i18n="upd.f.hint"></p>
+            <p id="upd-state" class="set-hint"></p>
+            <div class="form-actions">
+              <span id="upd-msg" class="form-msg"></span>
+              <button id="upd-check" class="fd-button" type="button" data-i18n="upd.check">Jetzt prüfen</button>
+            </div>
+          </div>
           <div id="sys-errors" class="card sys-errors" hidden>
             <h4 class="fd-title fd-title--h5 card-title" data-i18n="sys.err.title">Dokumente ohne lesbaren Text</h4>
             <p class="set-hint" data-i18n="sys.err.hint"></p>
@@ -918,6 +960,25 @@
         <button id="alt-go" class="fd-button fd-button--emphasized" type="submit" data-i18n="alt.dlg.go">Verschieben</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="upd-dlg" class="ai-dlg ed-dlg upd-dlg" aria-labelledby="upd-dlg-title">
+    <div class="ai-dlg-form">
+      <h4 id="upd-dlg-title" class="fd-title fd-title--h5"></h4>
+      <p id="upd-dlg-intro" class="set-hint"></p>
+      <h5 class="upd-sub" data-i18n="upd.how">So aktualisierst du</h5>
+      <ul class="upd-how">
+        <li><b>Unraid:</b> <span data-i18n="upd.unraid"></span></li>
+        <li><b>Synology:</b> <span data-i18n="upd.syno"></span></li>
+        <li><b>Docker Compose:</b> <span data-i18n="upd.compose"></span>: <code>docker compose pull &amp;&amp; docker compose up -d</code></li>
+      </ul>
+      <h5 class="upd-sub" data-i18n="upd.notes">Was ist neu</h5>
+      <div id="upd-dlg-notes" class="upd-notes"></div>
+      <div class="form-actions">
+        <a id="upd-dlg-link" class="fd-button fd-button--transparent" target="_blank" rel="noopener" data-i18n="upd.release">Alle Änderungen</a>
+        <button id="upd-dlg-close" class="fd-button fd-button--emphasized" type="button" data-i18n="upd.close">Schließen</button>
+      </div>
+    </div>
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>

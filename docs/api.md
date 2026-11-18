@@ -8,16 +8,22 @@ Alles, was die Oberfläche kann, geht auch per REST-API unter `/api/`. Die Oberf
 
 ## Anmelden mit API-Schlüssel
 
-Unter **Einstellungen → API** (nur für Administratoren) erzeugst du einen Schlüssel und kopierst ihn. Programme schicken ihn bei jeder Anfrage als Bearer-Token mit:
+Unter **Einstellungen → API** (nur für Administratoren) legst du benannte Schlüssel an – am besten einen je Programm – und kopierst ihn. Programme schicken ihn bei jeder Anfrage als Bearer-Token mit:
 
 ```bash
 curl -H "Authorization: Bearer DEIN_SCHLÜSSEL" https://ordnung.example.org/api/documents?q=versicherung
 ```
 
-- Der Schlüssel handelt **wie ein Administrator** und sieht alle Bereiche. Er gehört nur in vertrauenswürdige Skripte.
-- **Neu erzeugen** macht den alten sofort ungültig, **Löschen** schaltet den Zugang per Schlüssel ab.
+- Jeder Schlüssel hat ein **Recht**: *Lesen und schreiben* handelt **wie ein Administrator**, *Nur lesen* sieht alle Bereiche, ändert aber nichts (alles außer GET wird mit 403 abgewiesen, Admin-Bereiche wie Posteingang oder Benutzer bleiben zu).
+- Gespeichert wird nur ein Hash; der Schlüssel wird genau einmal angezeigt. **Neu erzeugen** macht den alten sofort ungültig, **Löschen** sperrt das Programm aus. Die Liste zeigt, wann ein Schlüssel zuletzt benutzt wurde.
 - Ohne Schlüssel bleibt die API nur mit einer Anmeldung im Browser (Sitzungs-Cookie) nutzbar.
-- Früher kam der Schlüssel aus der Umgebungsvariable `ORDNUNG_API_TOKEN`. Ist sie gesetzt, übernimmt Ordnung! sie beim ersten Start einmal in die Einstellungen. Danach gilt nur noch, was dort steht, und die Variable kann aus der Compose-Datei raus.
+- Der eine Schlüssel aus früheren Versionen wird beim Update zum benannten Schlüssel „API“ mit Schreibrecht; er gilt unverändert weiter. Auch `ORDNUNG_API_TOKEN` wird beim ersten Start einmal so übernommen, danach kann die Variable aus der Compose-Datei raus.
+
+## Für KI-Assistenten (MCP)
+
+Der MCP-Zugang ist bei einer frischen Installation aus; ein Administrator schaltet ihn unter *Einstellungen → KI* ein. Der Endpunkt `/api/mcp` spricht das Model Context Protocol (Streamable HTTP) und nimmt denselben Schlüssel als `Authorization: Bearer <Schlüssel>`.
+
+Werkzeuge: Bereiche, Ordner, Tags, Mappen und Papierkorb auflisten, suchen (mit Bereich, Ordner, Tags, Zeitraum), Dokument mit erkanntem Text lesen, Tags setzen oder ändern, Titel und Datum ändern, verschieben, Mappe anlegen, in den Papierkorb legen und zurückholen. Mit einem Administrator-Schlüssel zusätzlich: Posteingang ansehen, einsortieren oder beiseitelegen, Absender auflisten. Ein Schlüssel mit Leserecht bekommt keine schreibenden Werkzeuge angeboten. Endgültig gelöscht wird über MCP nichts, und Einstellungen (Benutzer, Sicherheit, Ablage, Regeln) bleiben der Oberfläche vorbehalten.
 
 ## Die wichtigsten Endpunkte
 
@@ -54,6 +60,7 @@ Dokumente haben eine `id` (die Kurz-ID aus dem Dateinamen). Bereiche heißen wie
 | `folder`, `recursive` | Ordner und ob Unterordner dazugehören; eine Suche ohne `folder` geht immer über das ganze Archiv |
 | `areas` | Bereiche, mit Komma getrennt; ohne: alle erlaubten |
 | `tags` | Tags, mit Komma getrennt, alle müssen passen |
+| `date_from`, `date_to` | Zeitraum nach Dokumentdatum, beide Tage eingeschlossen; `2026`, `2026-03` oder `2026-03-15` |
 | `alt` | `true` sucht auch in der Altablage |
 | `sort`, `desc` | `date` (Standard), `title`, `area` oder `relevance` (beste Treffer zuerst, nur bei einer Suche); `desc=false` dreht die Richtung |
 | `limit`, `offset` | Seitenweise holen, Standard 500 |

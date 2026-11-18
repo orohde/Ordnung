@@ -25,7 +25,8 @@ Die meisten Dokumentenverwaltungen bauen auf Tags und Filter. Das ist mächtig, 
 - **Mappen.** Dokumente aus vielen Ordnern sammeln, etwa *Steuererklärung 2026*, ohne sie zu verschieben. Eine Mappe lässt sich als ZIP oder als eine zusammengefügte PDF für den Steuerberater herunterladen.
 - **Tags, Papierkorb, Ziehen und Ablegen.** Dokumente auf Ordner ziehen verschiebt sie, auf Mappen ziehen verknüpft sie. Gelöschtes bleibt 30 Tage im Papierkorb (einstellbar).
 - **Altablage.** Alte Unterlagen, die man nicht mehr braucht, aber behalten will: einzeln, ordnerweise oder „alles älter als X Jahre“ nach `<bereich>/Altablage/`. Im Baum stehen sie abseits, die Suche findet sie nur auf Wunsch, Zurückholen stellt den alten Ordner wieder her.
-- **REST-API** für alles, was die Oberfläche kann: Schlüssel unter *Einstellungen → API*, Anleitung in [docs/api.md](docs/api.md), alle Endpunkte ausprobierbar unter `/api/docs`.
+- **REST-API** für alles, was die Oberfläche kann: benannte Schlüssel (lesen oder lesen und schreiben) unter *Einstellungen → API*, Anleitung in [docs/api.md](docs/api.md), alle Endpunkte ausprobierbar unter `/api/docs`.
+- **Für KI-Assistenten (MCP):** Unter `/api/mcp` kann ein Assistent wie Claude suchen, Dokumente lesen und – mit Schreibrecht – Tags setzen, umbenennen, verschieben und den Posteingang einsortieren. Einschalten unter *Einstellungen → KI*, bei frischer Installation aus.
 - **Umzug aus Paperless-ngx** mit einem Import-Planer.
 
 <table>
@@ -67,6 +68,7 @@ Eingestellt wird in der App. In die Compose-Datei gehören nur Ordner, Port und,
 |---|---|---|
 | `PUID` / `PGID` / `UMASK` | `99` / `100` / `0002` | Benutzer, Gruppe und umask, als die die App läuft, wenn der Container als root startet; frisch angelegte leere Ordner bekommt dieser Benutzer (bei `--user` ohne Wirkung) |
 | `TZ` | `UTC` | Zeitzone, z. B. `Europe/Berlin` |
+| `VERSIONSPRUEFUNG` | an | `0` schaltet die tägliche Frage nach neuen Versionen dauerhaft ab (siehe unten) |
 
 Diese älteren Variablen gelten nur noch als Vorgabe für eine frische Installation; sobald in der App etwas gespeichert ist, zählt die App:
 
@@ -77,6 +79,10 @@ Diese älteren Variablen gelten nur noch als Vorgabe für eine frische Installat
 | `ORDNUNG_OCR`, `ORDNUNG_OCR_LANG`, `ORDNUNG_OCR_MAX_PAGES`, `ORDNUNG_RESCAN_MINUTES`, `ORDNUNG_TEXT_WORKERS` | *Einstellungen → System* |
 | `ORDNUNG_INTERNAL_NETWORKS` | *Einstellungen → Sicherheit → Heimnetz* |
 | `ORDNUNG_STARTER` | – (`0` verhindert Ordnervorlage und Startregeln beim allerersten Start) |
+
+### Neue Versionen
+
+Einmal am Tag fragt Ordnung! bei `version.worldgate.de`, ob es eine neue Version gibt. Gibt es eine, sehen Admins oben einen Knopf mit Anleitung zum Aktualisieren. Übertragen werden dabei nur der Name der App, die installierte Version und die Installationsart (z. B. Docker), keine Kennung, keine Dokumente und keine Namen. Gespeichert werden dort nur Tagessummen, keine IP-Adressen. Daraus sehen wir, wie viele Installationen ungefähr laufen. Abschalten lässt sich das unter *Einstellungen → System* oder dauerhaft mit `VERSIONSPRUEFUNG=0`.
 
 ### Anmeldung von außen
 

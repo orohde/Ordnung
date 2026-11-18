@@ -472,6 +472,8 @@ class Index:
         alt: bool = False,
         before: str | None = None,
         sort: str = "",
+        date_from: str | None = None,
+        date_to: str | None = None,
         desc: bool = True,
     ) -> dict:
         """``sort`` is ``date``, ``title``, ``area`` or ``relevance`` (best hits first, searches only; empty: relevance for a search, else date).
@@ -480,6 +482,7 @@ class Index:
 
         The Altablage is left out unless ``alt`` is set or ``folder`` lies inside it.
         ``before`` keeps only documents dated before this ISO date (undated ones never match).
+        ``date_from`` and ``date_to`` keep documents dated in this range, both days included.
         """
         if not areas or shas is not None and not shas:
             return {"total": 0, "items": []}
@@ -505,6 +508,12 @@ class Index:
         if before:
             where.append("f.doc_date IS NOT NULL AND f.doc_date < ?")
             args.append(before)
+        if date_from:
+            where.append("f.doc_date IS NOT NULL AND f.doc_date >= ?")
+            args.append(date_from)
+        if date_to:
+            where.append("f.doc_date IS NOT NULL AND f.doc_date <= ?")
+            args.append(date_to)
 
         tokens = fold(query).split()
         long_tokens = [t for t in tokens if len(t) >= 3]

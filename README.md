@@ -25,7 +25,8 @@ Most document managers are built around tags and filters. That is powerful – a
 - **Collections.** Gather documents from many folders – *Tax return 2026* – without moving them. Download a collection as ZIP or as one merged PDF for your tax advisor.
 - **Tags, trash, drag and drop.** Drag documents onto folders to move them, onto collections to link them. Deleted documents stay in the trash for 30 days (configurable).
 - **Old files.** Papers you no longer need but want to keep: one by one, a whole folder or “everything older than X years” go to `<area>/Altablage/`. The tree keeps them apart, the search finds them only on request, taking them back restores the old folder.
-- **REST API** for everything the UI does: key under *Settings → API*, guide in [docs/api.en.md](docs/api.en.md), every endpoint to try out at `/api/docs`.
+- **REST API** for everything the UI does: named keys (read or read and write) under *Settings → API*, guide in [docs/api.en.md](docs/api.en.md), every endpoint to try out at `/api/docs`.
+- **For AI assistants (MCP):** at `/api/mcp` an assistant such as Claude can search, read documents and – with the write right – set tags, rename, move and file the inbox. Switch it on under *Settings → AI*; off in a fresh installation.
 - **Moving from Paperless-ngx** is supported with an import planner.
 
 <table>
@@ -67,6 +68,7 @@ Settings live in the app. The compose file only needs folders, port and, if nece
 |---|---|---|
 | `PUID` / `PGID` / `UMASK` | `99` / `100` / `0002` | user, group and umask the app runs as when the container starts as root; fresh empty folders are handed over to that user (ignored with `--user`) |
 | `TZ` | `UTC` | time zone, e.g. `Europe/Berlin` |
+| `VERSIONSPRUEFUNG` | on | `0` switches the daily check for new versions off for good (see below) |
 
 These older variables now only give the defaults for a fresh installation; once something is saved in the app, the app wins:
 
@@ -77,6 +79,10 @@ These older variables now only give the defaults for a fresh installation; once 
 | `ORDNUNG_OCR`, `ORDNUNG_OCR_LANG`, `ORDNUNG_OCR_MAX_PAGES`, `ORDNUNG_RESCAN_MINUTES`, `ORDNUNG_TEXT_WORKERS` | *Settings → System* |
 | `ORDNUNG_INTERNAL_NETWORKS` | *Settings → Security → Home network* |
 | `ORDNUNG_STARTER` | – (`0` skips the folder template and starter rules on the very first start) |
+
+### New versions
+
+Once a day Ordnung! asks `version.worldgate.de` whether a new version exists. If so, admins see a button at the top with update instructions. Only the app name, the installed version and the kind of installation (e.g. Docker) are sent: no identifier, no documents, no names. The service keeps daily totals only, no IP addresses. That tells us roughly how many installations are running. Switch it off under *Settings → System*, or for good with `VERSIONSPRUEFUNG=0`.
 
 ### Signing in from outside
 

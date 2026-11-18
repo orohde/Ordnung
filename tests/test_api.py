@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -48,19 +50,89 @@ def test_api_token(client: TestClient):
     assert client.get("/api/me", headers={"Authorization": "Bearer nope"}).status_code == 401
 
 
-def test_api_token_in_settings(client: TestClient):
+def test_api_keys_in_settings(client: TestClient):
     login(client, "oliver", "geheim123")
-    assert client.get("/api/security/api-token").json() == {"api_token": "tok"}   # taken over from the env
-    new = client.post("/api/security/api-token").json()["api_token"]
-    assert len(new) >= 32
+    # the key from before lives on as the named key "API", the settings file forgets the plain text
+    keys = client.get("/api/security/api-keys").json()
+    assert [(k["name"], k["right"]) for k in keys] == [("API", "write")]
+    assert "hash" not in keys[0] and "token" not in keys[0] and keys[0]["hint"] == "tok"[-4:]
+    assert client.app.state.security.load().api_token == ""
+    assert json.loads((client.app.state.settings.data / "security.json").read_text())["api_token"] == ""
+    made = client.post("/api/security/api-keys", json={"name": "Claude"}).json()
+    token = made["token"]
+    assert token.startswith("ord_") and made["right"] == "write"
+    assert "ord_" not in client.app.state.apikeys.path.read_text()        # only the hash is stored
+    assert client.post("/api/security/api-keys", json={"name": "claude"}).status_code == 409
+    assert client.post("/api/security/api-keys", json={"name": "x", "right": "admin"}).status_code == 422
+    bearer = {"Authorization": f"Bearer {token}"}
     client.cookies.clear()
+    assert client.get("/api/me", headers=bearer).json()["is_admin"] is True
+    assert client.get("/api/security/api-keys", headers=bearer).json()[1]["last"]   # use is remembered
+    renewed = client.post(f"/api/security/api-keys/{made['id']}/renew", headers=bearer).json()["token"]
+    assert client.get("/api/me", headers=bearer).status_code == 401
+    bearer = {"Authorization": f"Bearer {renewed}"}
+    assert client.get("/api/me", headers=bearer).status_code == 200
+    assert client.patch(f"/api/security/api-keys/{made['id']}", json={"name": "Claude Code"},
+                        headers=bearer).json()["name"] == "Claude Code"
+    assert client.delete(f"/api/security/api-keys/{made['id']}", headers=bearer).status_code == 200
+    assert client.get("/api/me", headers=bearer).status_code == 401
+    assert client.get("/api/me", headers={"Authorization": "Bearer tok"}).status_code == 200   # the other one still works
+    assert client.delete("/api/security/api-keys/nope", headers={"Authorization": "Bearer tok"}).status_code == 404
+    # the environment does not bring a deleted key back
+    old = client.get("/api/security/api-keys", headers={"Authorization": "Bearer tok"}).json()[0]["id"]
+    client.delete(f"/api/security/api-keys/{old}", headers={"Authorization": "Bearer tok"})
     assert client.get("/api/me", headers={"Authorization": "Bearer tok"}).status_code == 401
-    assert client.get("/api/me", headers={"Authorization": f"Bearer {new}"}).status_code == 200
-    assert client.get("/api/security", headers={"Authorization": f"Bearer {new}"}).json()["has_api_token"]
-    assert client.delete("/api/security/api-token", headers={"Authorization": f"Bearer {new}"}).status_code == 200
-    assert client.get("/api/me", headers={"Authorization": f"Bearer {new}"}).status_code == 401
-    # a deleted key is not taken over from the environment again
     assert not client.app.state.security.import_api_token("tok")
+
+
+def test_key_from_before_survives_the_update(settings: Settings):
+    """An installation from before named keys: its one token in security.json keeps working."""
+    from dataclasses import replace
+
+    from ordnung.app import create_app
+
+    settings = replace(settings, api_token="")
+    (settings.data / "security.json").write_text(json.dumps({"api_token": "alter-schluessel-123"}))
+    app = create_app(settings, background=False)
+    app.state.index.scan()
+    c = TestClient(app)
+    assert c.get("/api/documents", headers={"Authorization": "Bearer alter-schluessel-123"}).json()["total"] > 0
+    assert "alter-schluessel-123" not in (settings.data / "security.json").read_text()
+    assert "alter-schluessel-123" not in (settings.data / "apikeys.json").read_text()
+    # a second start changes nothing
+    again = TestClient(create_app(settings, background=False))
+    assert [k.name for k in again.app.state.apikeys.all()] == ["API"]
+    assert again.get("/api/me", headers={"Authorization": "Bearer alter-schluessel-123"}).status_code == 200
+
+
+def test_reading_key(client: TestClient):
+    login(client, "oliver", "geheim123")
+    token = client.post("/api/security/api-keys", json={"name": "Nur lesen", "right": "read"}).json()["token"]
+    client.cookies.clear()
+    bearer = {"Authorization": f"Bearer {token}"}
+    me = client.get("/api/me", headers=bearer).json()
+    assert me["is_admin"] is False and set(me["areas"]) >= {"oliver", "erika", "gemeinsam"} and me["write_areas"] == []
+    assert client.get("/api/documents", params={"q": "rezept"}, headers=bearer).json()["total"] == 2
+    doc = client.get("/api/documents", params={"q": "rezept"}, headers=bearer).json()["items"][0]
+    assert client.get(f"/api/documents/{doc['id']}/text", headers=bearer).status_code == 200
+    # admin-only routes stay shut, and nothing that changes anything goes through
+    for path in ("/api/security/api-keys", "/api/inbox", "/api/users", "/api/system/settings"):
+        assert client.get(path, headers=bearer).status_code == 403, path
+    assert client.put(f"/api/documents/{doc['id']}/tags", json={"tags": ["x"]}, headers=bearer).status_code == 403
+    assert client.patch(f"/api/documents/{doc['id']}", json={"title": "x", "date": "2026-01-01"},
+                        headers=bearer).status_code == 403
+    assert client.post(f"/api/documents/{doc['id']}/trash", headers=bearer).status_code == 403
+    assert client.put("/api/me/prefs", json={"language": "en"}, headers=bearer).status_code == 403
+    assert client.post("/api/mappen", json={"name": "M", "area": "oliver"}, headers=bearer).status_code == 403
+
+
+def test_date_filter(client: TestClient):
+    login(client, "oliver", "geheim123")
+    get = lambda **p: client.get("/api/documents", params={"recursive": True, **p}).json()["total"]
+    assert get(date_from="2026") == 3
+    assert get(date_from="2026-03", date_to="2026-03") == 1
+    assert get(date_to="2024-12-31") == 1
+    assert client.get("/api/documents", params={"date_from": "gestern"}).status_code == 422
 
 
 def test_user_management_and_area_rights(client: TestClient, settings: Settings):

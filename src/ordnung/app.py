@@ -5,7 +5,6 @@ from __future__ import annotations
 import base64
 import binascii
 import re
-import secrets
 import shutil
 import functools
 import logging
@@ -23,6 +22,7 @@ from pydantic import BaseModel, Field
 
 from . import __version__
 from .ai import AIError, AIService
+from .apikeys import ApiKeyStore, KeyError_
 from .altablage import ALT, cutoff, from_alt, is_alt, prune_empty
 from .auth import (User, client_ip, cookie_name, current_user, is_external, is_https,
                    require_admin, session_token)
@@ -44,6 +44,7 @@ from .prefs import PrefsStore
 from .rules import RuleError, RuleService, check_conditions
 from .senders import SenderBook, SenderService, describe
 from .system import SystemConfig, SystemStore
+from .versionspruefung import UpdateCheck
 from .tags import TagError, TagStore
 from .tags import clean as clean_tag
 from .storage import StorageError, StorageService, path_status
@@ -142,6 +143,7 @@ class SystemChange(BaseModel):
     ocr_max_pages: int | None = None
     rescan_minutes: int | None = None
     text_workers: int | None = None
+    mcp: bool | None = None
 
 
 class SecurityChange(BaseModel):
@@ -335,7 +337,26 @@ class PasswordChange(BaseModel):
     new: str
 
 
+class ApiKeyIn(BaseModel):
+    name: str = Field(max_length=60)
+    right: str = Field("write", pattern="^(read|write)$")
+
+
+class ApiKeyChange(BaseModel):
+    name: str | None = Field(None, max_length=60)
+    right: str | None = Field(None, pattern="^(read|write)$")
+
+
 INBOX_SECONDS = 60
+
+
+def _date_end(value: str) -> str:
+    """The last day a "2026" or "2026-03" stands for (ISO dates compare as text)."""
+    if len(value) == 4:
+        return value + "-12-31"
+    if len(value) == 7:
+        return value + "-31"
+    return value
 
 
 def _worker(app: FastAPI, stop: threading.Event) -> None:
@@ -403,6 +424,10 @@ def _worker(app: FastAPI, stop: threading.Event) -> None:
         app.state.wake.clear()
 
 
+class UpdateSwitch(BaseModel):
+    on: bool
+
+
 def create_app(settings: Settings | None = None, background: bool = True) -> FastAPI:
     settings = settings or load_settings()
 
@@ -411,6 +436,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         stop = threading.Event()
         if background:
             threading.Thread(target=_worker, args=(app, stop), daemon=True).start()
+            threading.Thread(target=app.state.update_check.run, args=(stop,), daemon=True).start()
         yield
         stop.set()
         app.state.wake.set()
@@ -435,13 +461,21 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     app.state.notify = Notifier(app.state.security)
     # which addresses count as home: Settings → Security, else ORDNUNG_INTERNAL_NETWORKS, else private ranges
     app.state.networks = Networks(app.state.security.load().internal_networks or settings.internal_networks)
+    app.state.apikeys = ApiKeyStore(settings.data / "apikeys.json")
     if app.state.security.import_api_token(settings.api_token):
         log.info("API key taken over from ORDNUNG_API_TOKEN; manage it under Settings → API from now on")
+    # the single key from before becomes a named one with the write right (same secret, so
+    # scripts keep working); the settings file forgets the plain text once the hash is stored
+    old = app.state.security.load().api_token
+    if old and app.state.apikeys.take_over(old, "API"):
+        app.state.security.set_api_token("")
+        log.info("API key from before is now the named key \"API\" (Settings → API)")
     app.state.guard = LoginGuard()
     app.state.system = SystemStore(settings.data / "system.json", SystemConfig(
         ocr=settings.ocr, ocr_lang=settings.ocr_lang, ocr_max_pages=settings.ocr_max_pages,
         rescan_minutes=settings.rescan_minutes, text_workers=settings.text_workers))
     app.state.wake = threading.Event()
+    app.state.update_check = UpdateCheck("ordnung", __version__, settings.data)
     app.state.ai = AIService(settings.data / "ai.json")
     app.state.rules = RuleService(settings.data / "rules.json", app.state.index)
     app.state.tags = TagStore(settings.data / "tags.json")
@@ -742,7 +776,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     @app.get("/api/security", tags=["security"])
     def get_security(request: Request, user: User = Depends(require_admin)):
         accounts = app.state.users.all()
-        return {**app.state.security.load().public(),
+        return {**app.state.security.load().public(), "api_keys": len(app.state.apikeys.all()),
                 "without_2fa": [a.name for a in accounts if not a.has_totp],
                 "networks_default": settings.internal_networks or ", ".join(DEFAULT_INTERNAL),
                 "client_ip": client_ip(request)}
@@ -773,22 +807,47 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         app.state.networks = Networks(config.internal_networks or settings.internal_networks)
         return get_security(request, user)
 
-    @app.get("/api/security/api-token", tags=["security"])
-    def get_api_token(user: User = Depends(require_admin)):
-        """The API key for scripts (empty: API only with a signed-in browser)."""
-        return {"api_token": app.state.security.load().api_token}
+    def _key_error(exc: KeyError_):
+        return HTTPException(status_code=404 if "unknown" in str(exc) else 409 if "exists" in str(exc) else 400,
+                             detail=str(exc))
 
-    @app.post("/api/security/api-token", tags=["security"])
-    def new_api_token(user: User = Depends(require_admin)):
-        """Create a new API key; the old one stops working at once."""
-        token = secrets.token_urlsafe(32)
-        app.state.security.set_api_token(token)
-        return {"api_token": token}
+    @app.get("/api/security/api-keys", tags=["security"])
+    def list_api_keys(user: User = Depends(require_admin)):
+        """All API keys with name, right and when they were made and last used – never the key itself."""
+        return [k.public() for k in app.state.apikeys.all()]
 
-    @app.delete("/api/security/api-token", tags=["security"])
-    def delete_api_token(user: User = Depends(require_admin)):
-        app.state.security.set_api_token("")
-        return {"api_token": ""}
+    @app.post("/api/security/api-keys", tags=["security"], status_code=201)
+    def new_api_key(body: ApiKeyIn, user: User = Depends(require_admin)):
+        """A new key. ``token`` is in this answer only – it is stored as a hash and cannot be shown again."""
+        try:
+            key, token = app.state.apikeys.create(body.name, body.right)
+        except KeyError_ as exc:
+            raise _key_error(exc) from exc
+        return {**key.public(), "token": token}
+
+    @app.patch("/api/security/api-keys/{key_id}", tags=["security"])
+    def change_api_key(key_id: str, body: ApiKeyChange, user: User = Depends(require_admin)):
+        try:
+            return app.state.apikeys.change(key_id, body.name, body.right).public()
+        except KeyError_ as exc:
+            raise _key_error(exc) from exc
+
+    @app.post("/api/security/api-keys/{key_id}/renew", tags=["security"])
+    def renew_api_key(key_id: str, user: User = Depends(require_admin)):
+        """Same name and right, new secret; the old secret stops working at once."""
+        try:
+            key, token = app.state.apikeys.renew(key_id)
+        except KeyError_ as exc:
+            raise _key_error(exc) from exc
+        return {**key.public(), "token": token}
+
+    @app.delete("/api/security/api-keys/{key_id}", tags=["security"])
+    def delete_api_key(key_id: str, user: User = Depends(require_admin)):
+        try:
+            app.state.apikeys.delete(key_id)
+        except KeyError_ as exc:
+            raise _key_error(exc) from exc
+        return {"ok": True}
 
     @app.post("/api/security/test", tags=["security"])
     def test_security(user: User = Depends(require_admin)):
@@ -866,6 +925,24 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         kick(full=False)
         return app.state.system.public()
 
+    @app.get("/api/update", tags=["system"])
+    def get_update(user: User = Depends(current_user)):
+        """Update check (version.worldgate.de): installed and newest version. Only admins see the details."""
+        info = app.state.update_check.public()
+        return info if user.is_admin else {"installed": info["installed"]}
+
+    @app.put("/api/update", tags=["system"])
+    def put_update(body: UpdateSwitch, user: User = Depends(require_admin)):
+        if app.state.update_check.public()["locked"]:
+            raise HTTPException(status_code=409, detail="switched off by VERSIONSPRUEFUNG=0")
+        return app.state.update_check.set_enabled(body.on)
+
+    @app.post("/api/update/check", tags=["system"])
+    def check_update(user: User = Depends(require_admin)):
+        if not app.state.update_check.enabled():
+            raise HTTPException(status_code=409, detail="update check is switched off")
+        return app.state.update_check.check()
+
     @app.post("/api/rescan", tags=["system"])
     def rescan(user: User = Depends(require_admin)):
         kick()
@@ -929,6 +1006,10 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         sort: str = Query("", pattern="^(|date|title|area|relevance)$",
                           description="relevance: best hits first for a search; else (and by default) date"),
         desc: bool = Query(True),
+        date_from: str | None = Query(None, pattern=r"^\d{4}(-\d{2}(-\d{2})?)?$",
+                                      description="only documents dated on or after this day (YYYY, YYYY-MM or YYYY-MM-DD)"),
+        date_to: str | None = Query(None, pattern=r"^\d{4}(-\d{2}(-\d{2})?)?$",
+                                    description="only documents dated on or before this day (YYYY, YYYY-MM or YYYY-MM-DD)"),
         user: User = Depends(current_user),
     ):
         store = app.state.tags
@@ -949,7 +1030,8 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         result = app.state.index.documents(
             pick_areas(user, areas), folder="" if wanted and not folder else folder,
             recursive=recursive or bool(wanted) or bool(words and not folder), query=" ".join(words), limit=limit, offset=offset, shas=shas,
-            alt=alt, sort=sort, desc=desc,
+            alt=alt, sort=sort, desc=desc, date_from=date_from or None,
+            date_to=_date_end(date_to) if date_to else None,
         )
         tagmap = store.mapping()
         hidden = store.hidden_for(user.can_read)
@@ -1800,6 +1882,18 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         return {"text": result.text[:200], "model": result.model, "seconds": result.seconds,
                 "input_tokens": result.input_tokens, "output_tokens": result.output_tokens,
                 "cost": round(result.cost, 6)}
+
+    # the same functions again as tools for an AI assistant (Model Context Protocol)
+    from types import SimpleNamespace
+
+    from .mcp import mount_mcp
+    mount_mcp(app, SimpleNamespace(
+        areas=areas, tree=tree, documents=documents, document=document, document_text=document_text,
+        tag_list=tag_list, document_tags=document_tags, tags_change=tags_change, document_meta=document_meta,
+        document_move=document_move, document_trash=document_trash, trash_items=trash_items,
+        trash_restore=trash_restore, mappen_list=mappen_list, mappen_add=mappen_add,
+        inbox_list=inbox_list, inbox_item=inbox_item, inbox_text=inbox_text, inbox_do_file=inbox_do_file,
+        inbox_dismiss=inbox_dismiss, senders_list=senders_list))
 
     @app.middleware("http")
     async def same_origin_only(request: Request, call_next):

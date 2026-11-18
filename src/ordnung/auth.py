@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hmac
 from dataclasses import dataclass
 
 from fastapi import HTTPException, Request
@@ -10,6 +9,7 @@ from fastapi import HTTPException, Request
 
 COOKIE = "ordnung_session"              # plain http (local testing, own LAN without TLS)
 COOKIE_SECURE = "__Host-ordnung_session"  # https: Secure, whole host only, no Domain
+READING_METHODS = ("GET", "HEAD", "OPTIONS")
 
 
 @dataclass(frozen=True)
@@ -53,10 +53,19 @@ def needs_mfa_outside(request: Request, account) -> bool:
 
 def current_user(request: Request) -> User:
     header = request.headers.get("authorization", "")
-    api_token = request.app.state.security.load().api_token if header.startswith("Bearer ") else ""
-    if api_token:
-        if hmac.compare_digest(header[7:].encode(), api_token.encode()):
-            return User(name="api", display_name="API", is_admin=True)
+    if header.startswith("Bearer "):
+        key = request.app.state.apikeys.check(header[7:].strip())
+        if not key:
+            raise HTTPException(status_code=401, detail="not authenticated")
+        if key.right == "write":
+            return User(name="api", display_name=key.name, is_admin=True)
+        # a reading key changes nothing, whatever the route would allow; the MCP endpoint is
+        # a POST for every call and keeps reading keys away from its writing tools itself
+        if request.method not in READING_METHODS and request.url.path != "/api/mcp":
+            raise HTTPException(status_code=403, detail="this API key may only read")
+        # it sees every area, like an administrator, but is none: admin-only routes stay shut
+        areas = {a["name"]: "read" for a in request.app.state.index.areas()}
+        return User(name="api", display_name=key.name, is_admin=False, areas=areas)
     session = request.app.state.sessions.get(session_token(request), client_ip(request))
     account = request.app.state.users.get(session.user) if session else None
     if account:

@@ -1,4 +1,4 @@
-"""Background work settings: text recognition, rescan interval, worker count.
+"""System settings: text recognition, rescan interval, worker count, and whether the MCP endpoint is on.
 
 They used to come only from the environment; now they live in ``system.json`` and can be changed
 under Settings → System. The environment still gives the defaults for a fresh installation.
@@ -31,6 +31,7 @@ class SystemConfig:
     ocr_max_pages: int = 30          # recognise at most this many pages per document
     rescan_minutes: int = 10         # full re-read of the archive folders
     text_workers: int = 1            # documents read at the same time
+    mcp: bool = False                # the MCP endpoint for AI assistants; off until an administrator turns it on
 
 
 class SystemStore:
@@ -71,6 +72,8 @@ class SystemStore:
                     if not low <= int(value) <= high:
                         raise ValueError(f"{key} must be between {low} and {high}")
                     value = int(value)
+                elif key in ("ocr", "mcp"):
+                    value = bool(value)
                 setattr(config, key, value)
             tmp = self.path.with_suffix(".tmp")
             tmp.write_text(json.dumps(asdict(config), indent=2), encoding="utf-8")

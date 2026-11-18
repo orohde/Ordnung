@@ -62,6 +62,18 @@ const I18N = {
     'status.docs': '{n} Dokumente', 'status.scan': 'eingelesen {t}', 'status.scanning': 'liest ein …',
     'count.of': '{n} von {total}', 'area.none': '(ohne)',
     'status.texts': 'Texte {done}/{total}',
+    'upd.btn': 'Neue Version {v}', 'upd.title': 'Neue Version {v}',
+    'upd.intro': 'Installiert ist Version {cur}. Deine Dokumente und Einstellungen bleiben beim Update erhalten – sie liegen in deinen Ordnern und im Datenordner, nicht im Container.',
+    'upd.how': 'So aktualisierst du', 'upd.notes': 'Was ist neu', 'upd.release': 'Alle Änderungen ↗', 'upd.close': 'Schließen',
+    'upd.unraid': 'Reiter Docker, beim Container auf „update ready“ klicken und „Apply update“ wählen.',
+    'upd.syno': 'Container Manager → Image → beim Image von Ordnung! „Update verfügbar“ → Aktualisieren.',
+    'upd.compose': 'im Ordner mit der compose.yml',
+    'upd.card': 'Neue Versionen', 'upd.f.on': 'Einmal am Tag nach neuen Versionen sehen',
+    'upd.f.hint': 'Ordnung! fragt dafür bei version.worldgate.de nach. Übertragen werden nur App-Name, installierte Version und Installationsart (z. B. Docker) – keine Kennung, keine Dokumente, keine Namen. Dort werden nur Tagessummen gezählt. Dauerhaft abschalten lässt es sich auch mit VERSIONSPRUEFUNG=0.',
+    'upd.f.locked': 'Abgeschaltet über VERSIONSPRUEFUNG=0.', 'upd.check': 'Jetzt prüfen', 'upd.checked': 'Geprüft.',
+    'upd.state.new': 'Version {v} ist verfügbar (installiert: {cur}).', 'upd.state.ok': 'Aktuell: Version {cur} (zuletzt geprüft am {d}).',
+    'upd.state.never': 'Installiert: Version {cur}. Noch nicht geprüft.', 'upd.state.err': 'Die letzte Prüfung am {d} hat nicht geklappt (kein Internet?). Ordnung! versucht es morgen wieder.',
+    'upd.state.off': 'Installiert: Version {cur}. Die Prüfung ist aus.',
     'set.title': 'Einstellungen', 'set.account': 'Mein Konto', 'set.users': 'Benutzer', 'set.system': 'System',
     'set.ai': 'KI', 'set.back': '← Zurück zum Archiv', 'set.storage': 'Ablage',
     'st.intro': 'Wo das Archiv liegt und aus welchen Ordnern neue Dokumente kommen. Zur Auswahl stehen die Ordner, die dem Container zur Verfügung stehen.',
@@ -314,17 +326,36 @@ const I18N = {
     "err.languages like deu+eng": "Sprachen bitte wie deu+eng angeben.",
     "set.api": "API",
     "api.intro": "Alles, was die Oberfläche kann, geht auch per REST-API unter /api/, für Skripte, Kurzbefehle oder Home Assistant.",
-    "api.key": "API-Schlüssel",
+    "api.keys": "API-Schlüssel",
+    "api.keys.hint": "Jedes Programm bekommt seinen eigenen Schlüssel, dann lässt sich einer allein widerrufen. „Lesen und schreiben“ öffnet alles wie ein Administrator, „Nur lesen“ zeigt alle Bereiche, ändert aber nichts.",
+    "api.col.name": "Name",
+    "api.col.right": "Recht",
+    "api.col.made": "Angelegt",
+    "api.col.last": "Zuletzt benutzt",
+    "api.none2": "Noch kein Schlüssel. Die API geht dann nur mit angemeldetem Browser.",
+    "api.name.ph": "Name, z. B. Claude oder Mail-Sortierer",
+    "api.right.write": "Lesen und schreiben",
+    "api.right.read": "Nur lesen",
+    "api.add": "Schlüssel anlegen",
+    "api.fresh": "Das ist der neue Schlüssel. Jetzt kopieren – er wird nur einmal gezeigt.",
+    "api.never": "noch nie",
+    "api.renew": "Neu erzeugen",
+    "api.renew.q": "Neuen Schlüssel für „{name}“ erzeugen? Der bisherige gilt sofort nicht mehr.",
+    "api.del.q2": "Schlüssel „{name}“ löschen? Programme, die ihn benutzen, kommen dann nicht mehr hinein.",
+    "api.saved": "„{name}“ gespeichert.",
+    "err.a key with this name exists": "Einen Schlüssel mit diesem Namen gibt es schon.",
+    "err.name must have 1 to 60 characters": "Der Name braucht 1 bis 60 Zeichen.",
+    "mcp.title": "Zugang für KI-Assistenten (MCP)",
+    "mcp.hint": "Über diesen Zugang kann ein KI-Assistent wie Claude in Ordnung! suchen und Dokumente lesen und – mit einem Schlüssel, der schreiben darf – Tags setzen, umbenennen, verschieben, in den Papierkorb legen und den Posteingang einsortieren. Rechte und Papierkorb gelten dabei wie in der Oberfläche; endgültig gelöscht wird nichts.",
+    "mcp.on": "MCP-Zugang einschalten",
+    "mcp.url": "Adresse",
+    "mcp.keys": "Der Assistent meldet sich mit einem API-Schlüssel an. Schlüssel legst du unter Einstellungen → API an, nur lesend oder lesend und schreibend.",
+    "mcp.keys.link": "Zu den API-Schlüsseln",
+    "mcp.saved.on": "Der MCP-Zugang ist eingeschaltet.",
+    "mcp.saved.off": "Der MCP-Zugang ist ausgeschaltet.",
     "api.copy": "Kopieren",
-    "api.new": "Neu erzeugen",
     "api.del": "Löschen",
-    "api.none": "Kein Schlüssel: Die API ist nur mit einer Anmeldung im Browser nutzbar.",
-    "api.set": "Schlüssel ist aktiv.",
-    "api.hint": "Programme schicken den Schlüssel bei jeder Anfrage mit. Er öffnet alles wie ein Administrator, also gehört er nur in vertrauenswürdige Skripte. Neu erzeugen macht den alten sofort ungültig.",
-    "api.new.q": "Neuen Schlüssel erzeugen? Der bisherige funktioniert dann sofort nicht mehr – Skripte, die ihn nutzen, brauchen den neuen.",
-    "api.del.q": "Schlüssel löschen? Skripte kommen dann nicht mehr hinein.",
     "api.copied": "Schlüssel kopiert",
-    "api.made": "Neuer Schlüssel erzeugt",
     "api.ref": "Beschreibung aller Endpunkte",
     "api.ref.hint": "Ordnung! beschreibt seine API selbst: jeder Endpunkt mit Parametern und Antwort, direkt im Browser ausprobierbar (mit deiner Anmeldung).",
     "api.open": "API-Beschreibung öffnen",
@@ -461,6 +492,18 @@ const I18N = {
     'status.docs': '{n} documents', 'status.scan': 'scanned {t}', 'status.scanning': 'scanning …',
     'count.of': '{n} of {total}', 'area.none': '(none)',
     'status.texts': 'Texts {done}/{total}',
+    'upd.btn': 'New version {v}', 'upd.title': 'New version {v}',
+    'upd.intro': 'Installed: version {cur}. Your documents and settings are kept during the update – they live in your folders and the data folder, not in the container.',
+    'upd.how': 'How to update', 'upd.notes': 'What’s new', 'upd.release': 'All changes ↗', 'upd.close': 'Close',
+    'upd.unraid': 'Docker tab, click “update ready” on the container and choose “Apply update”.',
+    'upd.syno': 'Container Manager → Image → “Update available” on the Ordnung! image → Update.',
+    'upd.compose': 'in the folder with the compose.yml',
+    'upd.card': 'New versions', 'upd.f.on': 'Look for new versions once a day',
+    'upd.f.hint': 'Ordnung! asks version.worldgate.de. Only the app name, the installed version and the kind of installation (e.g. Docker) are sent – no identifier, no documents, no names. Only daily totals are counted there. Switch it off for good with VERSIONSPRUEFUNG=0.',
+    'upd.f.locked': 'Switched off by VERSIONSPRUEFUNG=0.', 'upd.check': 'Check now', 'upd.checked': 'Checked.',
+    'upd.state.new': 'Version {v} is available (installed: {cur}).', 'upd.state.ok': 'Up to date: version {cur} (last checked {d}).',
+    'upd.state.never': 'Installed: version {cur}. Not checked yet.', 'upd.state.err': 'The last check on {d} failed (no internet?). Ordnung! tries again tomorrow.',
+    'upd.state.off': 'Installed: version {cur}. The check is off.',
     'set.title': 'Settings', 'set.account': 'My account', 'set.users': 'Users', 'set.system': 'System',
     'set.ai': 'AI', 'set.back': '← Back to the archive', 'set.storage': 'Storage',
     'st.intro': 'Where the archive lives and which folders new documents come from. You can pick from the folders available to the container.',
@@ -712,17 +755,36 @@ const I18N = {
     "err.languages like deu+eng": "Please give languages like deu+eng.",
     "set.api": "API",
     "api.intro": "Everything the interface does is also available through the REST API under /api/, for scripts, shortcuts or Home Assistant.",
-    "api.key": "API key",
+    "api.keys": "API keys",
+    "api.keys.hint": "Give every program its own key, so one can be revoked on its own. “Read and write” opens everything like an administrator, “Read only” shows all areas but changes nothing.",
+    "api.col.name": "Name",
+    "api.col.right": "Right",
+    "api.col.made": "Created",
+    "api.col.last": "Last used",
+    "api.none2": "No key yet. The API then only works with a signed-in browser.",
+    "api.name.ph": "Name, e.g. Claude or mail sorter",
+    "api.right.write": "Read and write",
+    "api.right.read": "Read only",
+    "api.add": "Create key",
+    "api.fresh": "This is the new key. Copy it now – it is shown only once.",
+    "api.never": "never",
+    "api.renew": "Renew",
+    "api.renew.q": "Create a new key for “{name}”? The current one stops working at once.",
+    "api.del.q2": "Delete the key “{name}”? Programs using it can no longer get in.",
+    "api.saved": "“{name}” saved.",
+    "err.a key with this name exists": "There is already a key with this name.",
+    "err.name must have 1 to 60 characters": "The name needs 1 to 60 characters.",
+    "mcp.title": "Access for AI assistants (MCP)",
+    "mcp.hint": "Through this access an AI assistant such as Claude can search Ordnung! and read documents and – with a key that may write – set tags, rename, move, put into the trash and file the inbox. Rights and the trash apply as in the interface; nothing is deleted for good.",
+    "mcp.on": "Switch MCP access on",
+    "mcp.url": "Address",
+    "mcp.keys": "The assistant signs in with an API key. Keys are made under Settings → API, read-only or read and write.",
+    "mcp.keys.link": "To the API keys",
+    "mcp.saved.on": "MCP access is on.",
+    "mcp.saved.off": "MCP access is off.",
     "api.copy": "Copy",
-    "api.new": "Create new",
     "api.del": "Delete",
-    "api.none": "No key: the API can only be used signed in from a browser.",
-    "api.set": "Key is active.",
-    "api.hint": "Programs send the key with every request. It opens everything like an administrator, so keep it to trusted scripts. Creating a new one disables the old one at once.",
-    "api.new.q": "Create a new key? The current one stops working at once – scripts using it need the new one.",
-    "api.del.q": "Delete the key? Scripts can no longer get in.",
     "api.copied": "Key copied",
-    "api.made": "New key created",
     "api.ref": "All endpoints",
     "api.ref.hint": "Ordnung! describes its own API: every endpoint with parameters and response, to try out right in the browser (with your sign-in).",
     "api.open": "Open API reference",
@@ -967,6 +1029,7 @@ async function showApp() {
   await loadOpen();
   await Promise.all([loadTree(), loadDocs(), loadStatus(), loadTags()]);
   updateImportButton();
+  loadUpdate();
 }
 
 // ----------------------------------------------------------------- chips
@@ -1492,7 +1555,7 @@ function showPane(pane) {
   if (pane === 'security') loadSecurity();
   if (pane === 'api') loadApiKey();
   if (pane === 'mail') loadMail();
-  if (pane === 'ai') loadAI();
+  if (pane === 'ai') { loadMcp(); loadAI(); }
   if (pane === 'storage') loadStorage();
   if (pane === 'folders') loadFolders();
   if (pane === 'system') loadSystem();
@@ -1861,18 +1924,58 @@ function initSecurity() {
   });
 }
 
-function showApiKey(token) {
-  $('api-key').value = token;
-  $('api-key').placeholder = token ? '' : '–';
-  $('api-copy').hidden = !token;
-  $('api-del').hidden = !token;
-  $('api-state').textContent = t(token ? 'api.set' : 'api.none');
+function showFreshKey(token) {
+  $('api-fresh').hidden = !token;
+  $('api-key').value = token || '';
   $('api-example').textContent = `curl -H "Authorization: Bearer ${token || '…'}" \\\n     "${location.origin}/api/documents?q=versicherung&limit=5"`;
+  if (token) $('api-key').select();
 }
+
+const shortTime = iso => iso ? new Date(iso).toLocaleString(LANG, { dateStyle: 'short', timeStyle: 'short' }) : '–';
 
 async function loadApiKey() {
   $('api-guide').href = LANG === 'de' ? 'https://worldgate.de/ordnung/api/' : 'https://worldgate.de/en/ordnung-en/api/';
-  showApiKey((await api('security/api-token')).api_token);
+  showFreshKey('');
+  $('api-msg').textContent = '';
+  const keys = await api('security/api-keys');
+  $('api-none').hidden = keys.length > 0;
+  const rows = $('api-rows');
+  rows.innerHTML = '';
+  for (const k of keys) {
+    const tr = document.createElement('tr');
+    tr.className = 'fd-table__row';
+    tr.innerHTML =
+      `<td class="fd-table__cell"><b>${esc(k.name)}</b> <span class="field-hint">…${esc(k.hint)}</span></td>` +
+      `<td class="fd-table__cell"><select class="fd-input api-right-sel">` +
+      `<option value="write"${k.right === 'write' ? ' selected' : ''}>${esc(t('api.right.write'))}</option>` +
+      `<option value="read"${k.right === 'read' ? ' selected' : ''}>${esc(t('api.right.read'))}</option></select></td>` +
+      `<td class="fd-table__cell">${esc(shortTime(k.made))}</td>` +
+      `<td class="fd-table__cell">${esc(k.last ? shortTime(k.last) : t('api.never'))}</td>` +
+      `<td class="fd-table__cell api-actions"><button type="button" class="fd-button fd-button--transparent" data-k="renew">${esc(t('api.renew'))}</button>` +
+      `<button type="button" class="fd-button fd-button--transparent fd-button--negative" data-k="del">${esc(t('api.del'))}</button></td>`;
+    tr.querySelector('.api-right-sel').addEventListener('change', async ev => {
+      try {
+        await api('security/api-keys/' + k.id, { method: 'PATCH', body: JSON.stringify({ right: ev.target.value }) });
+        setMsg($('api-msg'), t('api.saved', { name: k.name }), true);
+      } catch (e) { setMsg($('api-msg'), errText(e), false); }
+    });
+    tr.querySelector('[data-k="renew"]').addEventListener('click', async () => {
+      if (!confirm(t('api.renew.q', { name: k.name }))) return;
+      try {
+        const r = await api(`security/api-keys/${k.id}/renew`, { method: 'POST' });
+        await loadApiKey();
+        showFreshKey(r.token);
+      } catch (e) { setMsg($('api-msg'), errText(e), false); }
+    });
+    tr.querySelector('[data-k="del"]').addEventListener('click', async () => {
+      if (!confirm(t('api.del.q2', { name: k.name }))) return;
+      try {
+        await api('security/api-keys/' + k.id, { method: 'DELETE' });
+        loadApiKey();
+      } catch (e) { setMsg($('api-msg'), errText(e), false); }
+    });
+    rows.appendChild(tr);
+  }
 }
 
 function initApiKey() {
@@ -1880,15 +1983,38 @@ function initApiKey() {
     try { await navigator.clipboard.writeText($('api-key').value); toast(esc(t('api.copied')), null, 2500); }
     catch { $('api-key').select(); }
   });
-  $('api-new').addEventListener('click', async () => {
-    if ($('api-key').value && !confirm(t('api.new.q'))) return;
-    showApiKey((await api('security/api-token', { method: 'POST' })).api_token);
-    toast(esc(t('api.made')), null, 2500);
-  });
-  $('api-del').addEventListener('click', async () => {
-    if (!confirm(t('api.del.q'))) return;
-    showApiKey((await api('security/api-token', { method: 'DELETE' })).api_token);
-  });
+  const add = async () => {
+    const name = $('api-name').value.trim();
+    if (!name) { $('api-name').focus(); return; }
+    try {
+      const r = await api('security/api-keys', { method: 'POST', body: JSON.stringify({ name, right: $('api-right').value }) });
+      $('api-name').value = '';
+      await loadApiKey();
+      showFreshKey(r.token);
+    } catch (e) { setMsg($('api-msg'), errText(e), false); }
+  };
+  $('api-add').addEventListener('click', add);
+  $('api-name').addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); add(); } });
+  $('mcp-on').addEventListener('change', saveMcp);
+}
+
+// the switch for the MCP endpoint (Settings → AI); the assistant signs in with a key from above
+async function loadMcp() {
+  $('mcp-msg').textContent = '';
+  $('mcp-url').textContent = new URL('api/mcp', location.href.split('#')[0]).href;
+  try { $('mcp-on').checked = (await api('system/settings')).mcp; } catch (e) { setMsg($('mcp-msg'), errText(e), false); }
+}
+
+async function saveMcp() {
+  const on = $('mcp-on').checked;
+  try {
+    const saved = await api('system/settings', { method: 'PUT', body: JSON.stringify({ mcp: on }) });
+    $('mcp-on').checked = saved.mcp;
+    setMsg($('mcp-msg'), t(saved.mcp ? 'mcp.saved.on' : 'mcp.saved.off'), true);
+  } catch (e) {
+    $('mcp-on').checked = !on;
+    setMsg($('mcp-msg'), errText(e), false);
+  }
 }
 
 async function loadSystem() {
@@ -1907,6 +2033,68 @@ async function loadSystem() {
   $('sys-info').innerHTML = rows.map(([k, v]) => `<dt>${esc(t(k))}</dt><dd>${esc(v)}</dd>`).join('');
   loadTextErrors();
   if (State.me.is_admin) showSystemSettings(await api('system/settings'));
+  if (State.me.is_admin) showUpdateCard(await loadUpdate());
+}
+
+// --------------------------------------------------------------- update check (version.worldgate.de)
+
+function updDate(d) { return d ? new Date(d + 'T12:00').toLocaleDateString(LANG) : '–'; }
+
+async function loadUpdate() {
+  const btn = $('btn-update');
+  btn.hidden = true;
+  if (!State.me.is_admin) return null;
+  let u;
+  try { u = await api('update'); } catch { return null; }
+  if (u.on && u.newer) {
+    btn.textContent = t('upd.btn', { v: u.latest });
+    btn.hidden = false;
+    btn.onclick = () => openUpdateDialog(u);
+  }
+  return u;
+}
+
+function openUpdateDialog(u) {
+  $('upd-dlg-title').textContent = t('upd.title', { v: u.latest });
+  $('upd-dlg-intro').textContent = t('upd.intro', { cur: u.installed });
+  $('upd-dlg-notes').textContent = u.notes || '–';
+  const link = $('upd-dlg-link');
+  link.hidden = !u.url;
+  link.href = u.url || '#';
+  $('upd-dlg').showModal();
+}
+
+function showUpdateCard(u) {
+  if (!u) return;
+  $('upd-on').checked = u.on;
+  $('upd-on').disabled = u.locked;
+  $('upd-check').disabled = !u.on;
+  let state;
+  if (u.locked) state = t('upd.f.locked');
+  else if (!u.on) state = t('upd.state.off', { cur: u.installed });
+  else if (u.newer) state = t('upd.state.new', { v: u.latest, cur: u.installed });
+  else if (u.error) state = t('upd.state.err', { d: updDate(u.checked) });
+  else if (u.checked) state = t('upd.state.ok', { cur: u.installed, d: updDate(u.checked) });
+  else state = t('upd.state.never', { cur: u.installed });
+  $('upd-state').textContent = state;
+}
+
+function bindUpdate() {
+  $('upd-dlg-close').addEventListener('click', () => $('upd-dlg').close());
+  $('upd-on').addEventListener('change', async () => {
+    try {
+      showUpdateCard(await api('update', { method: 'PUT', body: JSON.stringify({ on: $('upd-on').checked }) }));
+      setMsg($('upd-msg'), t('sec.saved'), true);
+      loadUpdate();
+    } catch (e) { setMsg($('upd-msg'), errText(e), false); }
+  });
+  $('upd-check').addEventListener('click', async () => {
+    try {
+      showUpdateCard(await api('update/check', { method: 'POST' }));
+      setMsg($('upd-msg'), t('upd.checked'), true);
+      loadUpdate();
+    } catch (e) { setMsg($('upd-msg'), errText(e), false); }
+  });
 }
 
 function showSystemSettings(c) {
@@ -3222,6 +3410,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('usr-form').addEventListener('submit', saveUser);
   $('usr-admin').addEventListener('change', syncAdminAreas);
   $('sys-form').addEventListener('submit', saveSystemSettings);
+  bindUpdate();
   $('sys-rescan').addEventListener('click', async () => {
     await api('rescan', { method: 'POST' });
     $('sys-rescan').textContent = t('sys.rescan.ok');

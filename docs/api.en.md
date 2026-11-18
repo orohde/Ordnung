@@ -8,16 +8,22 @@ Everything the interface does is also available through the REST API under `/api
 
 ## Signing in with an API key
 
-Under **Settings → API** (administrators only) you create a key and copy it. Programs send it with every request as a bearer token:
+Under **Settings → API** (administrators only) you create named keys – best one per program – and copy it. Programs send it with every request as a bearer token:
 
 ```bash
 curl -H "Authorization: Bearer YOUR_KEY" https://ordnung.example.org/api/documents?q=insurance
 ```
 
-- The key acts **like an administrator** and sees every area. Keep it to trusted scripts.
-- **Create new** disables the old key at once, **Delete** turns key access off.
+- Every key has a **right**: *Read and write* acts **like an administrator**, *Read only* sees every area but changes nothing (anything but GET is refused with 403, admin areas such as the inbox or users stay shut).
+- Only a hash is stored; the key is shown exactly once. **Renew** disables the old secret at once, **Delete** locks the program out. The list shows when a key was last used.
 - Without a key the API can only be used with a browser sign-in (session cookie).
-- The key used to come from the environment variable `ORDNUNG_API_TOKEN`. If it is set, Ordnung! takes it over into the settings once on first start. After that only the settings count, and the variable can go from the compose file.
+- The single key of earlier versions becomes the named key "API" with the write right on update and keeps working unchanged. `ORDNUNG_API_TOKEN`, too, is taken over like this once on first start; after that the variable can go from the compose file.
+
+## For AI assistants (MCP)
+
+MCP access is off in a fresh installation; an administrator switches it on under *Settings → AI*. The endpoint `/api/mcp` speaks the Model Context Protocol (streamable HTTP) and takes the same key as `Authorization: Bearer <key>`.
+
+Tools: list areas, folders, tags, Mappen and the trash, search (by area, folder, tags, date range), read a document with its recognised text, set or change tags, change title and date, move, create a Mappe, put into the trash and restore. With an administrator key also: view the inbox, file or set aside items, list senders. A read-only key is offered no writing tool. Nothing is deleted for good through MCP, and settings (users, security, storage, rules) are left to the interface.
 
 ## Main endpoints
 
@@ -54,6 +60,7 @@ Documents have an `id` (the short ID from the file name). Areas are named like t
 | `folder`, `recursive` | Folder and whether subfolders count; a search without `folder` always covers the whole archive |
 | `areas` | Areas, comma-separated; without: all allowed ones |
 | `tags` | Tags, comma-separated, all must match |
+| `date_from`, `date_to` | Date range by document date, both days included; `2026`, `2026-03` or `2026-03-15` |
 | `alt` | `true` searches the old files, too |
 | `sort`, `desc` | `date` (default), `title`, `area` or `relevance` (best hits first, searches only); `desc=false` reverses |
 | `limit`, `offset` | Paging, default 500 |
