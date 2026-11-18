@@ -84,6 +84,7 @@ class MailStore:
     def update(self, changes: dict) -> MailConfig:
         with self._lock:
             config = self.load()
+            target = config.host
             if changes.pop("clear_password", False):
                 config.password = ""
             for key, value in changes.items():
@@ -100,6 +101,8 @@ class MailStore:
                 if key == "folder" and not value:
                     value = "INBOX"
                 setattr(config, key, value)
+            if config.host != target and not (changes.get("password") or "").strip():
+                config.password = ""        # the password belongs to the server it was given for
             if config.enabled and not (config.host and config.user and config.password):
                 raise MailError("server, user and password are needed")
             _write_json(self.path, asdict(config))

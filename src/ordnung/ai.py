@@ -177,6 +177,7 @@ class AIService:
     def update(self, changes: dict) -> AIConfig:
         with self._lock:
             config = self.load()
+            target = (config.provider, config.base_url)
             if "provider" in changes and changes["provider"] not in PROVIDERS:
                 raise AIError("unknown provider")
             for key in ("enabled", "provider", "model", "base_url", "monthly_limit_usd", "excluded_areas",
@@ -194,7 +195,8 @@ class AIService:
             if config.provider == "ollama" and config.base_url and not config.base_url.endswith("/v1"):
                 config.base_url += "/v1"  # Ollama's OpenAI-compatible endpoints live under /v1
             config.monthly_limit_usd = max(0.0, float(config.monthly_limit_usd))
-            if changes.get("clear_key"):
+            if changes.get("clear_key") or ((config.provider, config.base_url) != target and not changes.get("api_key")):
+                # a key belongs to the address it was given for: it never goes on to a new one
                 config.api_key = ""
             elif changes.get("api_key"):
                 key = changes["api_key"].strip()

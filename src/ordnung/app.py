@@ -572,41 +572,43 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
                         "notify_lockout", "lock.title", "lock.body", priority=4, tags="warning",
                         user=name, count=failures, ip=ip, minutes=max(1, seconds // 60),
                         where=app.state.notify.text("where.ext" if external else "where.int"))
-                time.sleep(1)
             raise HTTPException(status_code=status, detail=detail)
 
-        wait = guard.locked_for(name, external)
+        wait = guard.begin(name, external)
         if wait:
             raise HTTPException(status_code=429, detail="locked", headers={"Retry-After": str(wait)})
-        account = app.state.users.authenticate(name, body.password)
-        if not account:
-            refuse(401, "invalid credentials")
-        policy = app.state.security.load()
-        if external and policy.require_2fa_external and not account.has_totp:
-            refuse(403, "second factor required outside", count=False)
-        mfa = False
-        if account.has_totp and (external or policy.require_2fa_internal or body.code):
-            if not body.code:
-                raise HTTPException(status_code=401, detail="code required")
-            kind = app.state.users.second_factor(name, body.code)
-            if not kind:
-                refuse(401, "invalid code")
-            mfa = True
-            if kind == "recovery":
-                left = app.state.users.get(name).public()["recovery_left"]
-                app.state.notify.send("notify_2fa_changes", "recovery.title", "recovery.body",
-                                      priority=4, tags="key", user=name, left=left, ip=ip)
-        guard.success(name, external)
-        agent = request.headers.get("user-agent", "")
-        token = app.state.sessions.create(name, ip=ip, agent=agent, external=external, mfa=mfa)
-        response.set_cookie(
-            cookie_name(request), token, max_age=SessionStore.max_age(external),
-            httponly=True, samesite="lax", secure=is_https(request), path="/",
-        )
-        if external:
-            app.state.notify.send("notify_external_login", "external.title", "external.body",
-                                  user=name, ip=ip, agent=describe_agent(agent))
-        return account.public()
+        try:
+            account = app.state.users.authenticate(name, body.password)
+            if not account:
+                refuse(401, "invalid credentials")
+            policy = app.state.security.load()
+            if external and policy.require_2fa_external and not account.has_totp:
+                refuse(403, "second factor required outside", count=False)
+            mfa = False
+            if account.has_totp and (external or policy.require_2fa_internal or body.code):
+                if not body.code:
+                    raise HTTPException(status_code=401, detail="code required")
+                kind = app.state.users.second_factor(name, body.code)
+                if not kind:
+                    refuse(401, "invalid code")
+                mfa = True
+                if kind == "recovery":
+                    left = app.state.users.get(name).public()["recovery_left"]
+                    app.state.notify.send("notify_2fa_changes", "recovery.title", "recovery.body",
+                                          priority=4, tags="key", user=name, left=left, ip=ip)
+            guard.success(name, external)
+            agent = request.headers.get("user-agent", "")
+            token = app.state.sessions.create(name, ip=ip, agent=agent, external=external, mfa=mfa)
+            response.set_cookie(
+                cookie_name(request), token, max_age=SessionStore.max_age(external),
+                httponly=True, samesite="lax", secure=is_https(request), path="/",
+            )
+            if external:
+                app.state.notify.send("notify_external_login", "external.title", "external.body",
+                                      user=name, ip=ip, agent=describe_agent(agent))
+            return account.public()
+        finally:
+            guard.end(name, external)
 
     @app.get("/api/setup", tags=["auth"])
     def setup_state(request: Request):

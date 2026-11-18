@@ -201,9 +201,32 @@ class LoginGuard:
     can lock an account for the internet only – at home it keeps working.
     """
 
+    KEEP = 10_000          # accounts remembered at most; the oldest unlocked ones go first
+
     def __init__(self):
         self._lock = threading.Lock()
         self._state: dict[tuple[str, bool], list[float]] = {}   # key -> [failures, locked_until, last]
+        self._busy: set[tuple[str, bool]] = set()               # a try for this account is running
+
+    def begin(self, name: str, external: bool) -> int:
+        """Seconds until this account may try again – 0: go ahead, and end() must follow.
+
+        Checking and counting happen apart (the password check takes its time in between), so
+        only one try per account runs at once: many sent together cannot slip past the lock.
+        """
+        key = (name, external)
+        with self._lock:
+            if key in self._busy:
+                return 1
+            state = self._state.get(key)
+            wait = max(0, int(state[1] - time.time() + 0.999)) if state else 0
+            if not wait:
+                self._busy.add(key)
+            return wait
+
+    def end(self, name: str, external: bool) -> None:
+        with self._lock:
+            self._busy.discard((name, external))
 
     def locked_for(self, name: str, external: bool) -> int:
         with self._lock:
@@ -216,8 +239,11 @@ class LoginGuard:
         """Count a failure; returns (failures, seconds locked now – 0 if not locked)."""
         now = time.time()
         with self._lock:
-            if len(self._state) > 10_000:
+            if len(self._state) > self.KEEP:
                 self._state = {k: v for k, v in self._state.items() if now - v[2] < DAY}
+            if len(self._state) > self.KEEP:      # still too many: keep the locked, then the newest
+                ranked = sorted(self._state.items(), key=lambda kv: (kv[1][1] > now, kv[1][2]), reverse=True)
+                self._state = dict(ranked[: self.KEEP // 2])
             state = self._state.setdefault((name, external), [0, 0.0, now])
             if now - state[2] > DAY:
                 state[0] = 0
@@ -335,6 +361,7 @@ class SecurityStore:
     def update(self, changes: dict) -> SecurityConfig:
         with self._lock:
             config = self.load()
+            target = config.ntfy_url
             if changes.pop("clear_ntfy_token", False):
                 config.ntfy_token = ""
             for key, value in changes.items():
@@ -351,6 +378,8 @@ class SecurityStore:
                     if not value:
                         continue
                 setattr(config, key, value)
+            if config.ntfy_url != target and not (changes.get("ntfy_token") or "").strip():
+                config.ntfy_token = ""      # the token belongs to the address it was given for
             _write_json(self.path, asdict(config))
             return config
 
