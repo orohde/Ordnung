@@ -32,6 +32,7 @@ class Settings:
     starter: bool = True      # a fresh installation starts with the shipped rules and folders
     internal_networks: str = ""   # comma-separated CIDR ranges that count as "at home"; empty = private ranges
     trusted_proxies: str = ""     # who may tell the client address (X-Forwarded-For); empty = private ranges
+    max_upload_mb: int = 300       # largest request body in MB (ORDNUNG_MAX_UPLOAD_MB)
 
     @property
     def db_path(self) -> Path:
@@ -75,5 +76,6 @@ def load_settings() -> Settings:
         starter=_flag("ORDNUNG_STARTER", True),
         internal_networks=os.environ.get("ORDNUNG_INTERNAL_NETWORKS", ""),
         trusted_proxies=os.environ.get("ORDNUNG_TRUSTED_PROXIES", ""),
+        max_upload_mb=int(os.environ.get("ORDNUNG_MAX_UPLOAD_MB", "300")),
         text_workers=int(os.environ.get("ORDNUNG_TEXT_WORKERS", str(max(1, min(4, (os.cpu_count() or 2) // 3))))),
     )

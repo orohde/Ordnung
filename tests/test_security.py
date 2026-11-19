@@ -65,6 +65,10 @@ def test_every_route_needs_a_login(app):
             assert res.status_code == 401, f"{method} {route.path} answers {res.status_code} without login"
             checked += 1
     assert checked > 80
+    for path in ("/api/docs", "/api/openapi.json"):          # the API description too
+        assert c.get(path).status_code == 401, path
+    signed_in = client_at(app)
+    assert sign_in(signed_in).status_code == 200 and signed_in.get("/api/openapi.json").status_code == 200
 
 
 def test_logout_ends_the_session_on_the_server(app):

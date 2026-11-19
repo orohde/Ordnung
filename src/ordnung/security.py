@@ -489,3 +489,59 @@ def describe_agent(agent: str) -> str:
     system = ("iPhone" if "iPhone" in a else "iPad" if "iPad" in a else "Android" if "Android" in a
               else "Mac" if "Mac OS" in a else "Windows" if "Windows" in a else "Linux" if "Linux" in a else "")
     return f"{browser} · {system}" if system else browser
+
+
+# ----------------------------------------------------------------- request size
+
+
+class BodyLimit:
+    """ASGI layer: a request body larger than ``limit`` gets 413 – checked by Content-Length first,
+    and counted while it arrives (a body sent in chunks names no length). Paths in ``skip`` handle
+    their own limit (WebDAV)."""
+
+    class TooLarge(Exception):
+        pass
+
+    def __init__(self, app, limit: int, skip: tuple[str, ...] = ()):
+        self.app, self.limit, self.skip = app, limit, skip
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or (self.skip and scope["path"].startswith(self.skip)):
+            return await self.app(scope, receive, send)
+        length = dict(scope.get("headers") or []).get(b"content-length", b"")
+        if length.isdigit() and int(length) > self.limit:
+            return await self._refuse(send)
+        seen, started, refused = 0, False, False
+
+        async def counted():
+            nonlocal seen, started, refused
+            message = await receive()
+            if message["type"] == "http.request":
+                seen += len(message.get("body", b""))
+                if seen > self.limit:
+                    # answer right here: the framework would turn any error while reading into a 400
+                    if not started:
+                        await self._refuse(send)
+                        started = refused = True
+                    raise BodyLimit.TooLarge
+            return message
+
+        async def watched(message):
+            nonlocal started
+            if refused:                    # the 413 is out; whatever the app says after it is dropped
+                return
+            if message["type"] == "http.response.start":
+                started = True
+            await send(message)
+
+        try:
+            await self.app(scope, counted, watched)
+        except BodyLimit.TooLarge:
+            pass
+
+    @staticmethod
+    async def _refuse(send):
+        body = b'{"detail":"request too large"}'
+        await send({"type": "http.response.start", "status": 413,
+                    "headers": [(b"content-type", b"application/json"), (b"content-length", str(len(body)).encode())]})
+        await send({"type": "http.response.body", "body": body})

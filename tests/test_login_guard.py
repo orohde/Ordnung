@@ -54,3 +54,19 @@ def test_the_guard_forgets_but_never_endlessly():
     assert guard.begin("niemand499", True) == 0 and guard.begin("niemand499", True) == 1
     guard.end("niemand499", True)
     assert guard.begin("niemand499", True) == 0
+
+
+def test_password_asked_again_has_the_same_brake(app):
+    client = TestClient(app, client=("10.10.30.5", 50000))
+    assert client.post("/api/login", json={"username": "oliver", "password": "geheim123"}).status_code == 200
+    for _ in range(5):
+        assert client.post("/api/me/password", json={"old": "falsch-falsch", "new": "x" * 14}).status_code == 403
+    assert client.post("/api/me/password", json={"old": "geheim123", "new": "x" * 14}).status_code == 429
+    assert client.post("/api/me/totp/setup", json={"password": "geheim123"}).status_code == 429
+
+
+def test_names_the_app_acts_under_are_not_for_people(app):
+    client = TestClient(app, client=("10.10.30.5", 50000))
+    assert client.post("/api/login", json={"username": "oliver", "password": "geheim123"}).status_code == 200
+    for name in ("api", "upload", "API"):
+        assert client.post("/api/users", json={"name": name, "password": "geheim1234567"}).status_code == 400, name

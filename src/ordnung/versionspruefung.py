@@ -60,6 +60,12 @@ def disabled_by_env() -> bool:
     return os.environ.get("VERSIONSPRUEFUNG", "").strip().lower() in {"0", "false", "no", "off", "aus"}
 
 
+def safe_url(url: str) -> str:
+    """The link of the release goes into the page: only an https address, never javascript: and the like."""
+    url = (url or "").strip()
+    return url if url.lower().startswith("https://") and not any(c in url for c in ' "<>\'\\') else ""
+
+
 class UpdateCheck:
     """State in ``<data>/versionspruefung.json``: switch, chosen minute of the day, last answer."""
 
@@ -107,7 +113,7 @@ class UpdateCheck:
             "kind": self.kind,
             "latest": latest.get("version", ""),
             "newer": is_newer(latest.get("version", ""), self.version),
-            "url": latest.get("url", ""),
+            "url": safe_url(latest.get("url", "")),
             "notes": latest.get("notizen", ""),
             "released": latest.get("datum", ""),
             "checked": state.get("checked", ""),

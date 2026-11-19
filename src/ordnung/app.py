@@ -21,7 +21,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
-from . import __version__
+from . import __version__, outbound
 from .ai import AIError, AIService
 from .apikeys import ApiKeyStore, KeyError_
 from .altablage import ALT, cutoff, from_alt, is_alt, prune_empty
@@ -49,7 +49,8 @@ from .versionspruefung import UpdateCheck
 from .tags import TagError, TagStore
 from .tags import clean as clean_tag
 from .storage import StorageError, StorageService, path_status
-from .security import (DEFAULT_INTERNAL, LoginGuard, Networks, Notifier, SecurityStore, SessionStore, describe_agent,
+from .security import (
+    BodyLimit, DEFAULT_INTERNAL, LoginGuard, Networks, Notifier, SecurityStore, SessionStore, describe_agent,
                        normalise_networks, otpauth_uri, qr_data_uri)
 from .users import UserError, UserStore
 
@@ -349,6 +350,13 @@ class ApiKeyChange(BaseModel):
 
 
 INBOX_SECONDS = 60
+
+
+def said(exc: Exception) -> str:
+    """The message for the page: a file system error without the server's paths in it."""
+    if isinstance(exc, OSError):
+        return exc.strerror or "file system error"
+    return str(exc)
 
 
 def _date_end(value: str) -> str:
@@ -696,9 +704,25 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
             app.state.prefs.set_tree_open(user.name, body.tree_open)
         return app.state.prefs.get(user.name)
 
+    def confirm(name: str, request: Request, check) -> bool:
+        """Password or code asked again while signed in: the same brake as at the sign-in, so a
+        stolen session cannot be used to try passwords or codes without end."""
+        guard: LoginGuard = app.state.guard
+        external = is_external(request)
+        wait = guard.begin(name, external)
+        if wait:
+            raise HTTPException(status_code=429, detail="locked", headers={"Retry-After": str(wait)})
+        try:
+            if check():
+                return True
+            guard.fail(name, external)
+            return False
+        finally:
+            guard.end(name, external)
+
     @app.post("/api/me/password", tags=["auth"])
     def change_own_password(body: PasswordChange, request: Request, user: User = Depends(current_user)):
-        if not app.state.users.authenticate(user.name, body.old):
+        if not confirm(user.name, request, lambda: app.state.users.authenticate(user.name, body.old)):
             raise HTTPException(status_code=403, detail="wrong password")
         try:
             app.state.users.update(user.name, password=body.new)
@@ -732,9 +756,9 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         return {"signed_out": app.state.sessions.revoke(user.name, keep_token=session_token(request))}
 
     @app.post("/api/me/totp/setup", tags=["auth"])
-    def totp_setup(body: PasswordConfirm, user: User = Depends(current_user)):
+    def totp_setup(body: PasswordConfirm, request: Request, user: User = Depends(current_user)):
         account = _account_user(user)
-        if not app.state.users.authenticate(user.name, body.password):
+        if not confirm(user.name, request, lambda: app.state.users.authenticate(user.name, body.password)):
             raise HTTPException(status_code=403, detail="wrong password")
         if account.has_totp:
             raise HTTPException(status_code=400, detail="second factor already on")
@@ -758,11 +782,11 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         return {"recovery_codes": codes}
 
     @app.post("/api/me/totp/disable", tags=["auth"])
-    def totp_disable(body: TotpOff, user: User = Depends(current_user)):
+    def totp_disable(body: TotpOff, request: Request, user: User = Depends(current_user)):
         _account_user(user)
-        if not app.state.users.authenticate(user.name, body.password):
+        if not confirm(user.name, request, lambda: app.state.users.authenticate(user.name, body.password)):
             raise HTTPException(status_code=403, detail="wrong password")
-        if not app.state.users.second_factor(user.name, body.code):
+        if not confirm(user.name, request, lambda: app.state.users.second_factor(user.name, body.code)):
             raise HTTPException(status_code=400, detail="invalid code")
         app.state.users.totp_off(user.name)
         app.state.notify.send("notify_2fa_changes", "2fa.off.title", "2fa.off.body", priority=4,
@@ -770,9 +794,9 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         return {"ok": True}
 
     @app.post("/api/me/totp/recovery", tags=["auth"])
-    def totp_recovery(body: CodeIn, user: User = Depends(current_user)):
+    def totp_recovery(body: CodeIn, request: Request, user: User = Depends(current_user)):
         _account_user(user)
-        if app.state.users.second_factor(user.name, body.code) != "totp":
+        if not confirm(user.name, request, lambda: app.state.users.second_factor(user.name, body.code) == "totp"):
             raise HTTPException(status_code=400, detail="invalid code")
         return {"recovery_codes": app.state.users.new_recovery(user.name)}
 
@@ -1144,7 +1168,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         try:
             path = move_doc(app.state.index.archive, doc, body.folder, body.area)
         except (DocOpError, OSError) as exc:
-            raise HTTPException(status_code=409 if "exists" in str(exc) else 400, detail=str(exc)) from exc
+            raise HTTPException(status_code=409 if "exists" in str(exc) else 400, detail=said(exc)) from exc
         _rescan()
         return {"path": path, "id": doc["id"]}
 
@@ -1155,7 +1179,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         try:
             path = trash_doc(app.state.index.archive, doc)
         except (DocOpError, OSError) as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
+            raise HTTPException(status_code=400, detail=said(exc)) from exc
         _rescan()
         return {"trash_path": path}
 
@@ -1166,7 +1190,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         try:
             path = rename_doc(app.state.index.archive, doc, body.title, body.date)
         except (DocOpError, OSError) as exc:
-            raise HTTPException(status_code=409 if "exists" in str(exc) else 400, detail=str(exc)) from exc
+            raise HTTPException(status_code=409 if "exists" in str(exc) else 400, detail=said(exc)) from exc
         _rescan()
         return {"path": path, "id": doc["id"]}
 
@@ -1218,7 +1242,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
             try:
                 move_doc(archive, d, target)
             except (DocOpError, OSError) as exc:
-                failed.append({"id": d["id"], "title": d["title"], "error": str(exc)})
+                failed.append({"id": d["id"], "title": d["title"], "error": said(exc)})
                 continue
             moved.append(d["id"])
             emptied.add((archive / d["path"]).parent)
@@ -1344,7 +1368,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
             path = restore_doc(app.state.index.archive, body.trash_path,
                                user.can_write)  # the area may have vanished with its last document
         except (DocOpError, OSError) as exc:
-            raise HTTPException(status_code=409 if "exists" in str(exc) else 400, detail=str(exc)) from exc
+            raise HTTPException(status_code=409 if "exists" in str(exc) else 400, detail=said(exc)) from exc
         _rescan()
         return {"path": path}
 
@@ -1362,7 +1386,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
             result = save_beside(app.state.index, app.state.inbox, doc, data, body.title, body.date, body.text)
         except (EditorError, OSError) as exc:
             raise HTTPException(status_code=409 if "already" in str(exc) or "exists" in str(exc) else 400,
-                                detail=str(exc)) from exc
+                                detail=said(exc)) from exc
         if body.keep_tags and doc.get("tags"):
             app.state.tags.change([result["sha256"]], doc["tags"], [])
         _rescan()
@@ -1502,7 +1526,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     # ------------------------------------------------------------ rules
 
     def _rule_error(exc: RuleError):
-        return HTTPException(status_code=400, detail=str(exc))
+        return HTTPException(status_code=400, detail=said(exc))
 
     @app.get("/api/rules", tags=["rules"])
     def rules_overview(user: User = Depends(require_admin)):
@@ -1607,7 +1631,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         }
 
     def _folder_error(exc: FolderError):
-        return HTTPException(status_code=400, detail=str(exc))
+        return HTTPException(status_code=400, detail=said(exc))
 
     @app.post("/api/folders", tags=["folders"], status_code=201)
     def folders_add(body: FolderIn, user: User = Depends(require_admin)):
@@ -1626,7 +1650,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
             areas = [a["name"] for a in app.state.index.areas() if a["name"]]
             result = app.state.folders.rename(body.old, body.new, app.state.index.archive, areas)
         except (FolderError, OSError) as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
+            raise HTTPException(status_code=400, detail=said(exc)) from exc
         old, new = body.old.strip("/"), body.new.strip("/")
         result["rules"] = app.state.rules.rename_folder(old, new)
         app.state.importplan.rename_target(old, new)
@@ -1726,7 +1750,7 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
     # ------------------------------------------------------------ inbox
 
     def _inbox_error(exc: Exception):
-        return HTTPException(status_code=400, detail=str(exc))
+        return HTTPException(status_code=400, detail=said(exc))
 
     @app.get("/api/inbox", tags=["inbox"])
     def inbox_list(status: str = Query("new", pattern="^(new|filed|dismissed)$"),
@@ -1929,9 +1953,35 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
             response.headers["Cache-Control"] = "no-cache"
         return response
 
+    outbound.install()          # keys and tokens never follow a redirect to another address
+
+    @app.middleware("http")
+    async def docs_for_members(request: Request, call_next):
+        """The API description is for those who may use the API: signed in, or with a key."""
+        if request.url.path.startswith(("/api/docs", "/api/openapi.json", "/api/redoc")):
+            try:
+                current_user(request)
+            except HTTPException as exc:
+                return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
+        return await call_next(request)
+
+    @app.middleware("http")
+    async def security_headers(request: Request, call_next):
+        """Every answer says: do not guess the content type, do not show me in a frame of another
+        site (clickjacking), and do not tell other sites which page the link was on."""
+        response = await call_next(request)
+        headers = response.headers
+        headers.setdefault("X-Content-Type-Options", "nosniff")
+        headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        headers.setdefault("Referrer-Policy", "same-origin")
+        if "content-security-policy" not in headers:
+            headers["Content-Security-Policy"] = "frame-ancestors 'self'"
+        return response
+
     # Outermost layer: the client address and scheme come from X-Forwarded-For/-Proto only when the
     # connection itself comes from a trusted proxy, and then from the rightmost entry that is not one
     # of them. Trusting everybody would let anyone on the internet claim a home address.
+    app.add_middleware(BodyLimit, limit=max(1, settings.max_upload_mb) * 1024 * 1024)
     app.add_middleware(ProxyHeadersMiddleware,
                        trusted_hosts=settings.trusted_proxies or ", ".join(DEFAULT_INTERNAL))
     app.mount("/", StaticFiles(directory=STATIC, html=True), name="ui")

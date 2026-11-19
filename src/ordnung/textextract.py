@@ -19,6 +19,16 @@ from pathlib import Path
 
 MIN_PAGE_CHARS = 25        # fewer characters on a page → treat it as a scan
 MAX_TEXT_CHARS = 300_000   # keep the index small for huge documents
+MAX_RENDER_PIXELS = 40_000_000   # a page as a picture: never more (a PDF can claim a page of any size)
+
+
+def _scale(page, wanted: float, max_side: float | None = None) -> float:
+    """The render scale, made smaller where a page is so big the picture would not fit in memory."""
+    width, height = max(page.get_width(), 1), max(page.get_height(), 1)
+    scale = min(wanted, (MAX_RENDER_PIXELS / (width * height)) ** 0.5)
+    if max_side:
+        scale = min(scale, max_side / max(width, height))
+    return scale
 
 
 @dataclass
@@ -63,7 +73,7 @@ def extract_pdf(path: Path, ocr: bool, lang: str, max_ocr_pages: int) -> Extract
                 text = textpage.get_text_bounded()
                 textpage.close()
                 if len(text.strip()) < MIN_PAGE_CHARS and ocr and ocr_pages < max_ocr_pages:
-                    bitmap = page.render(scale=300 / 72, grayscale=True)
+                    bitmap = page.render(scale=_scale(page, 300 / 72), grayscale=True)
                     image = bitmap.to_pil()
                     buffer = io.BytesIO()
                     image.save(buffer, format="PNG")
@@ -119,7 +129,7 @@ def render_thumb(path: Path, ext: str, dest: Path, width: int = 240) -> None:
             try:
                 page = pdf[0]
                 try:
-                    image = page.render(scale=width / page.get_width()).to_pil()
+                    image = page.render(scale=_scale(page, width / max(page.get_width(), 1), max_side=width * 4)).to_pil()
                 finally:
                     page.close()
             finally:

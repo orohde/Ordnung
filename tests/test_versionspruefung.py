@@ -97,3 +97,11 @@ def test_api(settings, service):
     assert client.put("/api/update", json={"on": False}).json()["on"] is False
     assert client.post("/api/update/check").status_code == 409
     assert client.get("/api/update").json()["on"] is False
+
+
+def test_only_https_links_reach_the_page():
+    from ordnung.versionspruefung import safe_url
+    assert safe_url("https://github.com/orohde/x/releases/tag/1") == "https://github.com/orohde/x/releases/tag/1"
+    for bad in ("javascript:alert(1)", "JAVASCRIPT:alert(1)", "http://example.org", "data:text/html,x",
+                'https://x" onclick="a', ""):
+        assert safe_url(bad) == "", bad

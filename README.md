@@ -70,6 +70,7 @@ Settings live in the app. The compose file only needs folders, port and, if nece
 | `TZ` | `UTC` | time zone, e.g. `Europe/Berlin` |
 | `VERSIONSPRUEFUNG` | on | `0` switches the daily check for new versions off for good (see below) |
 | `ORDNUNG_TRUSTED_PROXIES` | private ranges | Which addresses may report the client address via `X-Forwarded-For`, comma-separated (IP or network, e.g. `10.10.20.50`). Best set to your reverse proxy's address (see below) |
+| `ORDNUNG_MAX_UPLOAD_MB` | `300` | Largest request in MB (an upload of several files arrives as one request); larger ones get 413 |
 
 These older variables now only give the defaults for a fresh installation; once something is saved in the app, the app wins:
 
