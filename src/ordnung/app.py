@@ -74,6 +74,8 @@ class EditedIn(BaseModel):
     date: str | None = None
     text: str = Field(default="", max_length=50_000)
     keep_tags: bool = True
+    replace: bool = False                           # original to the trash instead of keeping both
+    add_tags: list[str] = Field(default_factory=list, max_length=10)   # e.g. "Bezahlt" from a stamp
 
 
 class UploadFile(BaseModel):
@@ -175,6 +177,7 @@ class MailChange(BaseModel):
 class TreePrefs(BaseModel):
     tree_open: list[str] | None = Field(None, max_length=5000)
     language: str | None = Field(None, max_length=5)
+    stamps: list[dict] | None = Field(None, max_length=30)     # own stamp templates for the editor
 
 
 class NewUser(BaseModel):
@@ -702,6 +705,11 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
         if body.tree_open is not None:
             app.state.prefs.set_tree_open(user.name, body.tree_open)
+        if body.stamps is not None:
+            try:
+                app.state.prefs.set_stamps(user.name, body.stamps)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
         return app.state.prefs.get(user.name)
 
     def confirm(name: str, request: Request, check) -> bool:
@@ -1374,7 +1382,10 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
 
     @app.post("/api/documents/{doc_id}/edited", tags=["editor"], status_code=201)
     def document_edited(doc_id: str, body: EditedIn, user: User = Depends(current_user)):
-        """Store a PDF edited in the browser next to the original (which stays as it is)."""
+        """Store a PDF edited in the browser in the folder of the original.
+
+        ``replace``: the original goes to the trash (undo via ``/api/trash/restore`` with the
+        returned ``trash_path``). Otherwise both stay, i.e. the edit is saved as a copy."""
         doc = _writable_doc(doc_id, user)
         if doc["ext"] != "pdf":
             raise HTTPException(status_code=400, detail="only PDFs can be edited")
@@ -1383,12 +1394,18 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
         except (binascii.Error, ValueError) as exc:
             raise HTTPException(status_code=400, detail="invalid data") from exc
         try:
-            result = save_beside(app.state.index, app.state.inbox, doc, data, body.title, body.date, body.text)
+            add = [clean_tag(t) for t in body.add_tags]
+        except TagError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        try:
+            result = save_beside(app.state.index, app.state.inbox, doc, data, body.title, body.date, body.text,
+                                 replace=body.replace)
         except (EditorError, OSError) as exc:
             raise HTTPException(status_code=409 if "already" in str(exc) or "exists" in str(exc) else 400,
                                 detail=said(exc)) from exc
-        if body.keep_tags and doc.get("tags"):
-            app.state.tags.change([result["sha256"]], doc["tags"], [])
+        tags = [*((doc.get("tags") or []) if body.keep_tags else []), *[t for t in add if t]]
+        if tags:
+            app.state.tags.change([result["sha256"]], tags, [])
         _rescan()
         result["id"] = result["sha256"][:12]
         return result

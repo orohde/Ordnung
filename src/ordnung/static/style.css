@@ -712,7 +712,28 @@ textarea.ed-field { resize: none; line-height: 1.2; }
 .ed-text { font-family: Helvetica, Arial, sans-serif; line-height: 1.2; white-space: pre; color: #000; outline: none;
   min-width: 1em; min-height: 1.2em; cursor: text; }
 .ed-item.is-selected { outline: 1px dashed #0064d9; outline-offset: 2px; }
-.ed-item--check, .ed-item--cross, .ed-item--sign { cursor: move; }
+.ed-item--check, .ed-item--cross, .ed-item--sign, .ed-item--stamp { cursor: move; }
+.ed-item--stamp { transform-origin: 50% 50%; }
+.stamp-svg { opacity: .9; overflow: visible; }
+.stamp-svg text { font-family: Helvetica, Arial, sans-serif; }
+.ed-sv-mode { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; margin: .25rem 0 .5rem; }
+.stp-dlg { width: min(30rem, calc(100vw - 2rem)); }
+.stp-presets { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .5rem; }
+.stp-chip { font-weight: 700; display: inline-flex; align-items: center; }
+.stp-chip::before { content: ''; position: static; flex: none; display: inline-block; width: .6rem; height: .6rem; border-radius: 50%; margin-right: .4rem;
+  background: var(--stp-c, #c0171c); box-shadow: 0 0 0 1px rgba(128,128,128,.6); }
+.stp-own { display: inline-flex; align-items: center; }
+.stp-own .stp-chip { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.stp-forget { min-width: 1.6rem; padding: 0 .3rem; font-size: .75rem; }
+.stp-row { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1rem; margin: .35rem 0; }
+.stp-date { width: auto; }
+.stp-pos { width: auto; }
+.stp-colors { display: flex; gap: .5rem; }
+.stp-color { width: 1.75rem; height: 1.75rem; border-radius: 50%; border: 3px solid transparent; outline: 1px solid rgba(128,128,128,.6); cursor: pointer; padding: 0; }
+.stp-color.is-active { border-color: var(--sapBackgroundColor, #fff); outline: 2px solid var(--sapTextColor, #1d2d3e); }
+.stp-preview { display: flex; justify-content: center; align-items: center; min-height: 6rem; padding: 1rem; margin: .5rem 0;
+  background: #fff; border: 1px solid var(--sapGroup_ContentBorderColor, #d9d9d9); border-radius: .5rem; }
+.stp-preview .stamp-svg { height: 4.25rem; width: auto; max-width: 100%; transform: rotate(-6deg); }
 .ed-item svg { width: 100%; height: 100%; display: block; overflow: visible; }
 .ed-item svg path { fill: none; stroke: #000; stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
 .ed-item img { width: 100%; height: 100%; display: block; pointer-events: none; }

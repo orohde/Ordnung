@@ -175,6 +175,8 @@
             </form>
           </div>
           <button id="pv-edit" class="fd-button" type="button" hidden data-i18n="pv.edit">Bearbeiten</button>
+          <button id="pv-stamp" class="fd-button" type="button" hidden data-i18n="pv.stamp">Stempeln</button>
+          <button id="pv-dup" class="fd-button" type="button" hidden data-i18n="pv.dup">Duplizieren</button>
           <a id="pv-open" class="fd-button" target="_blank" rel="noopener" data-i18n="pv.open">Öffnen</a>
           <a id="pv-download" class="fd-button" data-i18n="pv.download">Herunterladen</a>
           <button id="pv-trash" class="fd-button pv-trash" type="button" hidden data-i18n="pv.trash">Löschen</button>
@@ -1106,6 +1108,43 @@
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
   <!-- ============================== PDF editor ============================== -->
+  <dialog id="stp-dlg" class="ai-dlg ed-dlg stp-dlg" aria-labelledby="stp-title">
+    <form id="stp-form" class="ai-dlg-form">
+      <h4 id="stp-title" class="fd-title fd-title--h5" data-i18n="stp.title">Stempel</h4>
+      <div id="stp-presets" class="stp-presets"></div>
+      <label class="fd-form-label" for="stp-text" data-i18n="stp.text">Aufschrift</label>
+      <input id="stp-text" class="fd-input" maxlength="40" autocomplete="off">
+      <div class="stp-row">
+        <label class="check"><input type="checkbox" id="stp-date-on"> <span data-i18n="stp.date">Mit Datum</span></label>
+        <input id="stp-date" class="fd-input stp-date" type="date">
+      </div>
+      <label class="fd-form-label" for="stp-extra" data-i18n="stp.extra">Zusatzzeile (frei)</label>
+      <input id="stp-extra" class="fd-input" maxlength="60" autocomplete="off" data-i18n-placeholder="stp.extra.ph">
+      <div class="stp-row">
+        <span class="fd-form-label" data-i18n="stp.color">Farbe</span>
+        <div id="stp-colors" class="stp-colors"></div>
+      </div>
+      <div id="stp-preview" class="stp-preview" aria-hidden="true"></div>
+      <div id="stp-pos-row" class="stp-row" hidden>
+        <label class="fd-form-label" for="stp-pos" data-i18n="stp.pos">Stelle auf Seite 1</label>
+        <select id="stp-pos" class="fd-input stp-pos">
+          <option value="tr" data-i18n="stp.pos.tr">oben rechts</option>
+          <option value="tl" data-i18n="stp.pos.tl">oben links</option>
+          <option value="br" data-i18n="stp.pos.br">unten rechts</option>
+          <option value="bl" data-i18n="stp.pos.bl">unten links</option>
+          <option value="c" data-i18n="stp.pos.c">Mitte</option>
+        </select>
+      </div>
+      <label id="stp-tag-row" class="check" hidden><input type="checkbox" id="stp-tag" checked> <span data-i18n="stp.tag">Aufschrift als Tag vergeben</span></label>
+      <label class="check"><input type="checkbox" id="stp-keep"> <span data-i18n="stp.keep">Als eigene Vorlage merken</span></label>
+      <div class="form-actions">
+        <span id="stp-msg" class="form-msg"></span>
+        <button id="stp-cancel" class="fd-button fd-button--transparent" type="button" data-i18n="ed.sv.cancel">Abbrechen</button>
+        <button id="stp-ok" class="fd-button fd-button--emphasized" type="submit" data-i18n="stp.ok">Einsetzen</button>
+      </div>
+    </form>
+  </dialog>
+
   <div id="editor" class="editor" hidden>
     <div class="editor__bar">
       <button id="ed-close" class="fd-button fd-button--transparent" type="button" data-i18n="ed.back">← Zurück</button>
@@ -1115,6 +1154,7 @@
         <button class="fd-button" type="button" data-tool="check"><span aria-hidden="true">✓ </span><span data-i18n="ed.check">Haken</span></button>
         <button class="fd-button" type="button" data-tool="cross"><span aria-hidden="true">✗ </span><span data-i18n="ed.cross">Kreuz</span></button>
         <button class="fd-button" type="button" data-tool="date" data-i18n="ed.date">Datum</button>
+        <button class="fd-button" type="button" data-tool="stamp" data-i18n="ed.stamp">Stempel</button>
         <span class="ed-split">
           <button class="fd-button" type="button" data-tool="sign" data-i18n="ed.sign">Unterschrift</button>
           <button id="ed-sign-new" class="fd-button" type="button" data-i18n-title="sg.new" title="Neu unterschreiben">✎</button>
@@ -1132,13 +1172,18 @@
 
     <dialog id="ed-save-dlg" class="ai-dlg ed-dlg" aria-labelledby="ed-sv-title">
       <form id="ed-sv-form" class="ai-dlg-form">
-        <h4 id="ed-sv-title" class="fd-title fd-title--h5" data-i18n="ed.sv.title">Als neues Dokument speichern</h4>
+        <h4 id="ed-sv-title" class="fd-title fd-title--h5" data-i18n="ed.sv.title">Speichern</h4>
+        <div class="ed-sv-mode" role="radiogroup">
+          <label class="check"><input type="radio" name="ed-sv-mode" value="replace"> <span data-i18n="ed.sv.replace">Dokument ersetzen</span></label>
+          <label class="check"><input type="radio" name="ed-sv-mode" value="copy"> <span data-i18n="ed.sv.copy">Als Kopie speichern</span></label>
+        </div>
         <label class="fd-form-label" for="ed-sv-name" data-i18n="ed.sv.name">Titel</label>
         <input id="ed-sv-name" class="fd-input" required maxlength="150">
         <label class="fd-form-label" for="ed-sv-date" data-i18n="ed.sv.date">Datum</label>
         <input id="ed-sv-date" class="fd-input" type="date">
         <label id="ed-sv-flatten-row" class="check"><input type="checkbox" id="ed-sv-flatten"> <span data-i18n="ed.sv.flatten">Formular festschreiben</span></label>
-        <p class="set-hint" data-i18n="ed.sv.hint">Das Original bleibt unverändert.</p>
+        <label id="ed-sv-tags-row" class="check" hidden><input type="checkbox" id="ed-sv-tags"> <span id="ed-sv-tags-label"></span></label>
+        <p id="ed-sv-hint" class="set-hint"></p>
         <div class="form-actions">
           <span id="ed-sv-msg" class="form-msg"></span>
           <button id="ed-sv-cancel" class="fd-button fd-button--transparent" type="button" data-i18n="ed.sv.cancel">Abbrechen</button>

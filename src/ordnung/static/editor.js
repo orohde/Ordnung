@@ -1,13 +1,16 @@
-/* Ordnung! – PDF editor: fill forms, add text, ticks and a signature.
- * PDF.js shows the pages, pdf-lib writes the result. The original stays as it
- * is, the edited PDF is stored next to it as a new document. */
+/* Ordnung! – PDF editor: fill forms, add text, ticks, stamps and a signature.
+ * PDF.js shows the pages, pdf-lib writes the result. Saving replaces the
+ * document (the original goes to the trash, undo brings it back); "Duplicate"
+ * or "save as copy" keeps the original and adds the edited PDF as a second one. */
 'use strict';
 
 Object.assign(I18N.de, {
   'pv.edit': 'Bearbeiten',
   'ed.back': '← Zurück', 'ed.text': 'Text', 'ed.check': 'Haken', 'ed.cross': 'Kreuz', 'ed.date': 'Datum',
   'ed.sign': 'Unterschrift', 'ed.save': 'Speichern …', 'ed.zoomin': 'Größer', 'ed.zoomout': 'Kleiner',
-  'ed.hint': 'Felder direkt ausfüllen. Für Text, Haken, Datum oder Unterschrift oben wählen und auf die Seite tippen.',
+  'ed.stamp': 'Stempel', 'pv.dup': 'Duplizieren', 'pv.stamp': 'Stempeln',
+  'ed.hint': 'Felder direkt ausfüllen. Für Text, Haken, Datum, Stempel oder Unterschrift oben wählen und auf die Seite tippen.',
+  'ed.hint.copy': 'Kopie: Beim Speichern entsteht ein zweites Dokument, das Original bleibt.',
   'ed.hint.place': 'Auf die Stelle tippen, wo es hin soll. Esc bricht ab.',
   'ed.loading': 'Lade PDF …', 'ed.fields': '{n} Formularfelder',
   'ed.del': 'Entfernen', 'ed.move': 'Verschieben', 'ed.size': 'Größe ändern',
@@ -15,11 +18,25 @@ Object.assign(I18N.de, {
   'ed.err.encrypted': 'Diese PDF ist geschützt und lässt sich nicht bearbeiten.',
   'ed.err.char': 'Das Zeichen „{c}“ kann Ordnung! nicht in die PDF schreiben.',
   'ed.err.load': 'Die PDF ließ sich nicht öffnen: {msg}',
-  'ed.sv.title': 'Als neues Dokument speichern', 'ed.sv.name': 'Titel', 'ed.sv.date': 'Datum',
+  'ed.sv.title': 'Speichern', 'ed.sv.name': 'Titel', 'ed.sv.date': 'Datum',
+  'ed.sv.replace': 'Dokument ersetzen', 'ed.sv.copy': 'Als Kopie speichern',
   'ed.sv.flatten': 'Formular festschreiben (Felder lassen sich danach nicht mehr ändern)',
-  'ed.sv.hint': 'Das Original bleibt unverändert. Die neue Datei kommt in denselben Ordner, Tags werden übernommen.',
-  'ed.sv.ok': 'Speichern', 'ed.sv.cancel': 'Abbrechen', 'ed.sv.suffix': 'bearbeitet', 'ed.sv.busy': 'Speichere …',
+  'ed.sv.hint': 'Das alte Dokument kommt in den Papierkorb, Tags werden übernommen. Rückgängig geht direkt danach oder über den Papierkorb.',
+  'ed.sv.hint.copy': 'Das Original bleibt unverändert. Die Kopie kommt in denselben Ordner, Tags werden übernommen.',
+  'ed.sv.tags': 'Stempel als Tag vergeben: {tags}',
+  'ed.sv.ok': 'Speichern', 'ed.sv.cancel': 'Abbrechen', 'ed.sv.suffix': 'Kopie', 'ed.sv.busy': 'Speichere …',
   'ed.sv.nothing': 'Es gibt noch keine Änderung.',
+  'ed.saved': '„{title}“ gespeichert, das alte liegt im Papierkorb.', 'ed.saved.copy': 'Kopie „{title}“ angelegt.',
+  'ed.stamped': '„{title}“ gestempelt.',
+  'stp.title': 'Stempel', 'stp.text': 'Aufschrift', 'stp.date': 'Mit Datum', 'stp.extra': 'Zusatzzeile (frei)',
+  'stp.extra.ph': 'z. B. per Überweisung', 'stp.color': 'Farbe', 'stp.keep': 'Als eigene Vorlage merken',
+  'stp.tag': 'Aufschrift als Tag vergeben', 'stp.pos': 'Stelle auf Seite 1',
+  'stp.pos.tr': 'oben rechts', 'stp.pos.tl': 'oben links', 'stp.pos.br': 'unten rechts', 'stp.pos.bl': 'unten links',
+  'stp.pos.c': 'Mitte', 'stp.ok': 'Einsetzen', 'stp.ok.quick': 'Stempeln', 'stp.own': 'eigene', 'stp.forget': 'Vorlage vergessen',
+  'stp.empty': 'Bitte eine Aufschrift eingeben.', 'stp.edit': 'Doppelklick: Stempel ändern',
+  'stp.c.red': 'Rot', 'stp.c.blue': 'Blau', 'stp.c.green': 'Grün', 'stp.c.black': 'Schwarz',
+  'stp.p.paid': 'Bezahlt', 'stp.p.done': 'Erledigt', 'stp.p.received': 'Eingegangen', 'stp.p.booked': 'Gebucht',
+  'stp.p.copy': 'Kopie', 'stp.p.void': 'Storniert',
   'sg.title': 'Deine Unterschrift', 'sg.hint': 'Mit Maus, Finger oder Stift ins Feld schreiben, oder ein Foto deiner Unterschrift laden (weißes Papier wird durchsichtig).',
   'sg.clear': 'Leeren', 'sg.upload': 'Bild laden …', 'sg.remove': 'Gespeicherte löschen', 'sg.use': 'Speichern und einsetzen',
   'sg.cancel': 'Abbrechen', 'sg.empty': 'Bitte erst unterschreiben.', 'sg.new': 'Neu unterschreiben',
@@ -29,7 +46,9 @@ Object.assign(I18N.en, {
   'pv.edit': 'Edit',
   'ed.back': '← Back', 'ed.text': 'Text', 'ed.check': 'Tick', 'ed.cross': 'Cross', 'ed.date': 'Date',
   'ed.sign': 'Signature', 'ed.save': 'Save …', 'ed.zoomin': 'Larger', 'ed.zoomout': 'Smaller',
-  'ed.hint': 'Fill in fields directly. For text, ticks, date or signature pick a tool above and tap the page.',
+  'ed.stamp': 'Stamp', 'pv.dup': 'Duplicate', 'pv.stamp': 'Stamp',
+  'ed.hint': 'Fill in fields directly. For text, ticks, date, stamp or signature pick a tool above and tap the page.',
+  'ed.hint.copy': 'Copy: saving adds a second document, the original stays.',
   'ed.hint.place': 'Tap where it should go. Esc cancels.',
   'ed.loading': 'Loading PDF …', 'ed.fields': '{n} form fields',
   'ed.del': 'Remove', 'ed.move': 'Move', 'ed.size': 'Resize',
@@ -37,11 +56,25 @@ Object.assign(I18N.en, {
   'ed.err.encrypted': 'This PDF is protected and cannot be edited.',
   'ed.err.char': 'Ordnung! cannot write the character “{c}” into the PDF.',
   'ed.err.load': 'Could not open the PDF: {msg}',
-  'ed.sv.title': 'Save as new document', 'ed.sv.name': 'Title', 'ed.sv.date': 'Date',
+  'ed.sv.title': 'Save', 'ed.sv.name': 'Title', 'ed.sv.date': 'Date',
+  'ed.sv.replace': 'Replace the document', 'ed.sv.copy': 'Save as a copy',
   'ed.sv.flatten': 'Flatten the form (fields cannot be changed afterwards)',
-  'ed.sv.hint': 'The original stays unchanged. The new file goes into the same folder, tags are copied.',
-  'ed.sv.ok': 'Save', 'ed.sv.cancel': 'Cancel', 'ed.sv.suffix': 'edited', 'ed.sv.busy': 'Saving …',
+  'ed.sv.hint': 'The old document goes to the trash, tags are kept. Undo right afterwards or from the trash.',
+  'ed.sv.hint.copy': 'The original stays unchanged. The copy goes into the same folder, tags are copied.',
+  'ed.sv.tags': 'Add the stamp as a tag: {tags}',
+  'ed.sv.ok': 'Save', 'ed.sv.cancel': 'Cancel', 'ed.sv.suffix': 'copy', 'ed.sv.busy': 'Saving …',
   'ed.sv.nothing': 'Nothing has been changed yet.',
+  'ed.saved': '“{title}” saved, the old one is in the trash.', 'ed.saved.copy': 'Copy “{title}” created.',
+  'ed.stamped': '“{title}” stamped.',
+  'stp.title': 'Stamp', 'stp.text': 'Text', 'stp.date': 'With date', 'stp.extra': 'Extra line (free)',
+  'stp.extra.ph': 'e.g. by bank transfer', 'stp.color': 'Colour', 'stp.keep': 'Remember as my own template',
+  'stp.tag': 'Add the text as a tag', 'stp.pos': 'Place on page 1',
+  'stp.pos.tr': 'top right', 'stp.pos.tl': 'top left', 'stp.pos.br': 'bottom right', 'stp.pos.bl': 'bottom left',
+  'stp.pos.c': 'centre', 'stp.ok': 'Insert', 'stp.ok.quick': 'Stamp', 'stp.own': 'own', 'stp.forget': 'Forget template',
+  'stp.empty': 'Please enter a text.', 'stp.edit': 'Double-click: change the stamp',
+  'stp.c.red': 'Red', 'stp.c.blue': 'Blue', 'stp.c.green': 'Green', 'stp.c.black': 'Black',
+  'stp.p.paid': 'Paid', 'stp.p.done': 'Done', 'stp.p.received': 'Received', 'stp.p.booked': 'Booked',
+  'stp.p.copy': 'Copy', 'stp.p.void': 'Cancelled',
   'sg.title': 'Your signature', 'sg.hint': 'Sign in the box with mouse, finger or pen, or load a photo of your signature (white paper becomes transparent).',
   'sg.clear': 'Clear', 'sg.upload': 'Load image …', 'sg.remove': 'Delete stored one', 'sg.use': 'Save and insert',
   'sg.cancel': 'Cancel', 'sg.empty': 'Please sign first.', 'sg.new': 'Sign again',
@@ -51,6 +84,7 @@ Object.assign(I18N.en, {
 const Ed = {
   doc: null, bytes: null, pdf: null, pages: [],   // pages: [{vp1, el, layer, rotation}]
   scale: 1, tool: null, items: [], fields: [], sel: null, seq: 0, sigImg: null, sigBytes: null,
+  mode: 'replace',                                 // 'replace' | 'copy'
 };
 
 const ED_TEXT_SIZE = 11;
@@ -76,8 +110,8 @@ function edDirty() {
   return Ed.items.length > 0 || Ed.fields.some(f => fieldValue(f) !== f.initial);
 }
 
-async function openEditor(doc) {
-  Object.assign(Ed, { doc, items: [], fields: [], sel: null, tool: null, pages: [] });
+async function openEditor(doc, mode = 'replace') {
+  Object.assign(Ed, { doc, mode, items: [], fields: [], sel: null, tool: null, pages: [] });
   $('editor').hidden = false;
   document.body.classList.add('editing');
   $('ed-title').textContent = doc.title;
@@ -117,7 +151,7 @@ function closeEditor(force = false) {
 }
 
 function edHint() {
-  $('ed-hint').textContent = Ed.tool ? t('ed.hint.place') : t('ed.hint');
+  $('ed-hint').textContent = Ed.tool ? t('ed.hint.place') : (Ed.mode === 'copy' ? t('ed.hint.copy') + ' ' : '') + t('ed.hint');
   document.querySelectorAll('#editor [data-tool]').forEach(b => b.classList.toggle('is-active', b.dataset.tool === Ed.tool));
   $('ed-pages').classList.toggle('placing', !!Ed.tool);
   $('ed-zoom').textContent = Math.round(Ed.scale * 100) + ' %';
@@ -235,6 +269,7 @@ function edPlace(e, info) {
   Ed.tool = null;
   edHint();
   if (tool === 'sign') { edSignature(info.n, x, y); return; }
+  if (tool === 'stamp') { edStamp(info.n, x, y); return; }
   const item = { id: ++Ed.seq, page: info.n, type: tool, x, y };
   if (tool === 'text' || tool === 'date') {
     Object.assign(item, { type: 'text', size: ED_TEXT_SIZE, y: y - ED_TEXT_SIZE * 0.6,
@@ -265,6 +300,14 @@ function edDrawItem(item) {
       if (!item.text.trim()) setTimeout(() => { if (!item.text.trim()) edRemove(item); }, 150);
     });
     el.appendChild(span);
+  } else if (item.type === 'stamp') {
+    el.innerHTML = stampSvg(item);
+    el.title = t('stp.edit');
+    el.addEventListener('dblclick', async e => {
+      e.stopPropagation();
+      const st = await stampDialog(item);
+      if (st) { Object.assign(item, st); edDrawItem(item); edSelect(item); }
+    });
   } else if (item.type === 'sign') {
     const img = document.createElement('img');
     img.src = Ed.sigImg.src;
@@ -302,6 +345,13 @@ function edPosition(item) {
   el.style.top = item.y * s + 'px';
   if (item.type === 'text') {
     el.style.fontSize = item.size * s + 'px';
+  } else if (item.type === 'stamp') {
+    const L = stampLayout(item);
+    el.style.left = (item.x - L.W / 2) * s + 'px';
+    el.style.top = (item.y - L.H / 2) * s + 'px';
+    el.style.width = L.W * s + 'px';
+    el.style.height = L.H * s + 'px';
+    el.style.transform = `rotate(${-STAMP_TILT}deg)`;
   } else {
     el.style.width = item.w * s + 'px';
     el.style.height = item.h * s + 'px';
@@ -322,8 +372,8 @@ function edDraggable(item, el, handle, mode) {
       if (mode === 'move') {
         item.x = Math.max(0, Math.min(info.vp1.width - 4, start.ix + dx));
         item.y = Math.max(0, Math.min(info.vp1.height - 4, start.iy + dy));
-      } else if (item.type === 'text') {
-        item.size = Math.max(5, Math.min(72, start.size + dy * 0.6));
+      } else if (item.type === 'text' || item.type === 'stamp') {
+        item.size = Math.max(5, Math.min(item.type === 'stamp' ? 90 : 72, start.size + dy * 0.6));
       } else {
         const f = Math.max(0.15, (start.w + dx) / start.w);
         item.w = Math.max(5, start.w * f);
@@ -496,6 +546,7 @@ async function edBuildPdf(flatten) {
   }
   const pages = doc.getPages();
   const sig = Ed.items.some(i => i.type === 'sign') ? await doc.embedPng(await edSigBytes()) : null;
+  const stampFonts = Ed.items.some(i => i.type === 'stamp') ? await stampEmbedFonts(doc) : null;
   for (const item of Ed.items) {
     const page = pages[item.page - 1];
     const vp1 = Ed.pages[item.page - 1].vp1;
@@ -511,6 +562,8 @@ async function edBuildPdf(flatten) {
         const [x, y] = pt(item.x, item.y + item.size * (0.95 + 1.2 * i));
         page.drawText(line, { x, y, size: item.size, font, color: rgb(0, 0, 0), rotate });
       });
+    } else if (item.type === 'stamp') {
+      stampDraw(page, pt, item, stampFonts);
     } else if (item.type === 'sign') {
       const [x, y] = pt(item.x, item.y + item.h);
       page.drawImage(sig, { x, y, width: item.w, height: item.h, rotate });
@@ -537,15 +590,59 @@ function edCheckChars(text, font) {
   }
 }
 
+const edStampTags = () => [...new Set(Ed.items.filter(i => i.type === 'stamp').map(i => i.text))];
+
+function edSaveMode(mode) {
+  const before = Ed.mode;
+  Ed.mode = mode;
+  document.querySelectorAll('input[name="ed-sv-mode"]').forEach(r => { r.checked = r.value === mode; });
+  $('ed-sv-hint').textContent = t(mode === 'copy' ? 'ed.sv.hint.copy' : 'ed.sv.hint');
+  const name = $('ed-sv-name'), copyName = `${Ed.doc.title} (${t('ed.sv.suffix')})`;
+  // follow the mode with the title unless it was typed in by hand
+  if (!name.value || name.value === (before === 'copy' ? copyName : Ed.doc.title)) {
+    name.value = mode === 'copy' ? copyName : Ed.doc.title;
+  }
+  edHint();
+}
+
 function edSaveDialog() {
   if (!edDirty()) { alert(t('ed.sv.nothing')); return; }
   const dlg = $('ed-save-dlg');
-  $('ed-sv-name').value = `${Ed.doc.title} (${t('ed.sv.suffix')})`;
+  $('ed-sv-name').value = '';
+  edSaveMode(Ed.mode);
   $('ed-sv-date').value = Ed.doc.date || new Date().toISOString().slice(0, 10);
   $('ed-sv-flatten').checked = false;
   $('ed-sv-flatten-row').hidden = !Ed.fields.length;
+  const tags = edStampTags();
+  $('ed-sv-tags-row').hidden = !tags.length;
+  $('ed-sv-tags').checked = !!tags.length;
+  $('ed-sv-tags-label').textContent = t('ed.sv.tags', { tags: tags.join(', ') });
   $('ed-sv-msg').textContent = '';
   dlg.showModal();
+}
+
+function pdfBase64(bytes) {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+// after saving: show the new document, offer undo for a replaced one
+async function edAfterSave(r, oldDoc, msg) {
+  await Promise.all([loadDocs(), loadTree(), loadStatus()].map(p => p.catch(() => null)));
+  try { openPreview(await api(`documents/${r.id}`)); } catch { /* list shows it after the scan */ }
+  toast(esc(msg), r.trash_path ? {
+    label: t('op.undo'),
+    run: async () => {
+      try {
+        await api(`documents/${r.id}/trash`, { method: 'POST' });
+        await api('trash/restore', { method: 'POST', body: JSON.stringify({ trash_path: r.trash_path }) });
+        await Promise.all([loadDocs(), loadTree(), loadStatus()].map(p => p.catch(() => null)));
+        try { openPreview(await api(`documents/${oldDoc.id}`)); } catch { closePreview(); }
+        toast(esc(t('op.restored')), null, 3000);
+      } catch (e) { toast(esc(e.message)); }
+    },
+  } : null, 10000);
 }
 
 async function edSave(e) {
@@ -555,17 +652,17 @@ async function edSave(e) {
   $('ed-sv-msg').textContent = t('ed.sv.busy');
   try {
     const bytes = await edBuildPdf($('ed-sv-flatten').checked);
-    let bin = '';
-    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
     const typed = [...Ed.items.filter(i => i.type === 'text').map(i => i.text),
+      ...Ed.items.filter(i => i.type === 'stamp').map(stampText),
       ...Ed.fields.filter(f => f.kind === 'text' && fieldValue(f) !== f.initial).map(fieldValue)].join('\n');
+    const replace = Ed.mode !== 'copy', oldDoc = Ed.doc, title = $('ed-sv-name').value;
     const r = await api(`documents/${Ed.doc.id}/edited`, { method: 'POST', body: JSON.stringify({
-      pdf: btoa(bin), title: $('ed-sv-name').value, date: $('ed-sv-date').value || null, text: typed,
+      pdf: pdfBase64(bytes), title, date: $('ed-sv-date').value || null, text: typed, replace,
+      add_tags: $('ed-sv-tags').checked ? edStampTags() : [],
     }) });
     $('ed-save-dlg').close();
     closeEditor(true);
-    await Promise.all([loadDocs(), loadTree(), loadStatus()].map(p => p.catch(() => null)));
-    try { openPreview(await api(`documents/${r.id}`)); } catch { /* list shows it after the scan */ }
+    await edAfterSave(r, oldDoc, t(replace ? 'ed.saved' : 'ed.saved.copy', { title }));
   } catch (err) {
     $('ed-sv-msg').textContent = err.message;
   } finally {
@@ -576,7 +673,11 @@ async function edSave(e) {
 // ------------------------------------------------------------------ wiring
 
 function initEditor() {
-  $('pv-edit').addEventListener('click', () => { if (State.selected) openEditor(State.selected); });
+  $('pv-edit').addEventListener('click', () => { if (State.selected) openEditor(State.selected, 'replace'); });
+  $('pv-dup').addEventListener('click', () => { if (State.selected) openEditor(State.selected, 'copy'); });
+  $('pv-stamp').addEventListener('click', () => { if (State.selected) quickStamp(State.selected); });
+  document.querySelectorAll('input[name="ed-sv-mode"]').forEach(r => r.addEventListener('change', () => edSaveMode(r.value)));
+  initStampDialog();
   $('ed-close').addEventListener('click', () => closeEditor());
   document.querySelectorAll('#editor [data-tool]').forEach(b => b.addEventListener('click', () => {
     Ed.tool = Ed.tool === b.dataset.tool ? null : b.dataset.tool;
@@ -613,4 +714,295 @@ function initEditor() {
 function editorButton(doc) {
   const can = doc && doc.ext === 'pdf' && (State.me.write_areas || []).includes(doc.area);
   $('pv-edit').hidden = !can;
+  $('pv-dup').hidden = !can;
+  $('pv-stamp').hidden = !can;
+}
+
+// ------------------------------------------------------------------ stamp
+/* A stamp is a rounded double frame with a big text, optionally a date and an
+ * extra line, slightly tilted like a rubber stamp. Layout is computed once in
+ * PDF units with the real Helvetica widths, so screen and PDF match; in the PDF
+ * it is vector text and lines (sharp, and the text stays selectable). */
+
+const STAMP_TILT = 6;                               // degrees, counter-clockwise
+const STAMP_SIZE = 22;                              // size of the big text in pt
+const STAMP_RGB = { red: [0.76, 0.09, 0.11], blue: [0.09, 0.24, 0.62], green: [0.07, 0.46, 0.2], black: [0.12, 0.12, 0.12] };
+const STAMP_PRESETS = [
+  { key: 'paid', date: true, color: 'red' }, { key: 'done', date: true, color: 'green' },
+  { key: 'received', date: true, color: 'blue' }, { key: 'booked', date: true, color: 'blue' },
+  { key: 'void', date: true, color: 'red' }, { key: 'copy', date: false, color: 'black' },
+];
+let StampM = null, StampOwn = null, StampLast = null, stampResolve = null;
+
+const edLocale = () => ({ de: 'de-DE', fr: 'fr-FR', it: 'it-IT' }[LANG] || 'en-GB');
+const todayIso = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+const stampCss = c => 'rgb(' + (STAMP_RGB[c] || STAMP_RGB.red).map(v => Math.round(v * 255)).join(',') + ')';
+
+function stampDateText(iso) {
+  if (!iso) return '';
+  return new Date(iso + 'T12:00:00').toLocaleDateString(edLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function stampLines(st) {
+  const lines = [{ text: st.text.toLocaleUpperCase(edLocale()), bold: true, k: 1 }];
+  if (st.date) lines.push({ text: stampDateText(st.date), bold: true, k: 0.5 });
+  if (st.extra) lines.push({ text: st.extra, bold: false, k: 0.42 });
+  return lines;
+}
+
+const stampText = st => [st.text, stampDateText(st.date), st.extra].filter(Boolean).join(' ');
+
+async function stampEmbedFonts(doc) {
+  const { StandardFonts } = PDFLib;
+  return { bold: await doc.embedFont(StandardFonts.HelveticaBold), reg: await doc.embedFont(StandardFonts.Helvetica) };
+}
+
+async function stampMeasureReady() {
+  await loadPdfLibs();
+  if (!StampM) StampM = await stampEmbedFonts(await PDFLib.PDFDocument.create());
+}
+
+function stampWidth(text, bold, size) {
+  if (StampM) {
+    try { return (bold ? StampM.bold : StampM.reg).widthOfTextAtSize(text, size); } catch { /* checked on save */ }
+  }
+  return text.length * size * (bold ? 0.68 : 0.55);
+}
+
+// local frame: origin in the middle of the stamp, y down, PDF units
+function stampLayout(st) {
+  const s = st.size || STAMP_SIZE;
+  const padX = 0.55 * s, padY = 0.38 * s, gap = 0.22 * s;
+  let y = padY, w = 0;
+  const lines = stampLines(st).map((l, i) => {
+    const size = s * l.k;
+    if (i) y += gap;
+    y += 0.72 * size;                               // cap height of Helvetica
+    const lw = stampWidth(l.text, l.bold, size);
+    w = Math.max(w, lw);
+    const out = { ...l, size, w: lw, base: y };
+    if (!l.bold) y += 0.21 * size;                  // descenders of the lower-case extra line
+    return out;
+  });
+  const W = w + 2 * padX, H = y + padY;
+  lines.forEach(l => { l.x = -l.w / 2; l.y = l.base - H / 2; });
+  return { W, H, lines, bw: 0.085 * s, r1: 0.24 * s, inset: 0.21 * s, bw2: 0.03 * s, r2: 0.12 * s };
+}
+
+function stampSvg(st) {
+  const L = stampLayout(st), c = stampCss(st.color);
+  const rect = (ins, rad, sw) => `<rect x="${-L.W / 2 + ins}" y="${-L.H / 2 + ins}" width="${L.W - 2 * ins}" ` +
+    `height="${L.H - 2 * ins}" rx="${rad}" fill="none" stroke="${c}" stroke-width="${sw}"/>`;
+  return `<svg class="stamp-svg" viewBox="${-L.W / 2} ${-L.H / 2} ${L.W} ${L.H}" preserveAspectRatio="none">` +
+    rect(L.bw / 2, L.r1, L.bw) + rect(L.inset, L.r2, L.bw2) +
+    L.lines.map(l => `<text x="${l.x}" y="${l.y}" font-size="${l.size}" font-weight="${l.bold ? 700 : 400}" ` +
+      `textLength="${l.w}" lengthAdjust="spacingAndGlyphs" fill="${c}">${esc(l.text)}</text>`).join('') +
+    '</svg>';
+}
+
+function stampCheck(st, fonts) {
+  stampLines(st).forEach(l => edCheckChars(l.text, l.bold ? fonts.bold : fonts.reg));
+}
+
+// pt(x, y): screen point of the page at scale 1 → PDF point (handles rotated pages)
+function stampDraw(page, pt, st, fonts) {
+  const { rgb, degrees } = PDFLib;
+  stampCheck(st, fonts);
+  const L = stampLayout(st);
+  const tr = STAMP_TILT * Math.PI / 180, co = Math.cos(tr), si = Math.sin(tr);
+  const map = (px, py) => pt(st.x + px * co + py * si, st.y - px * si + py * co);
+  const color = rgb(...(STAMP_RGB[st.color] || STAMP_RGB.red));
+  const [ax, ay] = map(0, 0), [bx, by] = map(1, 0);
+  const rotate = degrees(Math.atan2(by - ay, bx - ax) * 180 / Math.PI);
+  const frame = (ins, rad, width) => {
+    const x0 = -L.W / 2 + ins, y0 = -L.H / 2 + ins, x1 = L.W / 2 - ins, y1 = L.H / 2 - ins;
+    const corners = [[x1 - rad, y0 + rad, -90], [x1 - rad, y1 - rad, 0], [x0 + rad, y1 - rad, 90], [x0 + rad, y0 + rad, 180]];
+    const pts = [];
+    for (const [cx, cy, a0] of corners) {
+      for (let k = 0; k <= 8; k++) {
+        const a = (a0 + k * 90 / 8) * Math.PI / 180;
+        pts.push(map(cx + rad * Math.cos(a), cy + rad * Math.sin(a)));
+      }
+    }
+    // drawSvgPath flips y; with x = y = 0 the path is given in PDF coordinates
+    const d = pts.map(([x, y], i) => `${i ? 'L' : 'M'} ${x.toFixed(2)} ${(-y).toFixed(2)}`).join(' ') + ' Z';
+    page.drawSvgPath(d, { x: 0, y: 0, scale: 1, borderColor: color, borderWidth: width, borderOpacity: 0.9 });
+  };
+  frame(L.bw / 2, L.r1, L.bw);
+  frame(L.inset, L.r2, L.bw2);
+  for (const l of L.lines) {
+    const [x, y] = map(l.x, l.y);
+    page.drawText(l.text, { x, y, size: l.size, font: l.bold ? fonts.bold : fonts.reg, color, rotate, opacity: 0.9 });
+  }
+}
+
+// ---- dialog
+
+async function stampOwnLoad() {
+  if (!StampOwn) {
+    try { StampOwn = (await api('me/prefs')).stamps || []; } catch { StampOwn = []; }
+  }
+  return StampOwn;
+}
+
+async function stampOwnSave(list) {
+  try { StampOwn = (await api('me/prefs', { method: 'PUT', body: JSON.stringify({ stamps: list }) })).stamps; }
+  catch (e) { toast(esc(e.message)); }
+}
+
+function stampValue() {
+  const clean = v => v.trim().replace(/\s+/g, ' ');
+  return {
+    text: clean($('stp-text').value), extra: clean($('stp-extra').value), color: $('stp-dlg').dataset.color || 'red',
+    date: $('stp-date-on').checked ? ($('stp-date').value || todayIso()) : '',
+  };
+}
+
+function stampSetColor(c) {
+  $('stp-dlg').dataset.color = c;
+  document.querySelectorAll('#stp-colors .stp-color').forEach(b => b.classList.toggle('is-active', b.dataset.color === c));
+}
+
+function stampFill(v) {
+  $('stp-text').value = v.text || '';
+  $('stp-date-on').checked = !!v.date;
+  $('stp-date').value = (typeof v.date === 'string' && v.date) || $('stp-date').value || todayIso();
+  $('stp-date').disabled = !v.date;
+  $('stp-extra').value = v.extra || '';
+  stampSetColor(v.color || 'red');
+  stampPreview();
+}
+
+function stampPreview() {
+  const v = stampValue();
+  $('stp-preview').innerHTML = v.text ? stampSvg({ ...v, size: STAMP_SIZE }) : '';
+  let msg = '';
+  if (v.text && StampM) { try { stampCheck(v, StampM); } catch (e) { msg = e.message; } }
+  $('stp-msg').textContent = msg;
+}
+
+function stampPresets() {
+  const box = $('stp-presets');
+  box.innerHTML = '';
+  const chip = (v, own) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'fd-button stp-chip';
+    b.style.setProperty('--stp-c', stampCss(v.color));
+    b.textContent = v.text + (v.extra ? ' · ' + v.extra : '');
+    b.addEventListener('click', () => stampFill({ ...v, date: v.date ? ($('stp-date').value || todayIso()) : '' }));
+    box.appendChild(b);
+    if (own) {
+      const x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'fd-button fd-button--transparent stp-forget';
+      x.title = t('stp.forget');
+      x.textContent = '✕';
+      x.addEventListener('click', async () => {
+        await stampOwnSave(StampOwn.filter(o => o !== v));
+        stampPresets();
+      });
+      const wrap = document.createElement('span');
+      wrap.className = 'stp-own';
+      box.replaceChild(wrap, b);
+      wrap.append(b, x);
+    }
+  };
+  STAMP_PRESETS.forEach(p => chip({ text: t('stp.p.' + p.key), date: p.date, extra: '', color: p.color }, false));
+  (StampOwn || []).forEach(o => chip(o, true));
+}
+
+async function stampDialog(initial = null, quick = false) {
+  await stampMeasureReady();
+  await stampOwnLoad();
+  stampFill(initial || StampLast || { text: t('stp.p.paid'), date: todayIso(), extra: '', color: 'red' });
+  $('stp-pos-row').hidden = !quick;
+  $('stp-tag-row').hidden = !quick;
+  $('stp-ok').textContent = t(quick ? 'stp.ok.quick' : 'stp.ok');
+  $('stp-keep').checked = false;
+  stampPresets();
+  $('stp-dlg').showModal();
+  $('stp-text').focus();
+  $('stp-text').select();
+  return new Promise(res => { stampResolve = res; });
+}
+
+function initStampDialog() {
+  const box = $('stp-colors');
+  for (const c of Object.keys(STAMP_RGB)) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'stp-color';
+    b.dataset.color = c;
+    b.title = t('stp.c.' + c);
+    b.setAttribute('aria-label', t('stp.c.' + c));
+    b.style.background = stampCss(c);
+    b.addEventListener('click', () => { stampSetColor(c); stampPreview(); });
+    box.appendChild(b);
+  }
+  ['stp-text', 'stp-extra', 'stp-date'].forEach(id => $(id).addEventListener('input', stampPreview));
+  $('stp-date-on').addEventListener('change', () => { $('stp-date').disabled = !$('stp-date-on').checked; stampPreview(); });
+  $('stp-cancel').addEventListener('click', () => $('stp-dlg').close());
+  $('stp-dlg').addEventListener('close', () => { const r = stampResolve; stampResolve = null; if (r) r(null); });
+  $('stp-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const v = stampValue();
+    if (!v.text) { $('stp-msg').textContent = t('stp.empty'); return; }
+    try { stampCheck(v, StampM); } catch (err) { $('stp-msg').textContent = err.message; return; }
+    if ($('stp-keep').checked) {
+      await stampOwnSave([...StampOwn, { text: v.text, date: !!v.date, extra: v.extra, color: v.color }]);
+    }
+    StampLast = v;
+    const r = stampResolve;
+    stampResolve = null;
+    $('stp-dlg').close();
+    if (r) r({ ...v, pos: $('stp-pos').value, tag: $('stp-tag').checked });
+  });
+}
+
+// ---- in the editor: tap the page, then fill in the dialog
+
+async function edStamp(page, x, y) {
+  const st = await stampDialog();
+  if (!st) return;
+  const item = { id: ++Ed.seq, page, type: 'stamp', x, y, size: STAMP_SIZE,
+    text: st.text, date: st.date, extra: st.extra, color: st.color };
+  Ed.items.push(item);
+  edDrawItem(item);
+  edSelect(item);
+}
+
+// ---- from the preview: stamp page 1 at a chosen corner and save in place
+
+async function quickStamp(doc) {
+  let st;
+  try { st = await stampDialog(null, true); } catch (e) { toast(esc(e.message)); return; }
+  if (!st) return;
+  try {
+    const res = await fetch(`api/documents/${doc.id}/file`, { credentials: 'same-origin' });
+    if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const view = await pdfjsLib.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise;
+    const vp1 = (await view.getPage(1)).getViewport({ scale: 1 });
+    view.destroy();
+    let out;
+    try { out = await PDFLib.PDFDocument.load(bytes, { updateMetadata: false }); } catch (e) {
+      throw new Error(/encrypt/i.test(String(e)) ? t('ed.err.encrypted') : t('ed.err.load', { msg: String(e) }));
+    }
+    const item = { text: st.text, date: st.date, extra: st.extra, color: st.color, size: STAMP_SIZE + 2 };
+    const L = stampLayout(item), tr = STAMP_TILT * Math.PI / 180, m = 36;
+    const hx = (L.W * Math.cos(tr) + L.H * Math.sin(tr)) / 2, hy = (L.W * Math.sin(tr) + L.H * Math.cos(tr)) / 2;
+    const W = vp1.width, H = vp1.height;
+    [item.x, item.y] = { tl: [m + hx, m + hy], br: [W - m - hx, H - m - hy], bl: [m + hx, H - m - hy],
+      c: [W / 2, H / 2] }[st.pos] || [W - m - hx, m + hy];
+    stampDraw(out.getPages()[0], (x, y) => vp1.convertToPdfPoint(x, y), item, await stampEmbedFonts(out));
+    const saved = await out.save();
+    const r = await api(`documents/${doc.id}/edited`, { method: 'POST', body: JSON.stringify({
+      pdf: pdfBase64(saved), title: doc.title, date: doc.date || null, text: stampText(item), replace: true,
+      add_tags: st.tag ? [st.text] : [],
+    }) });
+    await edAfterSave(r, doc, t('ed.stamped', { title: doc.title }));
+  } catch (e) {
+    toast(esc(e.message));
+  }
 }

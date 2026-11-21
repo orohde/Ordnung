@@ -1,8 +1,10 @@
 """Saving PDFs edited in the browser and the stored signature per person.
 
 The browser (PDF.js to show, pdf-lib to write) sends the finished PDF. It is
-put next to the original as a new file; the original stays untouched. The
-signature is a transparent PNG in ``signatures/<user>.png`` in the data folder.
+put next to the original as a new file. With ``replace`` the original then goes
+to the trash (``.papierkorb``), so editing does not leave two versions behind
+and can still be undone; without it the original stays as a second document
+(duplicate). The signature is a transparent PNG in ``signatures/<user>.png`` in the data folder.
 """
 
 from __future__ import annotations
@@ -33,8 +35,10 @@ _save_lock = threading.Lock()
 
 
 def save_beside(index, inbox, doc: dict, data: bytes, title: str, doc_date: str | None,
-                text: str = "") -> dict:
-    """Write ``data`` as a new PDF in the folder of ``doc``; return path and sha256."""
+                text: str = "", replace: bool = False) -> dict:
+    """Write ``data`` as a new PDF in the folder of ``doc``; return path and sha256.
+
+    ``replace`` moves the original to the trash afterwards (``trash_path`` in the result)."""
     if len(data) > MAX_PDF_BYTES:
         raise EditorError("file too large")
     if not data.startswith(b"%PDF-"):
@@ -81,7 +85,17 @@ def save_beside(index, inbox, doc: dict, data: bytes, title: str, doc_date: str 
     body = (old + ("\n\n" + added if added else "")).strip()
     if body:
         index.store_text(sha, SimpleNamespace(text=body, pages=0, ocr_pages=0, method="editor", error=""))
-    return {"path": rel, "sha256": sha, "name": dest.name}
+    result = {"path": rel, "sha256": sha, "name": dest.name, "trash_path": None}
+    if replace:
+        from .docops import DocOpError, trash
+
+        try:
+            result["trash_path"] = trash(archive, doc)
+        except (DocOpError, OSError) as exc:
+            dest.unlink(missing_ok=True)       # keep exactly one version: the original
+            inbox._recent.pop(sha, None)
+            raise EditorError(f"original could not be replaced: {exc}") from exc
+    return result
 
 
 class SignatureStore:

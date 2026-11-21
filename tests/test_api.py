@@ -318,7 +318,7 @@ def test_language_preference(client: TestClient):
     assert client.get("/api/me").json()["language"] == "it"
     assert client.put("/api/me/prefs", json={"language": "xx"}).status_code == 400
     client.put("/api/me/prefs", json={"tree_open": ["Banken"]})          # tree state keeps the language
-    assert client.get("/api/me/prefs").json() == {"tree_open": ["Banken"], "language": "it"}
+    assert client.get("/api/me/prefs").json() == {"tree_open": ["Banken"], "language": "it", "stamps": []}
 
 
 def test_text_errors_list_and_retry(client: TestClient):

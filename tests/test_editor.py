@@ -64,3 +64,52 @@ def test_signature_roundtrip(client: TestClient):
     assert client.put("/api/me/signature", content=b"kein bild").status_code == 400
     assert client.delete("/api/me/signature").status_code == 200
     assert client.get("/api/me/signature").status_code == 404
+
+
+def test_edit_replaces_original_and_undo_works(client: TestClient, settings):
+    login(client, "oliver", "geheim123")
+    doc = _doc(client, "kontoauszug")
+    client.put(f"/api/documents/{doc['id']}/tags", json={"tags": ["steuer"]})
+    pdf = make_pdf("Deutsche Kreditbank Kontoauszug Maerz BEZAHLT")
+    res = client.post(f"/api/documents/{doc['id']}/edited", json={
+        "pdf": base64.b64encode(pdf).decode(), "title": doc["title"], "date": doc["date"],
+        "text": "BEZAHLT 21.11.2026", "replace": True, "add_tags": ["Bezahlt"]})
+    assert res.status_code == 201, res.text
+    out = res.json()
+    assert not (settings.archive / doc["path"]).exists()        # original went to the trash …
+    assert out["trash_path"].startswith(".papierkorb/")
+    assert (settings.archive / out["trash_path"]).is_file()
+    assert out["path"].startswith(f"oliver/Banken/DKB/{doc['date']}_{doc['title']}_")
+    new = client.get(f"/api/documents/{out['id']}").json()
+    assert sorted(new["tags"]) == ["Bezahlt", "steuer"]
+    # … and comes back with "undo"
+    assert client.post(f"/api/documents/{out['id']}/trash").status_code == 200
+    back = client.post("/api/trash/restore", json={"trash_path": out["trash_path"]})
+    assert back.status_code == 200, back.text
+    assert (settings.archive / doc["path"]).is_file()
+
+
+def test_edit_as_copy_keeps_original(client: TestClient, settings):
+    login(client, "oliver", "geheim123")
+    doc = _doc(client, "kontoauszug")
+    res = client.post(f"/api/documents/{doc['id']}/edited", json={
+        "pdf": base64.b64encode(make_pdf("Formular Dezember")).decode(), "title": "Formular (Kopie)",
+        "replace": False})
+    assert res.status_code == 201, res.text
+    assert res.json()["trash_path"] is None
+    assert (settings.archive / doc["path"]).is_file()
+
+
+def test_stamp_templates_follow_the_account(client: TestClient):
+    login(client, "oliver", "geheim123")
+    assert client.get("/api/me/prefs").json()["stamps"] == []
+    st = [{"text": "  Bezahlt ", "date": True, "extra": "per Überweisung", "color": "red"},
+          {"text": "Bezahlt", "date": True, "extra": "per Überweisung", "color": "red"},   # same → once
+          {"text": "Gebucht", "date": False, "color": "blue"}]
+    res = client.put("/api/me/prefs", json={"stamps": st})
+    assert res.status_code == 200, res.text
+    assert res.json()["stamps"] == [
+        {"text": "Bezahlt", "date": True, "extra": "per Überweisung", "color": "red"},
+        {"text": "Gebucht", "date": False, "extra": "", "color": "blue"}]
+    assert client.put("/api/me/prefs", json={"stamps": [{"text": "x", "color": "pink"}]}).status_code == 400
+    assert client.put("/api/me/prefs", json={"stamps": [{"text": ""}]}).status_code == 400

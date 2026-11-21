@@ -1,7 +1,8 @@
 """Per-person view settings that follow the account, not the browser.
 
 Kept in ``prefs.json`` in the data folder, one entry per user name. So far only
-which folders are expanded in the sidebar tree.
+which folders are expanded in the sidebar tree, the language and the own stamp
+templates of the PDF editor.
 """
 
 from __future__ import annotations
@@ -14,6 +15,22 @@ from pathlib import Path
 LANGUAGES = ("de", "en", "fr", "it")
 MAX_PATHS = 5000
 MAX_PATH_LEN = 1000
+MAX_STAMPS = 30
+STAMP_COLORS = ("red", "blue", "green", "black")
+
+
+def clean_stamp(raw: dict) -> dict:
+    """A stamp template: big text, whether a date goes below it, an extra line, a colour."""
+    if not isinstance(raw, dict):
+        raise ValueError("invalid stamp")
+    text = " ".join(str(raw.get("text") or "").split())
+    extra = " ".join(str(raw.get("extra") or "").split())
+    color = str(raw.get("color") or "red")
+    if not text or len(text) > 40 or len(extra) > 60:
+        raise ValueError("invalid stamp text")
+    if color not in STAMP_COLORS:
+        raise ValueError("invalid stamp colour")
+    return {"text": text, "date": bool(raw.get("date", True)), "extra": extra, "color": color}
 
 
 class PrefsStore:
@@ -37,7 +54,22 @@ class PrefsStore:
     def get(self, user: str) -> dict:
         with self._lock:
             p = self._load().get(user, {})
-        return {"tree_open": list(p.get("tree_open", [])), "language": p.get("language", "")}
+        return {"tree_open": list(p.get("tree_open", [])), "language": p.get("language", ""),
+                "stamps": list(p.get("stamps", []))}
+
+    def set_stamps(self, user: str, stamps: list[dict]) -> list[dict]:
+        clean, seen = [], set()
+        for raw in stamps[:MAX_STAMPS]:
+            st = clean_stamp(raw)
+            key = (st["text"].casefold(), st["date"], st["extra"].casefold(), st["color"])
+            if key not in seen:
+                seen.add(key)
+                clean.append(st)
+        with self._lock:
+            users = self._load()
+            users.setdefault(user, {})["stamps"] = clean
+            self._save(users)
+        return clean
 
     def set_language(self, user: str, language: str) -> str:
         if language not in LANGUAGES:
