@@ -1111,6 +1111,8 @@
   <dialog id="stp-dlg" class="ai-dlg ed-dlg stp-dlg" aria-labelledby="stp-title">
     <form id="stp-form" class="ai-dlg-form">
       <h4 id="stp-title" class="fd-title fd-title--h5" data-i18n="stp.title">Stempel</h4>
+      <div class="stp-body">
+      <div class="stp-fields">
       <div id="stp-presets" class="stp-presets"></div>
       <label class="fd-form-label" for="stp-text" data-i18n="stp.text">Aufschrift</label>
       <input id="stp-text" class="fd-input" maxlength="40" autocomplete="off">
@@ -1124,19 +1126,29 @@
         <span class="fd-form-label" data-i18n="stp.color">Farbe</span>
         <div id="stp-colors" class="stp-colors"></div>
       </div>
-      <div id="stp-preview" class="stp-preview" aria-hidden="true"></div>
-      <div id="stp-pos-row" class="stp-row" hidden>
-        <label class="fd-form-label" for="stp-pos" data-i18n="stp.pos">Stelle auf Seite 1</label>
-        <select id="stp-pos" class="fd-input stp-pos">
-          <option value="tr" data-i18n="stp.pos.tr">oben rechts</option>
-          <option value="tl" data-i18n="stp.pos.tl">oben links</option>
-          <option value="br" data-i18n="stp.pos.br">unten rechts</option>
-          <option value="bl" data-i18n="stp.pos.bl">unten links</option>
-          <option value="c" data-i18n="stp.pos.c">Mitte</option>
-        </select>
+      <div class="stp-row">
+        <label class="fd-form-label" for="stp-size" data-i18n="stp.size">Größe</label>
+        <input id="stp-size" class="stp-size" type="range" min="12" max="60" step="1" value="22">
+        <span id="stp-size-out" class="stp-size-out"></span>
       </div>
+      <div id="stp-preview" class="stp-preview" aria-hidden="true"></div>
       <label id="stp-tag-row" class="check" hidden><input type="checkbox" id="stp-tag" checked> <span data-i18n="stp.tag">Aufschrift als Tag vergeben</span></label>
       <label class="check"><input type="checkbox" id="stp-keep"> <span data-i18n="stp.keep">Als eigene Vorlage merken</span></label>
+      </div>
+      <div id="stp-place" class="stp-place" hidden>
+        <span class="fd-form-label" data-i18n="stp.place">Stelle auf der Seite</span>
+        <div id="stp-nav" class="stp-nav">
+          <button id="stp-prev" class="fd-button fd-button--transparent" type="button" data-i18n-title="stp.prev" title="Vorherige Seite">‹</button>
+          <span id="stp-page-label"></span>
+          <button id="stp-next" class="fd-button fd-button--transparent" type="button" data-i18n-title="stp.next" title="Nächste Seite">›</button>
+        </div>
+        <div id="stp-page" class="stp-page">
+          <canvas id="stp-canvas"></canvas>
+          <div id="stp-mark" class="stp-mark" tabindex="0" role="button" data-i18n-title="stp.place.hint"></div>
+        </div>
+        <p class="stp-hint" data-i18n="stp.place.hint">Auf die Seite tippen oder den Stempel ziehen.</p>
+      </div>
+      </div>
       <div class="form-actions">
         <span id="stp-msg" class="form-msg"></span>
         <button id="stp-cancel" class="fd-button fd-button--transparent" type="button" data-i18n="ed.sv.cancel">Abbrechen</button>

@@ -30,9 +30,10 @@ Object.assign(I18N.de, {
   'ed.stamped': '„{title}“ gestempelt.',
   'stp.title': 'Stempel', 'stp.text': 'Aufschrift', 'stp.date': 'Mit Datum', 'stp.extra': 'Zusatzzeile (frei)',
   'stp.extra.ph': 'z. B. per Überweisung', 'stp.color': 'Farbe', 'stp.keep': 'Als eigene Vorlage merken',
-  'stp.tag': 'Aufschrift als Tag vergeben', 'stp.pos': 'Stelle auf Seite 1',
-  'stp.pos.tr': 'oben rechts', 'stp.pos.tl': 'oben links', 'stp.pos.br': 'unten rechts', 'stp.pos.bl': 'unten links',
-  'stp.pos.c': 'Mitte', 'stp.ok': 'Einsetzen', 'stp.ok.quick': 'Stempeln', 'stp.own': 'eigene', 'stp.forget': 'Vorlage vergessen',
+  'stp.tag': 'Aufschrift als Tag vergeben', 'stp.size': 'Größe', 'stp.size.mm': '{w} × {h} mm',
+  'stp.page': 'Seite {n} von {total}', 'stp.prev': 'Vorherige Seite', 'stp.next': 'Nächste Seite',
+  'stp.place': 'Stelle auf der Seite', 'stp.place.hint': 'Auf die Seite tippen oder den Stempel ziehen. Mit den Pfeiltasten lässt er sich fein schieben.',
+  'stp.ok': 'Einsetzen', 'stp.ok.quick': 'Stempeln', 'stp.own': 'eigene', 'stp.forget': 'Vorlage vergessen',
   'stp.empty': 'Bitte eine Aufschrift eingeben.', 'stp.edit': 'Doppelklick: Stempel ändern',
   'stp.c.red': 'Rot', 'stp.c.blue': 'Blau', 'stp.c.green': 'Grün', 'stp.c.black': 'Schwarz',
   'stp.p.paid': 'Bezahlt', 'stp.p.done': 'Erledigt', 'stp.p.received': 'Eingegangen', 'stp.p.booked': 'Gebucht',
@@ -68,9 +69,10 @@ Object.assign(I18N.en, {
   'ed.stamped': '“{title}” stamped.',
   'stp.title': 'Stamp', 'stp.text': 'Text', 'stp.date': 'With date', 'stp.extra': 'Extra line (free)',
   'stp.extra.ph': 'e.g. by bank transfer', 'stp.color': 'Colour', 'stp.keep': 'Remember as my own template',
-  'stp.tag': 'Add the text as a tag', 'stp.pos': 'Place on page 1',
-  'stp.pos.tr': 'top right', 'stp.pos.tl': 'top left', 'stp.pos.br': 'bottom right', 'stp.pos.bl': 'bottom left',
-  'stp.pos.c': 'centre', 'stp.ok': 'Insert', 'stp.ok.quick': 'Stamp', 'stp.own': 'own', 'stp.forget': 'Forget template',
+  'stp.tag': 'Add the text as a tag', 'stp.size': 'Size', 'stp.size.mm': '{w} × {h} mm',
+  'stp.page': 'Page {n} of {total}', 'stp.prev': 'Previous page', 'stp.next': 'Next page',
+  'stp.place': 'Position on the page', 'stp.place.hint': 'Tap the page or drag the stamp. The arrow keys move it in small steps.',
+  'stp.ok': 'Insert', 'stp.ok.quick': 'Stamp', 'stp.own': 'own', 'stp.forget': 'Forget template',
   'stp.empty': 'Please enter a text.', 'stp.edit': 'Double-click: change the stamp',
   'stp.c.red': 'Red', 'stp.c.blue': 'Blue', 'stp.c.green': 'Green', 'stp.c.black': 'Black',
   'stp.p.paid': 'Paid', 'stp.p.done': 'Done', 'stp.p.received': 'Received', 'stp.p.booked': 'Booked',
@@ -732,7 +734,7 @@ const STAMP_PRESETS = [
   { key: 'received', date: true, color: 'blue' }, { key: 'booked', date: true, color: 'blue' },
   { key: 'void', date: true, color: 'red' }, { key: 'copy', date: false, color: 'black' },
 ];
-let StampM = null, StampOwn = null, StampLast = null, stampResolve = null;
+let StampM = null, StampOwn = null, StampLast = null, stampResolve = null, StampPlace = null;
 
 const edLocale = () => ({ de: 'de-DE', fr: 'fr-FR', it: 'it-IT' }[LANG] || 'en-GB');
 const todayIso = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
@@ -855,6 +857,7 @@ function stampValue() {
   return {
     text: clean($('stp-text').value), extra: clean($('stp-extra').value), color: $('stp-dlg').dataset.color || 'red',
     date: $('stp-date-on').checked ? ($('stp-date').value || todayIso()) : '',
+    size: +$('stp-size').value || STAMP_SIZE,
   };
 }
 
@@ -869,6 +872,7 @@ function stampFill(v) {
   $('stp-date').value = (typeof v.date === 'string' && v.date) || $('stp-date').value || todayIso();
   $('stp-date').disabled = !v.date;
   $('stp-extra').value = v.extra || '';
+  if (v.size) $('stp-size').value = v.size;
   stampSetColor(v.color || 'red');
   stampPreview();
 }
@@ -876,6 +880,9 @@ function stampFill(v) {
 function stampPreview() {
   const v = stampValue();
   $('stp-preview').innerHTML = v.text ? stampSvg({ ...v, size: STAMP_SIZE }) : '';
+  const L = stampLayout({ ...v, text: v.text || 'X' }), mm = pt => Math.round(pt * 25.4 / 72);
+  $('stp-size-out').textContent = t('stp.size.mm', { w: mm(L.W), h: mm(L.H) });
+  stampPlaceDraw();
   let msg = '';
   if (v.text && StampM) { try { stampCheck(v, StampM); } catch (e) { msg = e.message; } }
   $('stp-msg').textContent = msg;
@@ -890,7 +897,7 @@ function stampPresets() {
     b.className = 'fd-button stp-chip';
     b.style.setProperty('--stp-c', stampCss(v.color));
     b.textContent = v.text + (v.extra ? ' · ' + v.extra : '');
-    b.addEventListener('click', () => stampFill({ ...v, date: v.date ? ($('stp-date').value || todayIso()) : '' }));
+    b.addEventListener('click', () => stampFill({ ...v, size: 0, date: v.date ? ($('stp-date').value || todayIso()) : '' }));
     box.appendChild(b);
     if (own) {
       const x = document.createElement('button');
@@ -912,11 +919,16 @@ function stampPresets() {
   (StampOwn || []).forEach(o => chip(o, true));
 }
 
-async function stampDialog(initial = null, quick = false) {
+// view: an opened pdf.js document → quick mode with a page to place the stamp on
+async function stampDialog(initial = null, view = null) {
+  const quick = !!view;
   await stampMeasureReady();
   await stampOwnLoad();
-  stampFill(initial || StampLast || { text: t('stp.p.paid'), date: todayIso(), extra: '', color: 'red' });
-  $('stp-pos-row').hidden = !quick;
+  StampPlace = quick ? { view, page: 0, fx: StampLast?.fx ?? null, fy: StampLast?.fy ?? null } : null;
+  $('stp-dlg').classList.toggle('is-quick', quick);
+  $('stp-place').hidden = !quick;
+  $('stp-preview').hidden = quick;
+  stampFill(initial || StampLast || { text: t('stp.p.paid'), date: todayIso(), extra: '', color: 'red', size: STAMP_SIZE });
   $('stp-tag-row').hidden = !quick;
   $('stp-ok').textContent = t(quick ? 'stp.ok.quick' : 'stp.ok');
   $('stp-keep').checked = false;
@@ -924,7 +936,113 @@ async function stampDialog(initial = null, quick = false) {
   $('stp-dlg').showModal();
   $('stp-text').focus();
   $('stp-text').select();
-  return new Promise(res => { stampResolve = res; });
+  const done = new Promise(res => { stampResolve = res; });
+  if (quick) stampPlacePage(1).catch(e => { $('stp-msg').textContent = e.message; });
+  return done;
+}
+
+// ---- quick mode: a small picture of the page, tap or drag to place the stamp
+
+// half extent of the tilted stamp's bounding box
+function stampHalf(L) {
+  const tr = STAMP_TILT * Math.PI / 180;
+  return [(L.W * Math.cos(tr) + L.H * Math.sin(tr)) / 2, (L.W * Math.sin(tr) + L.H * Math.cos(tr)) / 2];
+}
+
+async function stampPlacePage(n) {
+  const P = StampPlace;
+  if (!P) return;
+  const total = P.view.numPages;
+  n = Math.max(1, Math.min(total, n));
+  P.page = n;
+  const token = P.token = (P.token || 0) + 1;
+  $('stp-nav').hidden = total < 2;
+  $('stp-page-label').textContent = t('stp.page', { n, total });
+  $('stp-prev').disabled = n <= 1;
+  $('stp-next').disabled = n >= total;
+  const pg = await P.view.getPage(n);
+  const vp1 = pg.getViewport({ scale: 1 });
+  const maxW = Math.min(360, window.innerWidth - 80), maxH = Math.min(480, window.innerHeight - 220);
+  const k = Math.min(maxW / vp1.width, Math.max(200, maxH) / vp1.height);
+  const dpr = window.devicePixelRatio || 1;
+  const vp = pg.getViewport({ scale: k * dpr });
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(vp.width);
+  cv.height = Math.round(vp.height);
+  await pg.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+  if (token !== P.token || StampPlace !== P) return;
+  cv.id = 'stp-canvas';
+  cv.style.width = vp1.width * k + 'px';
+  cv.style.height = vp1.height * k + 'px';
+  $('stp-canvas').replaceWith(cv);
+  P.vp = vp1;
+  P.k = k;
+  stampPlaceDraw();
+}
+
+function stampPlaceDraw() {
+  const P = StampPlace, mark = $('stp-mark');
+  if (!P || !P.vp) return;
+  const v = stampValue();
+  if (!v.text) { mark.hidden = true; return; }
+  mark.hidden = false;
+  const L = stampLayout(v), [hx, hy] = stampHalf(L), W = P.vp.width, H = P.vp.height, m = 36;
+  if (P.fx == null) { P.fx = (W - m - hx) / W; P.fy = (m + hy) / H; }   // first time: top right
+  const clamp = (c, h, max) => h * 2 >= max ? max / 2 : Math.max(h, Math.min(max - h, c));
+  P.x = clamp(P.fx * W, hx, W);
+  P.y = clamp(P.fy * H, hy, H);
+  mark.innerHTML = stampSvg(v);
+  Object.assign(mark.style, {
+    left: (P.x - L.W / 2) * P.k + 'px', top: (P.y - L.H / 2) * P.k + 'px',
+    width: L.W * P.k + 'px', height: L.H * P.k + 'px', transform: `rotate(${-STAMP_TILT}deg)`,
+  });
+}
+
+function initStampPlace() {
+  const box = $('stp-page');
+  let drag = null;
+  const at = e => {
+    const r = box.getBoundingClientRect();
+    return [e.clientX - r.left, e.clientY - r.top, r];
+  };
+  box.addEventListener('pointerdown', e => {
+    const P = StampPlace;
+    if (!P || !P.vp || e.button > 0) return;
+    e.preventDefault();
+    const [px, py] = at(e);
+    // grabbing the stamp keeps the grip point, a tap elsewhere puts its centre there
+    drag = $('stp-mark').contains(e.target) ? [P.x * P.k - px, P.y * P.k - py] : [0, 0];
+    box.setPointerCapture(e.pointerId);
+    box.dispatchEvent(new PointerEvent('pointermove', e));
+  });
+  box.addEventListener('pointermove', e => {
+    const P = StampPlace;
+    if (!drag || !P) return;
+    const [px, py, r] = at(e);
+    P.fx = (px + drag[0]) / r.width;
+    P.fy = (py + drag[1]) / r.height;
+    stampPlaceDraw();
+  });
+  // remember the clamped spot, so a bigger stamp later does not jump back to where the pointer was
+  const end = () => {
+    drag = null;
+    const P = StampPlace;
+    if (P && P.vp && P.x != null) { P.fx = P.x / P.vp.width; P.fy = P.y / P.vp.height; }
+  };
+  box.addEventListener('pointerup', end);
+  box.addEventListener('pointercancel', end);
+  $('stp-mark').addEventListener('keydown', e => {
+    const P = StampPlace, d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+    if (!P || !P.vp || !d) return;
+    e.preventDefault();
+    const step = e.shiftKey ? 20 : 4;
+    P.fx = (P.x + d[0] * step) / P.vp.width;
+    P.fy = (P.y + d[1] * step) / P.vp.height;
+    stampPlaceDraw();
+    end();
+  });
+  $('stp-prev').addEventListener('click', () => stampPlacePage(StampPlace.page - 1));
+  $('stp-next').addEventListener('click', () => stampPlacePage(StampPlace.page + 1));
 }
 
 function initStampDialog() {
@@ -940,7 +1058,8 @@ function initStampDialog() {
     b.addEventListener('click', () => { stampSetColor(c); stampPreview(); });
     box.appendChild(b);
   }
-  ['stp-text', 'stp-extra', 'stp-date'].forEach(id => $(id).addEventListener('input', stampPreview));
+  ['stp-text', 'stp-extra', 'stp-date', 'stp-size'].forEach(id => $(id).addEventListener('input', stampPreview));
+  initStampPlace();
   $('stp-date-on').addEventListener('change', () => { $('stp-date').disabled = !$('stp-date-on').checked; stampPreview(); });
   $('stp-cancel').addEventListener('click', () => $('stp-dlg').close());
   $('stp-dlg').addEventListener('close', () => { const r = stampResolve; stampResolve = null; if (r) r(null); });
@@ -952,11 +1071,12 @@ function initStampDialog() {
     if ($('stp-keep').checked) {
       await stampOwnSave([...StampOwn, { text: v.text, date: !!v.date, extra: v.extra, color: v.color }]);
     }
-    StampLast = v;
+    const P = StampPlace;
+    StampLast = P ? { ...v, fx: P.fx, fy: P.fy } : { ...v, fx: StampLast?.fx, fy: StampLast?.fy };
     const r = stampResolve;
     stampResolve = null;
     $('stp-dlg').close();
-    if (r) r({ ...v, pos: $('stp-pos').value, tag: $('stp-tag').checked });
+    if (r) r(P && P.vp ? { ...v, tag: $('stp-tag').checked, page: P.page, x: P.x, y: P.y } : v);
   });
 }
 
@@ -965,37 +1085,39 @@ function initStampDialog() {
 async function edStamp(page, x, y) {
   const st = await stampDialog();
   if (!st) return;
-  const item = { id: ++Ed.seq, page, type: 'stamp', x, y, size: STAMP_SIZE,
+  const item = { id: ++Ed.seq, page, type: 'stamp', x, y, size: st.size || STAMP_SIZE,
     text: st.text, date: st.date, extra: st.extra, color: st.color };
   Ed.items.push(item);
   edDrawItem(item);
   edSelect(item);
 }
 
-// ---- from the preview: stamp page 1 at a chosen corner and save in place
+// ---- from the preview: pick page, place and size on a picture of the page, save in place
 
 async function quickStamp(doc) {
-  let st;
-  try { st = await stampDialog(null, true); } catch (e) { toast(esc(e.message)); return; }
-  if (!st) return;
+  let bytes, view, st;
   try {
+    await loadPdfLibs();
     const res = await fetch(`api/documents/${doc.id}/file`, { credentials: 'same-origin' });
     if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
-    const bytes = new Uint8Array(await res.arrayBuffer());
-    const view = await pdfjsLib.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise;
-    const vp1 = (await view.getPage(1)).getViewport({ scale: 1 });
+    bytes = new Uint8Array(await res.arrayBuffer());
+    view = await pdfjsLib.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise;
+    st = await stampDialog(null, view);
+  } catch (e) {
+    if (view) view.destroy();
+    toast(esc(/password|encrypt/i.test(String(e)) ? t('ed.err.encrypted') : e.message));
+    return;
+  }
+  if (!st || !st.page) { view.destroy(); return; }
+  try {
+    const vp1 = (await view.getPage(st.page)).getViewport({ scale: 1 });
     view.destroy();
     let out;
     try { out = await PDFLib.PDFDocument.load(bytes, { updateMetadata: false }); } catch (e) {
       throw new Error(/encrypt/i.test(String(e)) ? t('ed.err.encrypted') : t('ed.err.load', { msg: String(e) }));
     }
-    const item = { text: st.text, date: st.date, extra: st.extra, color: st.color, size: STAMP_SIZE + 2 };
-    const L = stampLayout(item), tr = STAMP_TILT * Math.PI / 180, m = 36;
-    const hx = (L.W * Math.cos(tr) + L.H * Math.sin(tr)) / 2, hy = (L.W * Math.sin(tr) + L.H * Math.cos(tr)) / 2;
-    const W = vp1.width, H = vp1.height;
-    [item.x, item.y] = { tl: [m + hx, m + hy], br: [W - m - hx, H - m - hy], bl: [m + hx, H - m - hy],
-      c: [W / 2, H / 2] }[st.pos] || [W - m - hx, m + hy];
-    stampDraw(out.getPages()[0], (x, y) => vp1.convertToPdfPoint(x, y), item, await stampEmbedFonts(out));
+    const item = { text: st.text, date: st.date, extra: st.extra, color: st.color, size: st.size, x: st.x, y: st.y };
+    stampDraw(out.getPages()[st.page - 1], (x, y) => vp1.convertToPdfPoint(x, y), item, await stampEmbedFonts(out));
     const saved = await out.save();
     const r = await api(`documents/${doc.id}/edited`, { method: 'POST', body: JSON.stringify({
       pdf: pdfBase64(saved), title: doc.title, date: doc.date || null, text: stampText(item), replace: true,

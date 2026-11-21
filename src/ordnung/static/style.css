@@ -718,6 +718,22 @@ textarea.ed-field { resize: none; line-height: 1.2; }
 .stamp-svg text { font-family: Helvetica, Arial, sans-serif; }
 .ed-sv-mode { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; margin: .25rem 0 .5rem; }
 .stp-dlg { width: min(30rem, calc(100vw - 2rem)); }
+.stp-dlg.is-quick { width: min(58rem, calc(100vw - 2rem)); }
+.stp-dlg.is-quick .stp-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.5rem; align-items: start; }
+@media (max-width: 760px) { .stp-dlg.is-quick .stp-body { grid-template-columns: minmax(0, 1fr); } }
+.stp-place { display: flex; flex-direction: column; align-items: center; gap: .4rem; }
+.stp-place[hidden], .stp-mark[hidden], .stp-nav[hidden] { display: none; }
+.stp-nav { display: flex; align-items: center; gap: .25rem; font-variant-numeric: tabular-nums; }
+.stp-page { position: relative; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,.35); cursor: crosshair; touch-action: none;
+  user-select: none; -webkit-user-select: none; overflow: hidden; }
+.stp-page canvas { display: block; }
+.stp-mark { position: absolute; cursor: grab; transform-origin: center; }
+.stp-mark:active { cursor: grabbing; }
+.stp-mark:focus-visible { outline: 2px dashed var(--sapContent_FocusColor, #0070f2); outline-offset: 3px; }
+.stp-mark svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.stp-hint { margin: 0; max-width: 21rem; font-size: .8rem; text-align: center; color: var(--sapContent_LabelColor, #556b82); }
+.stp-size { flex: 1; min-width: 8rem; accent-color: var(--sapButton_Emphasized_Background, #0070f2); }
+.stp-size-out { min-width: 6.5rem; font-variant-numeric: tabular-nums; color: var(--sapContent_LabelColor, #556b82); }
 .stp-presets { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .5rem; }
 .stp-chip { font-weight: 700; display: inline-flex; align-items: center; }
 .stp-chip::before { content: ''; position: static; flex: none; display: inline-block; width: .6rem; height: .6rem; border-radius: 50%; margin-right: .4rem;
@@ -727,7 +743,6 @@ textarea.ed-field { resize: none; line-height: 1.2; }
 .stp-forget { min-width: 1.6rem; padding: 0 .3rem; font-size: .75rem; }
 .stp-row { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1rem; margin: .35rem 0; }
 .stp-date { width: auto; }
-.stp-pos { width: auto; }
 .stp-colors { display: flex; gap: .5rem; }
 .stp-color { width: 1.75rem; height: 1.75rem; border-radius: 50%; border: 3px solid transparent; outline: 1px solid rgba(128,128,128,.6); cursor: pointer; padding: 0; }
 .stp-color.is-active { border-color: var(--sapBackgroundColor, #fff); outline: 2px solid var(--sapTextColor, #1d2d3e); }
