@@ -33,6 +33,8 @@ Object.assign(I18N.de, {
   'stp.tag': 'Aufschrift als Tag vergeben', 'stp.size': 'Größe', 'stp.size.mm': '{w} × {h} mm',
   'stp.page': 'Seite {n} von {total}', 'stp.prev': 'Vorherige Seite', 'stp.next': 'Nächste Seite',
   'stp.place': 'Stelle auf der Seite', 'stp.place.hint': 'Auf die Seite tippen oder den Stempel ziehen. Mit den Pfeiltasten lässt er sich fein schieben.',
+  'stp.own.size': 'Eigene Vorlage mit Größe', 'stp.own.place': 'Eigene Vorlage mit Größe und Stelle',
+  'stp.keep.size': 'Als eigene Vorlage merken (mit Größe)', 'stp.keep.place': 'Als eigene Vorlage merken (mit Größe und Stelle)',
   'stp.ok': 'Einsetzen', 'stp.ok.quick': 'Stempeln', 'stp.own': 'eigene', 'stp.forget': 'Vorlage vergessen',
   'stp.empty': 'Bitte eine Aufschrift eingeben.', 'stp.edit': 'Doppelklick: Stempel ändern',
   'stp.c.red': 'Rot', 'stp.c.blue': 'Blau', 'stp.c.green': 'Grün', 'stp.c.black': 'Schwarz',
@@ -72,6 +74,8 @@ Object.assign(I18N.en, {
   'stp.tag': 'Add the text as a tag', 'stp.size': 'Size', 'stp.size.mm': '{w} × {h} mm',
   'stp.page': 'Page {n} of {total}', 'stp.prev': 'Previous page', 'stp.next': 'Next page',
   'stp.place': 'Position on the page', 'stp.place.hint': 'Tap the page or drag the stamp. The arrow keys move it in small steps.',
+  'stp.own.size': 'Own template with size', 'stp.own.place': 'Own template with size and position',
+  'stp.keep.size': 'Remember as my own template (with size)', 'stp.keep.place': 'Remember as my own template (with size and position)',
   'stp.ok': 'Insert', 'stp.ok.quick': 'Stamp', 'stp.own': 'own', 'stp.forget': 'Forget template',
   'stp.empty': 'Please enter a text.', 'stp.edit': 'Double-click: change the stamp',
   'stp.c.red': 'Red', 'stp.c.blue': 'Blue', 'stp.c.green': 'Green', 'stp.c.black': 'Black',
@@ -897,7 +901,12 @@ function stampPresets() {
     b.className = 'fd-button stp-chip';
     b.style.setProperty('--stp-c', stampCss(v.color));
     b.textContent = v.text + (v.extra ? ' · ' + v.extra : '');
-    b.addEventListener('click', () => stampFill({ ...v, size: 0, date: v.date ? ($('stp-date').value || todayIso()) : '' }));
+    if (own && (v.size || v.fx != null)) b.title = t(v.fx != null ? 'stp.own.place' : 'stp.own.size');
+    b.addEventListener('click', () => {
+      // an own template brings its size and, in the quick stamp, its spot on the page
+      if (own && v.fx != null && StampPlace) { StampPlace.fx = v.fx; StampPlace.fy = v.fy; }
+      stampFill({ ...v, size: own ? v.size : 0, date: v.date ? ($('stp-date').value || todayIso()) : '' });
+    });
     box.appendChild(b);
     if (own) {
       const x = document.createElement('button');
@@ -930,6 +939,7 @@ async function stampDialog(initial = null, view = null) {
   $('stp-preview').hidden = quick;
   stampFill(initial || StampLast || { text: t('stp.p.paid'), date: todayIso(), extra: '', color: 'red', size: STAMP_SIZE });
   $('stp-tag-row').hidden = !quick;
+  document.querySelector('#stp-keep + span').textContent = t(quick ? 'stp.keep.place' : 'stp.keep.size');
   $('stp-ok').textContent = t(quick ? 'stp.ok.quick' : 'stp.ok');
   $('stp-keep').checked = false;
   stampPresets();
@@ -1068,10 +1078,15 @@ function initStampDialog() {
     const v = stampValue();
     if (!v.text) { $('stp-msg').textContent = t('stp.empty'); return; }
     try { stampCheck(v, StampM); } catch (err) { $('stp-msg').textContent = err.message; return; }
-    if ($('stp-keep').checked) {
-      await stampOwnSave([...StampOwn, { text: v.text, date: !!v.date, extra: v.extra, color: v.color }]);
-    }
     const P = StampPlace;
+    if ($('stp-keep').checked) {
+      const own = { text: v.text, date: !!v.date, extra: v.extra, color: v.color, size: v.size,
+        ...(P && P.vp && P.fx != null ? { fx: P.fx, fy: P.fy } : {}) };
+      // same text, date, extra line and colour: the new one replaces the old (size, spot)
+      const same = o => o.text.toLowerCase() === own.text.toLowerCase() && !!o.date === own.date &&
+        (o.extra || '').toLowerCase() === own.extra.toLowerCase() && o.color === own.color;
+      await stampOwnSave([...StampOwn.filter(o => !same(o)), own]);
+    }
     StampLast = P ? { ...v, fx: P.fx, fy: P.fy } : { ...v, fx: StampLast?.fx, fy: StampLast?.fy };
     const r = stampResolve;
     stampResolve = null;

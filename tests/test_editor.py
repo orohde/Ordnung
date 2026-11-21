@@ -111,5 +111,12 @@ def test_stamp_templates_follow_the_account(client: TestClient):
     assert res.json()["stamps"] == [
         {"text": "Bezahlt", "date": True, "extra": "per Überweisung", "color": "red"},
         {"text": "Gebucht", "date": False, "extra": "", "color": "blue"}]
+    # size and spot on the page are kept when given
+    res = client.put("/api/me/prefs", json={"stamps": [
+        {"text": "Eingegangen", "date": True, "color": "blue", "size": 30.4, "fx": 0.81234567, "fy": 0.1}]})
+    assert res.json()["stamps"] == [
+        {"text": "Eingegangen", "date": True, "extra": "", "color": "blue", "size": 30, "fx": 0.8123, "fy": 0.1}]
+    for bad in ({"size": 200}, {"size": True}, {"fx": 0.5}, {"fx": 1.5, "fy": 0.2}, {"fx": "a", "fy": 0.2}):
+        assert client.put("/api/me/prefs", json={"stamps": [{"text": "x", **bad}]}).status_code == 400, bad
     assert client.put("/api/me/prefs", json={"stamps": [{"text": "x", "color": "pink"}]}).status_code == 400
     assert client.put("/api/me/prefs", json={"stamps": [{"text": ""}]}).status_code == 400

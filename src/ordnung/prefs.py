@@ -17,10 +17,11 @@ MAX_PATHS = 5000
 MAX_PATH_LEN = 1000
 MAX_STAMPS = 30
 STAMP_COLORS = ("red", "blue", "green", "black")
+STAMP_SIZE = (12, 60)
 
 
 def clean_stamp(raw: dict) -> dict:
-    """A stamp template: big text, whether a date goes below it, an extra line, a colour."""
+    """A stamp template: big text, whether a date goes below it, an extra line, a colour; optionally size and spot."""
     if not isinstance(raw, dict):
         raise ValueError("invalid stamp")
     text = " ".join(str(raw.get("text") or "").split())
@@ -30,7 +31,19 @@ def clean_stamp(raw: dict) -> dict:
         raise ValueError("invalid stamp text")
     if color not in STAMP_COLORS:
         raise ValueError("invalid stamp colour")
-    return {"text": text, "date": bool(raw.get("date", True)), "extra": extra, "color": color}
+    out = {"text": text, "date": bool(raw.get("date", True)), "extra": extra, "color": color}
+    # optional: size in pt and the spot on the page as a share of width/height (centre of the stamp)
+    if raw.get("size") is not None:
+        size = raw["size"]
+        if isinstance(size, bool) or not isinstance(size, (int, float)) or not STAMP_SIZE[0] <= size <= STAMP_SIZE[1]:
+            raise ValueError("invalid stamp size")
+        out["size"] = int(round(size))
+    if raw.get("fx") is not None or raw.get("fy") is not None:
+        pos = [raw.get("fx"), raw.get("fy")]
+        if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not 0 <= v <= 1 for v in pos):
+            raise ValueError("invalid stamp position")
+        out["fx"], out["fy"] = (round(float(v), 4) for v in pos)
+    return out
 
 
 class PrefsStore:
