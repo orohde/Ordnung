@@ -30,7 +30,7 @@ Die meisten Dokumentenverwaltungen bauen auf Tags und Filter. Das ist mächtig, 
 - **Umzug aus Paperless-ngx** mit einem Import-Planer.
 
 <table>
-<tr><td><img src="docs/screenshots/de/04-posteingang.jpg" alt="Posteingang mit Ordnervorschlag"></td><td><img src="docs/screenshots/de/06-editor.jpg" alt="PDF-Editor mit Unterschrift"></td></tr>
+<tr><td><img src="docs/screenshots/de/04-posteingang.jpg" alt="Posteingang mit Ordnervorschlag"></td><td><img src="docs/screenshots/de/06-editor.jpg" alt="PDF-Editor mit Stempel und Unterschrift"></td></tr>
 <tr><td><img src="docs/screenshots/de/03-mappe.jpg" alt="Mappe Steuererklärung 2026"></td><td><img src="docs/screenshots/de/02-suche.jpg" alt="Volltextsuche"></td></tr>
 </table>
 

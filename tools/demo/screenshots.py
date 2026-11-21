@@ -1,6 +1,6 @@
 """Screenshots of a running demo installation (see make_demo.py) with Playwright and Chrome.
 
-    python tools/demo/screenshots.py http://localhost:8472 de OUTDIR [--signature sig.png]
+    python tools/demo/screenshots.py http://localhost:8472 de OUTDIR [--signature sig.png] [--only 06-editor,…]
 """
 
 from __future__ import annotations
@@ -17,9 +17,10 @@ QUERY = {"de": "nordlicht", "en": "nordlicht"}
 POLICY = {"de": "Versicherungsschein Wohngebäude", "en": "Buildings insurance policy"}
 EDIT = {"de": "Heil- und Kostenplan", "en": "Treatment and cost plan"}
 EDIT_TEXT = {"de": "Einverstanden, bitte Termin im Dezember", "en": "Agreed, please book a date in December"}
+STAMP = {"de": ("Eingegangen", "per Post"), "en": ("Received", "by post")}
 
 
-async def shoot(base: str, lang: str, out: Path, signature: Path | None) -> None:
+async def shoot(base: str, lang: str, out: Path, signature: Path | None, only: set[str] | None = None) -> None:
     out.mkdir(parents=True, exist_ok=True)
     async with async_playwright() as p:
         browser = await p.chromium.launch(channel="chrome")
@@ -41,6 +42,8 @@ async def shoot(base: str, lang: str, out: Path, signature: Path | None) -> None
         await page.wait_for_timeout(1500)
 
         async def snap(name: str, wait: int = 1200):
+            if only and name not in only:
+                return
             await page.wait_for_timeout(wait)
             await page.screenshot(path=str(out / f"{name}.png"))
             print("  ", name)
@@ -67,12 +70,13 @@ async def shoot(base: str, lang: str, out: Path, signature: Path | None) -> None
         # 5 senders and rules
         await page.evaluate("location.hash = '#/regeln'")
         await snap("05-absender", 2500)
-        # 6 PDF editor with text, tick and signature
+        # 6 PDF editor with text, tick, stamp and signature
         await page.evaluate("location.hash = '#/'")
         await page.wait_for_timeout(800)
-        await page.evaluate("""async ([title, text]) => {
+        await page.evaluate("""async ([title, text, stamp]) => {
             const d = await api('documents?recursive=true&q=' + encodeURIComponent(title));
             await openEditor(d.items[0]);
+            await stampMeasureReady();
             Ed.scale = 1.05;
             await edRender();
             await edSigLoad();
@@ -82,9 +86,12 @@ async def shoot(base: str, lang: str, out: Path, signature: Path | None) -> None
               const w = 160, h = w * Ed.sigImg.naturalHeight / Ed.sigImg.naturalWidth;
               Ed.items.push({id: 93, page: 1, type: 'sign', x: 340, y: 470, w, h});
             }
+            const st = {id: 94, page: 1, type: 'stamp', x: 450, y: 118, size: 20,
+                        text: stamp[0], date: '2026-03-12', extra: stamp[1], color: 'blue'};
+            Ed.items.push(st);
             Ed.items.forEach(edDrawItem);
-            edSelect(Ed.items[Ed.items.length - 1]);
-        }""", [EDIT[lang], EDIT_TEXT[lang]])
+            edSelect(st);
+        }""", [EDIT[lang], EDIT_TEXT[lang], STAMP[lang]])
         await snap("06-editor", 2500)
         await page.evaluate("closeEditor(true)")
         # 7 settings: areas without owner
@@ -120,4 +127,5 @@ async def shoot(base: str, lang: str, out: Path, signature: Path | None) -> None
 
 if __name__ == "__main__":
     sig = Path(sys.argv[sys.argv.index("--signature") + 1]) if "--signature" in sys.argv else None
-    asyncio.run(shoot(sys.argv[1], sys.argv[2], Path(sys.argv[3]), sig))
+    only = set(sys.argv[sys.argv.index("--only") + 1].split(",")) if "--only" in sys.argv else None
+    asyncio.run(shoot(sys.argv[1], sys.argv[2], Path(sys.argv[3]), sig, only))

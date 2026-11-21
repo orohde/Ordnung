@@ -30,7 +30,7 @@ Most document managers are built around tags and filters. That is powerful – a
 - **Moving from Paperless-ngx** is supported with an import planner.
 
 <table>
-<tr><td><img src="docs/screenshots/en/04-posteingang.jpg" alt="Inbox with a suggested folder"></td><td><img src="docs/screenshots/en/06-editor.jpg" alt="PDF editor with signature"></td></tr>
+<tr><td><img src="docs/screenshots/en/04-posteingang.jpg" alt="Inbox with a suggested folder"></td><td><img src="docs/screenshots/en/06-editor.jpg" alt="PDF editor with stamp and signature"></td></tr>
 <tr><td><img src="docs/screenshots/en/03-mappe.jpg" alt="Collection 'Tax return 2026'"></td><td><img src="docs/screenshots/en/02-suche.jpg" alt="Full-text search"></td></tr>
 </table>
 
