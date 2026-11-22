@@ -317,6 +317,8 @@ class FileIn(BaseModel):
     date: str
     force: bool = False
     tags: list[str] = Field(default_factory=list)
+    pdf: str | None = Field(default=None, max_length=120_000_000)   # base64, stamped in the browser
+    text: str = Field(default="", max_length=50_000)                # the stamp's words, for the search
 
 
 class TagsIn(BaseModel):
@@ -1821,8 +1823,15 @@ def create_app(settings: Settings | None = None, background: bool = True) -> Fas
             [clean_tag(t) for t in body.tags]          # refuse bad tags before anything is copied
         except TagError as exc:
             raise _inbox_error(exc) from exc
+        data = None
+        if body.pdf is not None:
+            try:
+                data = base64.b64decode(body.pdf, validate=True)
+            except (binascii.Error, ValueError) as exc:
+                raise HTTPException(status_code=400, detail="invalid data") from exc
         try:
-            result = app.state.inbox.file(key, body.area, body.folder, body.title, body.date, body.force)
+            result = app.state.inbox.file(key, body.area, body.folder, body.title, body.date, body.force,
+                                          data=data, extra_text=body.text)
         except (InboxError, OSError) as exc:
             raise _inbox_error(exc) from exc
         if body.tags:

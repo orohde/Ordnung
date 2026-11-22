@@ -311,14 +311,14 @@ def test_delete_junk_from_inbox(env):
     assert c.delete(f"/api/inbox/{item['key']}").status_code == 400
 
 
-def _file_one(app, c, inbox, fresh, text, name):
+def _file_one(app, c, inbox, fresh, text, name, extra=None):
     f = inbox / name
     f.write_bytes(make_pdf(text))
     settle(f)
     process(app)
     item = next(i for i in c.get("/api/inbox").json()["items"] if i["name"] == name)
     res = c.post(f"/api/inbox/{item['key']}/file", json={"area": "oliver", "folder": "Post",
-                                                         "title": name[:-4], "date": "2026-11-01"})
+                                                         "title": name[:-4], "date": "2026-11-01", **(extra or {})})
     assert res.status_code == 200, res.text
     return f, res.json()
 
@@ -378,3 +378,59 @@ def test_zero_days_cleans_up_old_parked_files(env):
     app.state.index.scan()
     assert app.state.inbox.purge_done() == 1 and not parked.exists()
     assert not (inbox / "_importiert").exists() or not any((inbox / "_importiert").iterdir())
+
+
+def _stamped(text):
+    import base64
+    return base64.b64encode(make_pdf(text + " BEZAHLT")).decode()
+
+
+def test_file_with_stamp_keeps_original(env):
+    app, c, inbox, fresh = env
+    c.post("/api/storage/switch", json={"archive_path": str(fresh)})
+    add_inbox(c, inbox, area="oliver", after_import="keep")
+    f, body = _file_one(app, c, inbox, fresh, "Rechnung Stempel", "rech.pdf",
+                        {"pdf": _stamped("Rechnung Stempel"), "text": "BEZAHLT 21.11.2026", "tags": ["Bezahlt"]})
+    assert body["stamped"] and f.read_bytes() == make_pdf("Rechnung Stempel")      # original untouched
+    assert (fresh / body["path"]).read_bytes() == make_pdf("Rechnung Stempel BEZAHLT")
+    assert body["sha256"] == hashlib.sha256(make_pdf("Rechnung Stempel BEZAHLT")).hexdigest()
+    text = app.state.index.document_text(body["sha256"])
+    assert "Rechnung Stempel" in text and "BEZAHLT 21.11.2026" in text
+    app.state.index.scan()
+    doc = c.get(f"/api/documents/{body['sha256'][:12]}").json()
+    assert "Bezahlt" in doc["tags"]
+
+
+def test_file_with_stamp_deletes_after_verified_copy(env):
+    app, c, inbox, fresh = env
+    c.post("/api/storage/switch", json={"archive_path": str(fresh)})
+    add_inbox(c, inbox, area="oliver", after_import="delete", delete_days=0)
+    f, body = _file_one(app, c, inbox, fresh, "Brief gestempelt", "bg.pdf", {"pdf": _stamped("Brief gestempelt")})
+    assert body["moved"] and not f.exists()
+
+
+def test_file_with_stamp_purged_after_days(env):
+    app, c, inbox, fresh = env
+    c.post("/api/storage/switch", json={"archive_path": str(fresh)})
+    add_inbox(c, inbox, area="oliver", after_import="delete", delete_days=7)
+    f, body = _file_one(app, c, inbox, fresh, "Brief wartet", "bw.pdf", {"pdf": _stamped("Brief wartet")})
+    parked = inbox / "_importiert" / "bw.pdf"
+    assert body["moved"] and parked.exists()
+    app.state.index.scan()
+    assert app.state.inbox.purge_done(now=time.time() + 8 * 86400) == 1 and not parked.exists()
+
+
+def test_file_with_stamp_refuses_garbage(env):
+    import base64
+    app, c, inbox, fresh = env
+    c.post("/api/storage/switch", json={"archive_path": str(fresh)})
+    add_inbox(c, inbox, area="oliver")
+    f = inbox / "x.pdf"
+    f.write_bytes(make_pdf("Brief x"))
+    settle(f)
+    process(app)
+    key = c.get("/api/inbox").json()["items"][0]["key"]
+    body = {"area": "oliver", "title": "x", "date": "2026-11-01"}
+    assert c.post(f"/api/inbox/{key}/file", json={**body, "pdf": "%%%"}).status_code == 400
+    assert c.post(f"/api/inbox/{key}/file", json={**body, "pdf": base64.b64encode(b"kein pdf").decode()}).status_code == 400
+    assert f.exists() and c.get("/api/inbox").json()["items"][0]["status"] == "new"

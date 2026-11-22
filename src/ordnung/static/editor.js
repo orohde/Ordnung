@@ -9,6 +9,7 @@ Object.assign(I18N.de, {
   'ed.back': '← Zurück', 'ed.text': 'Text', 'ed.check': 'Haken', 'ed.cross': 'Kreuz', 'ed.date': 'Datum',
   'ed.sign': 'Unterschrift', 'ed.save': 'Speichern …', 'ed.zoomin': 'Größer', 'ed.zoomout': 'Kleiner',
   'ed.stamp': 'Stempel', 'pv.dup': 'Duplizieren', 'pv.stamp': 'Stempeln',
+  'ib.stamp.note': 'Gestempelt mit {what} – kommt beim Ablegen so ins Archiv.', 'ib.stamp.undo': 'Stempel entfernen',
   'ed.hint': 'Felder direkt ausfüllen. Für Text, Haken, Datum, Stempel oder Unterschrift oben wählen und auf die Seite tippen.',
   'ed.hint.copy': 'Kopie: Beim Speichern entsteht ein zweites Dokument, das Original bleibt.',
   'ed.hint.place': 'Auf die Stelle tippen, wo es hin soll. Esc bricht ab.',
@@ -50,6 +51,7 @@ Object.assign(I18N.en, {
   'ed.back': '← Back', 'ed.text': 'Text', 'ed.check': 'Tick', 'ed.cross': 'Cross', 'ed.date': 'Date',
   'ed.sign': 'Signature', 'ed.save': 'Save …', 'ed.zoomin': 'Larger', 'ed.zoomout': 'Smaller',
   'ed.stamp': 'Stamp', 'pv.dup': 'Duplicate', 'pv.stamp': 'Stamp',
+  'ib.stamp.note': 'Stamped with {what} – filed into the archive like this.', 'ib.stamp.undo': 'Remove stamp',
   'ed.hint': 'Fill in fields directly. For text, ticks, date, stamp or signature pick a tool above and tap the page.',
   'ed.hint.copy': 'Copy: saving adds a second document, the original stays.',
   'ed.hint.place': 'Tap where it should go. Esc cancels.',
@@ -682,6 +684,7 @@ function initEditor() {
   $('pv-edit').addEventListener('click', () => { if (State.selected) openEditor(State.selected, 'replace'); });
   $('pv-dup').addEventListener('click', () => { if (State.selected) openEditor(State.selected, 'copy'); });
   $('pv-stamp').addEventListener('click', () => { if (State.selected) quickStamp(State.selected); });
+  $('ib-stamp').addEventListener('click', inboxStamp);
   document.querySelectorAll('input[name="ed-sv-mode"]').forEach(r => r.addEventListener('change', () => edSaveMode(r.value)));
   initStampDialog();
   $('ed-close').addEventListener('click', () => closeEditor());
@@ -1109,37 +1112,99 @@ async function edStamp(page, x, y) {
 
 // ---- from the preview: pick page, place and size on a picture of the page, save in place
 
-async function quickStamp(doc) {
-  let bytes, view, st;
+// Fetch a PDF, let the person place a stamp on a picture of a page and draw it with pdf-lib.
+// Returns { bytes, item, st } or null when the dialog was cancelled; errors are thrown readable.
+async function stampPdf(url, bytes = null) {
+  let view;
   try {
     await loadPdfLibs();
-    const res = await fetch(`api/documents/${doc.id}/file`, { credentials: 'same-origin' });
-    if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
-    bytes = new Uint8Array(await res.arrayBuffer());
+    if (!bytes) {
+      const res = await fetch(url, { credentials: 'same-origin' });
+      if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+      bytes = new Uint8Array(await res.arrayBuffer());
+    }
     view = await pdfjsLib.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise;
-    st = await stampDialog(null, view);
-  } catch (e) {
-    if (view) view.destroy();
-    toast(esc(/password|encrypt/i.test(String(e)) ? t('ed.err.encrypted') : e.message));
-    return;
-  }
-  if (!st || !st.page) { view.destroy(); return; }
-  try {
+    const st = await stampDialog(null, view);
+    if (!st || !st.page) return null;
     const vp1 = (await view.getPage(st.page)).getViewport({ scale: 1 });
-    view.destroy();
     let out;
     try { out = await PDFLib.PDFDocument.load(bytes, { updateMetadata: false }); } catch (e) {
       throw new Error(/encrypt/i.test(String(e)) ? t('ed.err.encrypted') : t('ed.err.load', { msg: String(e) }));
     }
     const item = { text: st.text, date: st.date, extra: st.extra, color: st.color, size: st.size, x: st.x, y: st.y };
     stampDraw(out.getPages()[st.page - 1], (x, y) => vp1.convertToPdfPoint(x, y), item, await stampEmbedFonts(out));
-    const saved = await out.save();
-    const r = await api(`documents/${doc.id}/edited`, { method: 'POST', body: JSON.stringify({
-      pdf: pdfBase64(saved), title: doc.title, date: doc.date || null, text: stampText(item), replace: true,
-      add_tags: st.tag ? [st.text] : [],
+    return { bytes: await out.save(), item, st };
+  } catch (e) {
+    throw new Error(/password|encrypt/i.test(String(e)) ? t('ed.err.encrypted') : e.message);
+  } finally {
+    if (view) view.destroy();
+  }
+}
+
+async function quickStamp(doc) {
+  try {
+    const r = await stampPdf(`api/documents/${doc.id}/file`);
+    if (!r) return;
+    const saved = await api(`documents/${doc.id}/edited`, { method: 'POST', body: JSON.stringify({
+      pdf: pdfBase64(r.bytes), title: doc.title, date: doc.date || null, text: stampText(r.item), replace: true,
+      add_tags: r.st.tag ? [r.st.text] : [],
     }) });
-    await edAfterSave(r, doc, t('ed.stamped', { title: doc.title }));
+    await edAfterSave(saved, doc, t('ed.stamped', { title: doc.title }));
   } catch (e) {
     toast(esc(e.message));
   }
+}
+
+/* Inbox: the stamp is drawn into a copy in the browser right away (preview shows it)
+ * and goes to the archive when the item is filed; the file in the inbox stays as it is.
+ * A second stamp lands on the first one. */
+async function inboxStamp() {
+  const it = Inb.data && Inb.data.items.find(i => i.key === Inb.shown);
+  if (!it || it.ext !== 'pdf' || it.status !== 'new') return;
+  const prev = Inb.stamp && Inb.stamp.key === it.key ? Inb.stamp : null;
+  let r;
+  try {
+    r = await stampPdf(`api/inbox/${it.key}/file`, prev ? prev.bytes : null);
+  } catch (e) {
+    toast(esc(e.message));
+    return;
+  }
+  if (!r || Inb.shown !== it.key) return;
+  if (prev) URL.revokeObjectURL(prev.url);
+  Inb.stamp = { key: it.key, bytes: r.bytes, url: URL.createObjectURL(new Blob([r.bytes], { type: 'application/pdf' })),
+    names: [...(prev ? prev.names : []), r.st.text], texts: [...(prev ? prev.texts : []), stampText(r.item)] };
+  if (r.st.tag) {
+    const tags = $('ib-tags').flush ? $('ib-tags').flush() : (Inb.tags || []);
+    if (!tags.some(x => x.toLowerCase() === r.st.text.toLowerCase())) {
+      Inb.tags = [...tags, r.st.text];
+      tagEditor($('ib-tags'), Inb.tags, async x => { Inb.tags = x; return x; });
+    }
+  }
+  Inb.dirty = true;
+  inboxStampShow(it);
+}
+
+function inboxStampClear() {
+  if (Inb.stamp) URL.revokeObjectURL(Inb.stamp.url);
+  Inb.stamp = null;
+}
+
+// called at the end of showItem: button, note and the stamped preview
+function inboxStampShow(it) {
+  if (Inb.stamp && (!it || Inb.stamp.key !== it.key)) inboxStampClear();
+  const note = $('ib-stamp-note');
+  if (!it) { note.hidden = true; return; }
+  $('ib-stamp').hidden = it.ext !== 'pdf' || it.status !== 'new' || !Inb.data.archive_writable;
+  const st = Inb.stamp;
+  note.hidden = !st;
+  if (!st) return;
+  note.innerHTML = `<span>${esc(t('ib.stamp.note', { what: st.names.map(n => `„${n}“`).join(', ') }))}</span>` +
+    `<button type="button" class="fd-button fd-button--transparent" id="ib-stamp-undo">${esc(t('ib.stamp.undo'))}</button>`;
+  $('ib-stamp-undo').addEventListener('click', () => {
+    inboxStampClear();
+    const cur = Inb.data.items.find(i => i.key === Inb.shown);
+    if (cur) $('ib-preview').innerHTML = `<iframe src="api/inbox/${cur.key}/file#view=FitH" title="${esc(cur.name)}"></iframe>`;
+    inboxStampShow(cur);
+  });
+  $('ib-preview').innerHTML = `<iframe src="${st.url}#view=FitH" title="${esc(it.name)}"></iframe>`;
 }

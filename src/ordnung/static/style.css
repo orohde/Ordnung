@@ -536,6 +536,10 @@ table.card { padding: 0; border-collapse: separate; overflow: hidden; width: 100
 .ib-cand-why { margin-top: 0.3rem; display: flex; flex-wrap: wrap; gap: 0.3rem; font-size: 0.78rem; }
 .ib-dup { padding: 0.5rem 0.7rem; border-radius: 0.4rem; font-size: 0.85rem;
   background: var(--sapErrorBackground, #ffeaf4); color: var(--sapNegativeTextColor, #aa0808); }
+.ib-stamp-note { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; padding: 0.4rem 0.7rem;
+  border-radius: 0.4rem; font-size: 0.85rem; background: var(--sapInformationBackground, #e8f3ff);
+  color: var(--sapInformativeTextColor, #0040b0); }
+.ib-stamp-note[hidden] { display: none; }
 .ib-dup-path { color: inherit; text-decoration: underline; word-break: break-all; }
 .ib-dup-actions { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.3rem; }
 .ib-filename { font-size: 0.75rem; word-break: break-all; align-self: center; }

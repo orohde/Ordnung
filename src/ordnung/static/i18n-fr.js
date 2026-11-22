@@ -124,6 +124,7 @@ I18N.fr = {
   'ib.delete': 'Supprimer',
   'ib.delete.q': 'Supprimer définitivement « {name} » ? Le fichier est retiré du dossier d’entrée et ne peut pas être récupéré.',
   'err.cannot delete': 'Le fichier n’a pas pu être supprimé (dossier d’entrée en lecture seule ?).',
+  'ib.stamp.note': 'Tamponné avec {what} – classé ainsi dans les archives.', 'ib.stamp.undo': 'Retirer le tampon',
   'ib.dismiss': 'Écarter', 'ib.undismiss': 'Récupérer', 'ib.file': 'Classer', 'ib.filed': 'Classé sous {path}.',
   'ib.learn': 'Aucune règle ne correspond – laisser Ordnung! proposer des règles pour ce dossier ?',
   'ib.learn.link': 'Vers les règles', 'ib.reading': 'Lecture du texte …', 'ib.nosugg': 'pas de proposition',

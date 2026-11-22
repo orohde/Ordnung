@@ -48,6 +48,7 @@ log = logging.getLogger("ordnung.inbox")
 DONE_DIR = "_importiert"
 EXTENSIONS = {"pdf", "png", "jpg", "jpeg", "tif", "tiff", "txt", "docx"}
 SETTLE_SECONDS = 10           # a scanner may still be writing younger files
+MAX_STAMPED_BYTES = 80 * 1024 * 1024   # a stamped PDF from the browser
 AI_TEXT_CHARS = 5000
 
 SCHEMA = """
@@ -76,6 +77,8 @@ CREATE TABLE IF NOT EXISTS items (
 CREATE INDEX IF NOT EXISTS items_status ON items(status);
 CREATE INDEX IF NOT EXISTS items_sha ON items(sha256);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+-- filed with a stamp: the archive holds a changed copy (``archived``) of the original (``sha256``)
+CREATE TABLE IF NOT EXISTS derived (sha256 TEXT PRIMARY KEY, archived TEXT NOT NULL);
 """
 
 # file names a scanner or a mail program makes up – not worth keeping as a title
@@ -580,7 +583,13 @@ class InboxService:
             need = max(need, common + 1)
         return sha[:need]
 
-    def file(self, key: str, area: str, folder: str, title: str, doc_date: str, force: bool = False) -> dict:
+    def file(self, key: str, area: str, folder: str, title: str, doc_date: str, force: bool = False,
+             data: bytes | None = None, extra_text: str = "") -> dict:
+        """Copy an inbox item into the archive.
+
+        ``data`` (a PDF stamped in the browser) is stored instead of an exact copy; the
+        original's text plus ``extra_text`` goes with it, and the original counts as
+        archived through that copy (``derived``) for "delete after import"."""
         archive = self.index.archive
         if not path_status(str(archive))["writable"]:
             raise InboxError("archive is read-only for filing")
@@ -609,7 +618,14 @@ class InboxService:
             dup = self._archived(row["sha256"])
             if dup and not force:
                 raise InboxError(f"already in the archive: {dup}")
-            name = f"{doc_date}_{title}_{self._short_id(row['sha256'])}.{ext}"
+            sha = row["sha256"]
+            if data is not None:
+                if ext != "pdf" or not data.startswith(b"%PDF-") or len(data) > MAX_STAMPED_BYTES:
+                    raise InboxError("not a PDF")
+                sha = hashlib.sha256(data).hexdigest()
+                if sha != row["sha256"] and self._archived(sha):
+                    raise InboxError(f"already in the archive: {self._archived(sha)}")
+            name = f"{doc_date}_{title}_{self._short_id(sha)}.{ext}"
             target_dir = archive / area / folder if folder else archive / area
             dest = target_dir / name
             if dest.exists():
@@ -618,30 +634,38 @@ class InboxService:
             tmp_dir.mkdir(exist_ok=True)
             tmp = tmp_dir / (uuid.uuid4().hex + "." + ext)
             try:
-                shutil.copyfile(src, tmp)
+                if data is not None:
+                    tmp.write_bytes(data)
+                else:
+                    shutil.copyfile(src, tmp)
                 os.chmod(tmp, 0o664)
                 _makedirs(target_dir, archive)
                 os.replace(tmp, dest)
             finally:
                 tmp.unlink(missing_ok=True)
             # the text is known already: hand it to the archive index, no second OCR
-            if row["body"] is not None:
-                self.index.store_text(row["sha256"], SimpleNamespace(
-                    text=row["body"], pages=row["pages"], ocr_pages=row["ocr_pages"],
+            added = (extra_text or "").strip()[:20_000] if sha != row["sha256"] else ""
+            if row["body"] is not None or added:
+                self.index.store_text(sha, SimpleNamespace(
+                    text=((row["body"] or "") + ("\n\n" + added if added else "")).strip(),
+                    pages=row["pages"], ocr_pages=row["ocr_pages"],
                     method=row["method"] or "text", error=row["error"]))
             rel_dest = dest.relative_to(archive).as_posix()
-            self._recent[row["sha256"]] = rel_dest
-            moved = self._after_import(row, src, rel_dest)
+            self._recent[sha] = rel_dest
+            if sha != row["sha256"]:
+                with self.connect() as con:
+                    con.execute("INSERT OR REPLACE INTO derived (sha256, archived) VALUES (?, ?)", (row["sha256"], sha))
+            moved = self._after_import(row, src, rel_dest, sha)
             with self.connect() as con:
                 if moved:
                     con.execute("DELETE FROM items WHERE key=?", (key,))
                 else:
                     con.execute("UPDATE items SET status='filed', filed_path=? WHERE key=?", (rel_dest, key))
         sugg = json.loads(row["sugg"]) if row["sugg"] else {}
-        return {"path": rel_dest, "moved": moved, "sha256": row["sha256"],
+        return {"path": rel_dest, "moved": moved, "sha256": sha, "stamped": sha != row["sha256"],
                 "learn": folder != (sugg.get("folder") or "") or "rule" not in (sugg.get("source") or "")}
 
-    def _after_import(self, row: sqlite3.Row, src: Path, archived_path: str = "") -> bool:
+    def _after_import(self, row: sqlite3.Row, src: Path, archived_path: str = "", archived_sha: str = "") -> bool:
         inbox = next((i for i in self.inboxes(False) if i.id == row["inbox"]), None)
         if inbox and inbox.id == "upload":
             # an upload has done its job once the archive holds the copy
@@ -654,7 +678,8 @@ class InboxService:
             return False
         if inbox.after_import == "delete":
             # only once the archive copy is proven identical to the original
-            if not archived_path or not self._same_content(src, self.index.archive / archived_path, row["sha256"]):
+            if not archived_path or not self._same_content(src, self.index.archive / archived_path, row["sha256"],
+                                                           archived_sha or row["sha256"]):
                 log.warning("inbox: archive copy of %s could not be verified, original kept", row["rel"])
                 return False
             if inbox.delete_days <= 0:
@@ -677,9 +702,10 @@ class InboxService:
         return True
 
     @staticmethod
-    def _same_content(src: Path, copy: Path, sha: str) -> bool:
+    def _same_content(src: Path, copy: Path, sha: str, copy_sha: str | None = None) -> bool:
+        """``src`` still is ``sha`` and the archive ``copy`` is ``copy_sha`` (the stamped copy) or ``sha``."""
         try:
-            return copy.is_file() and sha256_file(copy) == sha and sha256_file(src) == sha
+            return copy.is_file() and sha256_file(copy) == (copy_sha or sha) and sha256_file(src) == sha
         except OSError:
             return False
 
@@ -701,8 +727,15 @@ class InboxService:
                     if not f.is_file() or f.is_symlink() or now - f.stat().st_mtime < inbox.delete_days * 86400:
                         continue
                     sha = sha256_file(f)
+                    copy_sha = sha
                     archived = self._archived(sha)
-                    if not archived or not self._same_content(f, self.index.archive / archived, sha):
+                    if not archived:
+                        with self.connect() as con:
+                            d = con.execute("SELECT archived FROM derived WHERE sha256=?", (sha,)).fetchone()
+                        if d:
+                            copy_sha = d[0]
+                            archived = self._archived(copy_sha)
+                    if not archived or not self._same_content(f, self.index.archive / archived, sha, copy_sha):
                         log.warning("inbox: %s not found identical in the archive, kept", f)
                         continue
                     f.unlink()

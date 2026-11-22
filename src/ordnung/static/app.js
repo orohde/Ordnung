@@ -2851,7 +2851,7 @@ function showItem(it) {
   $('ib-detail').hidden = !it;
   $('ib-empty').hidden = !!it;
   $('ib-msg').textContent = '';
-  if (!it) { $('ib-preview').innerHTML = ''; return; }
+  if (!it) { $('ib-preview').innerHTML = ''; inboxStampShow(null); return; }
   const s = it.suggestion || {};
   $('ib-name').textContent = it.name;
   $('ib-rel').textContent = `${it.inbox_name} / ${it.rel}` + (it.text ? ' · ' + (it.text.chars
@@ -2917,6 +2917,7 @@ function showItem(it) {
   if (it.ext === 'pdf') pv.innerHTML = `<iframe src="${url}#view=FitH" title="${esc(it.name)}"></iframe>`;
   else if (['png', 'jpg', 'jpeg'].includes(it.ext)) pv.innerHTML = `<img src="${url}" alt="${esc(it.name)}">`;
   else pv.innerHTML = `<p class="preview__none">${esc(t('pv.none'))}</p>`;
+  inboxStampShow(it);
 }
 
 function updateFilename() {
@@ -2945,9 +2946,14 @@ async function fileItem(force) {
     force,
     tags: $('ib-tags').flush ? $('ib-tags').flush() : (Inb.tags || []),
   };
+  if (Inb.stamp && Inb.stamp.key === key) {
+    body.pdf = pdfBase64(Inb.stamp.bytes);
+    body.text = Inb.stamp.texts.join('\n');
+  }
   $('ib-submit').disabled = true;
   try {
     const r = await api(`inbox/${key}/file`, { method: 'POST', body: JSON.stringify(body) });
+    if (Inb.stamp && Inb.stamp.key === key) inboxStampClear();
     nextItem();
     Inb.shown = null;
     await loadInbox();

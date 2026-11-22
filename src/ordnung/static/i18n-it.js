@@ -124,6 +124,7 @@ I18N.it = {
   'ib.delete': 'Elimina',
   'ib.delete.q': 'Eliminare definitivamente «{name}»? Il file viene tolto dalla cartella di entrata e non si può recuperare.',
   'err.cannot delete': 'Non è stato possibile eliminare il file (cartella di entrata in sola lettura?).',
+  'ib.stamp.note': 'Timbrato con {what} – archiviato così.', 'ib.stamp.undo': 'Togli il timbro',
   'ib.dismiss': 'Scarta', 'ib.undismiss': 'Recupera', 'ib.file': 'Archivia', 'ib.filed': 'Archiviato come {path}.',
   'ib.learn': 'Nessuna regola corrisponde – lasciare che Ordnung! proponga regole per questa cartella?',
   'ib.learn.link': 'Alle regole', 'ib.reading': 'Lettura del testo …', 'ib.nosugg': 'nessuna proposta',
