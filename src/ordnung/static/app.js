@@ -66,6 +66,9 @@ const I18N = {
     'fo.rename.q': 'Neuer Name. Mit „/“ lässt sich der Ordner auch verschieben (z. B. Versicherungen/Cosmos/KFZ):',
     'fo.delete.q': 'Ordner „{folder}“ und seine leeren Unterordner löschen?', 'fo.notempty': 'Nur leere Ordner lassen sich löschen.',
     'fo.renamed': 'Umbenannt. {rules} Regel(n) angepasst.',
+    'fm.rename': 'Umbenennen …', 'fm.move': 'Verschieben …', 'fm.rename.q': 'Neuer Name des Ordners:',
+    'fm.move.q': 'Neuer Ort des Ordners als ganzer Pfad (z. B. Versicherungen/Cosmos/KFZ). Alles darin zieht mit, in allen Bereichen:',
+    'fm.made': 'Ordner „{folder}“ angelegt.', 'tree.newfolder': 'Neuer Ordner',
     'op.trashed': '„{title}“ liegt im Papierkorb.', 'op.undo': 'Rückgängig', 'op.restored': 'Wiederhergestellt.',
     'op.moved': '{n} Dokument(e) nach „{folder}“ verschoben.', 'op.moved.fail': '{n} nicht verschoben: {err}',
     'op.drag': '{n} Dokument(e)',
@@ -524,6 +527,9 @@ const I18N = {
     'fo.rename.q': 'New name. Use “/” to move the folder as well (e.g. Insurance/Cosmos/Car):',
     'fo.delete.q': 'Delete folder “{folder}” and its empty subfolders?', 'fo.notempty': 'Only empty folders can be deleted.',
     'fo.renamed': 'Renamed. {rules} rule(s) updated.',
+    'fm.rename': 'Rename …', 'fm.move': 'Move …', 'fm.rename.q': 'New name of the folder:',
+    'fm.move.q': 'New place of the folder as a full path (e.g. Insurance/Cosmos/Car). Everything in it moves along, in all areas:',
+    'fm.made': 'Folder “{folder}” created.', 'tree.newfolder': 'New folder',
     'op.trashed': '“{title}” moved to the trash.', 'op.undo': 'Undo', 'op.restored': 'Restored.',
     'op.moved': 'Moved {n} document(s) to “{folder}”.', 'op.moved.fail': '{n} not moved: {err}',
     'op.drag': '{n} document(s)',
@@ -1163,7 +1169,13 @@ function addNode(box, node, depth, altRoot = false) {
     `<span class="tree-count">${node.count}</span>` +
     (writesAny() ? `<button type="button" class="tree-menu" title="${esc(t('fo.menu'))}" aria-label="${esc(t('fo.menu'))}">⋯</button>` : '');
   const menuBtn = row.querySelector('.tree-menu');
-  if (menuBtn) menuBtn.addEventListener('click', ev => { ev.stopPropagation(); folderMenu(menuBtn, node); });
+  if (menuBtn) {
+    menuBtn.addEventListener('click', ev => { ev.stopPropagation(); folderMenu(menuBtn, node); });
+    row.addEventListener('contextmenu', ev => {
+      if (folderMenu(menuBtn, node, { x: ev.clientX, y: ev.clientY }) !== false) ev.preventDefault();
+    });
+    longPress(row, (x, y) => folderMenu(menuBtn, node, { x, y }));
+  }
   box.appendChild(row);
 
   row.querySelector('.tree-caret').addEventListener('click', ev => {
@@ -1612,12 +1624,10 @@ function showPane(pane) {
   if (pane === 'security') loadSecurity();
   if (pane === 'general') $('set-theme').value = theme;
   if (pane === 'connections') { loadApiKey(); loadMcp(); }
-  if (pane === 'mail') loadMail();
-  if (pane === 'ai') loadAI();
-  if (pane === 'about') loadAbout();
-  if (pane === 'storage') loadStorage();
-  if (pane === 'system') loadSystem();
+  const loaders = { mail: loadMail, ai: loadAI, about: loadAbout, storage: loadStorage, system: loadSystem };
   syncNeeds();
+  // the loaders set the switches only once their data is in; grey out the dependent rows after that
+  if (loaders[pane]) Promise.resolve(loaders[pane]()).finally(syncNeeds);
 }
 
 // ---- settings that save themselves (like CutStock): a change saves the whole form; text fields
@@ -3498,6 +3508,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('btn-tree').addEventListener('click', () => $('tree-panel').classList.toggle('is-open'));
   $('tree-expand').addEventListener('click', () => setAllOpen(true));
   $('tree-collapse').addEventListener('click', () => setAllOpen(false));
+  $('tree-newfolder').addEventListener('click', () => newFolderIn(isAlt(State.folder) || State.mappe ? '' : State.folder));
   document.addEventListener('keydown', ev => {
     if (ev.key !== 'Escape' || !$('editor').hidden) return;
     if (!$('settings').hidden) location.hash = '#/';
@@ -4253,7 +4264,8 @@ async function loadTrash() {
 
 // ------------------------------------------------------- folder menu
 
-function folderMenu(anchor, node) {
+// at: {x, y} for a right click or a long press; else the menu opens below the ⋯ button
+function folderMenu(anchor, node, at = null) {
   document.querySelector('.fo-menu')?.remove();
   const menu = document.createElement('div');
   menu.className = 'fo-menu';
@@ -4264,23 +4276,27 @@ function folderMenu(anchor, node) {
   else if (isAlt(node.path)) entries = [['altback', t('alt.fo.back'), !node.count]];
   else {
     entries = !admin ? [] : node.path
-      ? [['new', t('fo.new')], ['rename', t('fo.rename')], ['delete', t('fo.delete'), node.count > 0]]
+      ? [['new', t('fo.new')], ['rename', t('fm.rename')], ['move', t('fm.move')], ['delete', t('fo.delete'), node.count > 0]]
       : [['new', t('fo.newtop')]];
     entries.push(node.path ? ['altto', t('alt.fo.to'), !node.count] : ['altyears', t('alt.years')]);
   }
   menu.innerHTML = entries.map(([k, label, off]) =>
     `<button type="button" role="menuitem" data-k="${k}"${off ? ` disabled${k === 'delete' ? ` title="${esc(t('fo.notempty'))}"` : ''}` : ''}>${esc(label)}</button>`).join('');
+  if (!entries.length) return false;
   document.body.appendChild(menu);
-  const r = anchor.getBoundingClientRect();
-  menu.style.left = Math.min(r.left, innerWidth - menu.offsetWidth - 8) + 'px';
-  menu.style.top = (r.bottom + 4) + 'px';
-  const close = ev => { if (!menu.contains(ev.target)) { menu.remove(); removeEventListener('pointerdown', close, true); } };
+  const r = at ? { left: at.x, bottom: at.y - 4 } : anchor.getBoundingClientRect();
+  menu.style.left = Math.max(8, Math.min(r.left, innerWidth - menu.offsetWidth - 8)) + 'px';
+  menu.style.top = Math.max(8, Math.min(r.bottom + 4, innerHeight - menu.offsetHeight - 8)) + 'px';
+  const shut = () => { menu.remove(); removeEventListener('pointerdown', close, true); removeEventListener('keydown', onKey, true); };
+  const close = ev => { if (!menu.contains(ev.target)) shut(); };
+  const onKey = ev => { if (ev.key === 'Escape') shut(); };
   addEventListener('pointerdown', close, true);
+  addEventListener('keydown', onKey, true);
+  menu.querySelector('button:not(:disabled)')?.focus();
   menu.addEventListener('click', async ev => {
     const k = ev.target.dataset.k;
-    if (!k) return;
-    menu.remove();
-    removeEventListener('pointerdown', close, true);
+    if (!k || ev.target.disabled) return;
+    shut();
     if (k === 'altyears') { altDialog(); return; }
     if (k === 'altto') {
       if (!confirm(t('alt.fo.q', { n: node.count, folder: node.path.replaceAll('/', ' › ') }))) return;
@@ -4290,20 +4306,24 @@ function folderMenu(anchor, node) {
     if (k === 'altback') { altMove({ folder: node.path, areas: [...State.active].join(',') }, true); return; }
     try {
       if (k === 'new') {
-        const name = prompt(node.path ? t('fo.new.q', { folder: node.path }) : t('fo.newtop.q'));
-        if (!name || !name.trim()) return;
-        const path = (node.path ? node.path + '/' : '') + name.trim().replace(/^\/+|\/+$/g, '');
-        await api('folders', { method: 'POST', body: JSON.stringify({ path }) });
-        if (node.path) State.open.add(node.path);
-        saveOpen();
-      } else if (k === 'rename') {
-        const target = prompt(t('fo.rename.q'), node.path);
-        if (!target || !target.trim() || target.trim() === node.path) return;
-        const r = await api('folders', { method: 'PATCH', body: JSON.stringify({ old: node.path, new: target.trim() }) });
+        await newFolderIn(node.path);
+        return;
+      } else if (k === 'rename' || k === 'move') {
+        const parent = node.path.includes('/') ? node.path.slice(0, node.path.lastIndexOf('/') + 1) : '';
+        const answer = k === 'rename' ? prompt(t('fm.rename.q'), node.name) : prompt(t('fm.move.q'), node.path);
+        if (!answer || !answer.trim()) return;
+        const target = k === 'rename' ? parent + answer.trim().replace(/^\/+|\/+$/g, '') : answer.trim();
+        if (target === node.path) return;
+        const r = await api('folders', { method: 'PATCH', body: JSON.stringify({ old: node.path, new: target }) });
+        const swap = p => (p === node.path || p.startsWith(node.path + '/') ? target + p.slice(node.path.length) : p);
+        State.open = new Set([...State.open].map(swap));
         if (State.folder === node.path || State.folder.startsWith(node.path + '/')) {
-          State.folder = target.trim() + State.folder.slice(node.path.length);
+          State.folder = swap(State.folder);
           store.set('folder', State.folder);
         }
+        openAncestors(State.folder);
+        openAncestors(target);
+        saveOpen();
         toast(esc(t('fo.renamed', { rules: r.rules ?? 0 })), null, 5000);
       } else if (k === 'delete') {
         if (!confirm(t('fo.delete.q', { folder: node.path, name: node.path }))) return;
@@ -4315,6 +4335,41 @@ function folderMenu(anchor, node) {
       toast(esc(e.message));
     }
   });
+}
+
+async function newFolderIn(parent) {
+  const name = prompt(parent ? t('fo.new.q', { folder: parent }) : t('fo.newtop.q'));
+  if (!name || !name.trim()) return;
+  const path = (parent ? parent + '/' : '') + name.trim().replace(/^\/+|\/+$/g, '');
+  try {
+    const made = await api('folders', { method: 'POST', body: JSON.stringify({ path }) });
+    toast(esc(t('fm.made', { folder: made.path.replaceAll('/', ' › ') })), null, 5000);
+    openAncestors(made.path);
+    State.open.add(made.path);
+    saveOpen();
+    await refreshArchive();
+  } catch (e) {
+    toast(esc(e.message));
+  }
+}
+
+// touch: holding a finger on an element opens what a right click would (iPad, iPhone)
+function longPress(el, fire) {
+  let timer = null, start = null, fired = false;
+  const cancel = () => { clearTimeout(timer); timer = null; };
+  el.addEventListener('pointerdown', ev => {
+    if (ev.pointerType === 'mouse') return;
+    fired = false;
+    start = [ev.clientX, ev.clientY];
+    timer = setTimeout(() => { timer = null; fired = true; fire(start[0], start[1]); }, 550);
+  });
+  el.addEventListener('pointermove', ev => {
+    if (timer && Math.hypot(ev.clientX - start[0], ev.clientY - start[1]) > 10) cancel();
+  });
+  el.addEventListener('pointerup', cancel);
+  el.addEventListener('pointercancel', cancel);
+  // the finger lifting after a long press is no click on the folder
+  el.addEventListener('click', ev => { if (fired) { fired = false; ev.stopImmediatePropagation(); } }, true);
 }
 
 // ------------------------------------------------------------ Mappen

@@ -97,10 +97,13 @@ async def shoot(base: str, lang: str, out: Path, signature: Path | None, only: s
         # 7 settings: areas without owner
         await page.evaluate("location.hash = '#/einstellungen/ablage'")
         await page.wait_for_timeout(1500)
-        await page.evaluate("document.querySelector('#st-areas').scrollIntoView({block: 'center'})")
+        await page.evaluate("document.querySelector('#st-trash-days').closest('.set-row').scrollIntoView({block: 'start'})")
         await snap("07-bereiche", 800)
         await ctx.close()
 
+        if only and not only & {"08-handy", "09-handy-baum"}:
+            await browser.close()
+            return
         # 8 phone
         phone = await browser.new_context(viewport={"width": 430, "height": 932}, device_scale_factor=3,
                                           color_scheme="dark", is_mobile=True, has_touch=True, locale=lang)
